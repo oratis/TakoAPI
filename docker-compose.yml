@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: takoapi
+      POSTGRES_PASSWORD: takoapi_dev
+      POSTGRES_DB: takoapi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "3000:8080"
+    environment:
+      DATABASE_URL: postgresql://takoapi:takoapi_dev@db:5432/takoapi
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: dev-secret-change-in-production
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
