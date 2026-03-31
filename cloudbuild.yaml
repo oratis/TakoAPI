@@ -1,0 +1,43 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
+      - '.'
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'takoapi'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '512Mi'
+      - '--add-cloudsql-instances'
+      - 'takoapi-491505:us-central1:takoapi-db'
+      - '--set-env-vars'
+      - 'NODE_ENV=production,AUTH_TRUST_HOST=true,DATABASE_URL=postgresql://USER:PASSWORD@localhost/takoapi?host=/cloudsql/PROJECT:REGION:INSTANCE,NEXTAUTH_URL=https://takoapi.com,NEXTAUTH_SECRET=your-secret-here,GOOGLE_CLIENT_ID=your-google-client-id,GOOGLE_CLIENT_SECRET=your-google-client-secret,APPLE_CLIENT_ID=your-apple-client-id,APPLE_CLIENT_SECRET=your-apple-client-secret'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
