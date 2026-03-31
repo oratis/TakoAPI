@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
-import { Search, Menu, X, User, LogOut, Plus, TrendingUp } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Plus, TrendingUp, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -74,6 +74,15 @@ export default function Header() {
                   >
                     My Skills
                   </Link>
+                  {(session.user as { role?: string })?.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Shield className="h-3.5 w-3.5" />
+                      Admin Panel
+                    </Link>
+                  )}
                   <button
                     onClick={() => signOut()}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg flex items-center gap-2"

@@ -22,14 +22,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, description, githubUrl, clawSkillsUrl, categoryId } = await req.json();
+    const { name, brief, description, readme, githubUrl, clawSkillsUrl, categoryId } =
+      await req.json();
 
-    if (!name || !description || !categoryId) {
+    if (!name || !categoryId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    if (!description && !brief) {
+      return NextResponse.json({ error: "Please provide a brief or description" }, { status: 400 });
+    }
+
     if (!githubUrl && !clawSkillsUrl) {
-      return NextResponse.json({ error: "Please provide either a GitHub URL or ClawSkills.sh URL" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Please provide either a GitHub URL or ClawSkills.sh URL" },
+        { status: 400 }
+      );
     }
 
     // Verify category exists
@@ -48,8 +56,9 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         slug,
-        brief: description,
-        description,
+        brief: brief || description,
+        description: description || brief,
+        readme: readme || null,
         githubUrl: githubUrl || null,
         clawSkillsUrl: clawSkillsUrl || null,
         clawHubUrl: clawSkillsUrl || null,

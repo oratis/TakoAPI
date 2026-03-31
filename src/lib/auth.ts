@@ -15,7 +15,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     Apple({
       clientId: process.env.APPLE_CLIENT_ID,
-      clientSecret: process.env.APPLE_CLIENT_SECRET,
+      clientSecret: process.env.APPLE_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name
+            ? `${profile.name.firstName ?? ""} ${profile.name.lastName ?? ""}`.trim()
+            : profile.email?.split("@")[0],
+          email: profile.email,
+        };
+      },
     }),
     Credentials({
       name: "credentials",
@@ -47,15 +56,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/auth/signin",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
+        // Fetch role from DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        });
+        token.role = dbUser?.role || "user";
+      }
+      // Refresh role on session update
+      if (trigger === "update" && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true },
+        });
+        token.role = dbUser?.role || "user";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
+        (session.user as { role?: string }).role = (token.role as string) || "user";
       }
       return session;
     },
