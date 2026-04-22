@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { badRequest, parseJson, serverError } from "@/lib/api";
+import { autoFillSchema } from "@/lib/schemas";
 
 function parseReadmeSections(readme: string) {
   const sections: Record<string, string> = {};
@@ -37,16 +40,16 @@ function extractGithubInfo(url: string) {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const { url } = await req.json();
-    if (!url) {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 });
-    }
+  const rl = checkRateLimit(req, { key: "autofill", windowMs: 60 * 60 * 1000, max: 60 });
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
+  const parsed = await parseJson(req, autoFillSchema);
+  if (!parsed.ok) return parsed.response;
+  const { url } = parsed.data;
+
+  try {
     const githubInfo = extractGithubInfo(url);
-    if (!githubInfo) {
-      return NextResponse.json({ error: "Invalid GitHub URL" }, { status: 400 });
-    }
+    if (!githubInfo) return badRequest("Invalid GitHub URL");
 
     const { owner, repo } = githubInfo;
 
@@ -167,6 +170,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Auto-fill error:", error);
-    return NextResponse.json({ error: "Failed to fetch data from URL" }, { status: 500 });
+    return serverError("Failed to fetch data from URL");
   }
 }

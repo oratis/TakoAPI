@@ -19,6 +19,7 @@ function SkillsContent() {
   const q = searchParams.get("q") || "";
   const categorySlug = searchParams.get("category") || "";
   const sortParam = searchParams.get("sort") || "latest";
+  const agentParam = searchParams.get("agent") || "";
 
   const [skills, setSkills] = useState<Skill[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -28,6 +29,7 @@ function SkillsContent() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(categorySlug);
   const [sort, setSort] = useState(sortParam);
+  const [agent, setAgent] = useState(agentParam);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -44,6 +46,7 @@ function SkillsContent() {
       ...(q ? { q } : {}),
       ...(activeCategory ? { category: activeCategory } : {}),
       ...(sort ? { sort } : {}),
+      ...(agent ? { agent } : {}),
     });
 
     fetch(`${endpoint}?${params}`)
@@ -54,7 +57,7 @@ function SkillsContent() {
         setTotal(data.pagination.total);
       })
       .finally(() => setLoading(false));
-  }, [q, activeCategory, sort, page]);
+  }, [q, activeCategory, sort, page, agent]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -79,6 +82,23 @@ function SkillsContent() {
           <option value="latest">Latest</option>
           <option value="popular">Most Popular</option>
           <option value="views">Most Viewed</option>
+          <option value="stars">Most Starred</option>
+        </select>
+
+        <select
+          value={agent}
+          onChange={(e) => { setAgent(e.target.value); setPage(1); }}
+          className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
+        >
+          <option value="">All agents</option>
+          <option value="CLAUDE_CODE">Claude Code</option>
+          <option value="CURSOR">Cursor</option>
+          <option value="WINDSURF">Windsurf</option>
+          <option value="CODEX">Codex</option>
+          <option value="AIDER">Aider</option>
+          <option value="CLINE">Cline</option>
+          <option value="COPILOT">Copilot</option>
+          <option value="GENERIC">Generic</option>
         </select>
 
         {/* Category filter */}

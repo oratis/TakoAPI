@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     prisma.user.count(),
     prisma.category.count(),
     prisma.like.count(),
-    prisma.skill.count({ where: { status: "pending" } }),
+    prisma.skill.count({ where: { status: "PENDING" } }),
     prisma.skill.aggregate({ _sum: { viewsCount: true } }),
     prisma.skill.aggregate({ _sum: { downloads: true } }),
     prisma.skill.findMany({

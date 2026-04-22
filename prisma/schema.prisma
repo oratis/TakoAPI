@@ -76,10 +76,34 @@ model Category {
   skills      Skill[]
 }
 
+enum SkillStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AgentType {
+  CLAUDE_CODE
+  CURSOR
+  WINDSURF
+  ZED
+  CODEX
+  COPILOT
+  AIDER
+  CLINE
+  GENERIC
+}
+
+enum SkillSource {
+  USER_SUBMITTED
+  GITHUB_SCRAPE
+  CURATED
+}
+
 model Skill {
-  id            String     @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String
-  slug          String     @unique
+  slug          String      @unique
   description   String
   githubUrl     String?
   clawHubUrl    String?
@@ -87,25 +111,33 @@ model Skill {
   author        String?
   categoryId    String
   submitterId   String?
-  featured      Boolean    @default(false)
-  likesCount    Int        @default(0)
-  viewsCount    Int        @default(0)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  featured      Boolean     @default(false)
+  likesCount    Int         @default(0)
+  viewsCount    Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   brief         String?
   clawSkillsUrl String?
-  downloads     Int        @default(0)
+  downloads     Int         @default(0)
   readme        String?
-  stars         Int        @default(0)
-  status        String     @default("approved")
-  avgRating     Float      @default(0)
+  stars         Int         @default(0)
+  status        SkillStatus @default(PENDING)
+  reviewNote    String?
+  avgRating     Float       @default(0)
   ghCheckedAt   DateTime?
   ghStatus      String?
-  ratingCount   Int        @default(0)
+  ratingCount   Int         @default(0)
+  agentType     AgentType   @default(CLAUDE_CODE)
+  source        SkillSource @default(USER_SUBMITTED)
+  sourceUrl     String?
+  ghStars       Int?
+  ghOwner       String?
+  ghRepo        String?
   Bookmark      Bookmark[]
   likes         Like[]
-  category      Category   @relation(fields: [categoryId], references: [id])
-  submitter     User?      @relation(fields: [submitterId], references: [id])
+  category      Category    @relation(fields: [categoryId], references: [id])
+  submitter     User?       @relation(fields: [submitterId], references: [id], onDelete: SetNull)
+  tags          SkillTag[]
 
   @@index([categoryId])
   @@index([slug])
@@ -117,6 +149,47 @@ model Skill {
   @@index([likesCount(sort: Desc)])
   @@index([status, downloads(sort: Desc)])
   @@index([viewsCount(sort: Desc)])
+  @@index([status, categoryId])
+  @@index([featured])
+  @@index([updatedAt(sort: Desc)])
+  @@index([agentType, status])
+  @@index([source])
+  @@index([ghOwner, ghRepo])
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  skills    SkillTag[]
+  createdAt DateTime   @default(now())
+}
+
+model SkillTag {
+  skillId String
+  tagId   String
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([skillId, tagId])
+  @@index([tagId])
+}
+
+model RequestLog {
+  id         String   @id @default(cuid())
+  path       String
+  method     String
+  status     Int
+  durationMs Int
+  userId     String?
+  ip         String?
+  userAgent  String?
+  errorCode  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@index([status, createdAt])
 }
 
 model Like {

@@ -1,3 +1,5 @@
+export type SkillStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface Skill {
   id: string;
   name: string;
@@ -13,6 +15,8 @@ export interface Skill {
   categoryId: string;
   submitterId: string | null;
   featured: boolean;
+  status: SkillStatus;
+  reviewNote?: string | null;
   likesCount: number;
   viewsCount: number;
   downloads: number;

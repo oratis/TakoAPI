@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { clampPagination } from "@/lib/pagination";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "24");
+  const q = (searchParams.get("q") || "").trim();
   const category = searchParams.get("category");
+  const { page, limit, skip } = clampPagination(searchParams);
 
-  if (!q.trim()) {
-    return NextResponse.json({ skills: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+  if (!q) {
+    return NextResponse.json({
+      skills: [],
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    });
   }
 
   const where = {
+    status: "APPROVED" as const,
     AND: [
       {
         OR: [
-          { name: { contains: q } },
-          { description: { contains: q } },
-          { author: { contains: q } },
+          { name: { contains: q, mode: "insensitive" as const } },
+          { description: { contains: q, mode: "insensitive" as const } },
+          { author: { contains: q, mode: "insensitive" as const } },
         ],
       },
       ...(category ? [{ category: { slug: category } }] : []),
@@ -30,7 +34,7 @@ export async function GET(req: NextRequest) {
       where,
       include: { category: { select: { name: true, slug: true } } },
       orderBy: { likesCount: "desc" },
-      skip: (page - 1) * limit,
+      skip,
       take: limit,
     }),
     prisma.skill.count({ where }),

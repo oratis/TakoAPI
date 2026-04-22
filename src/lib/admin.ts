@@ -2,28 +2,32 @@ import { auth } from "./auth";
 import { prisma } from "./prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function requireAdmin(req?: NextRequest) {
-  // Check API key first
+type AdminUser = { id: string; name: string | null; email: string | null; role: string };
+
+export async function requireAdmin(req?: NextRequest): Promise<AdminUser | null> {
+  // API key path (for programmatic access)
   if (req) {
     const apiKey = req.headers.get("x-api-key");
     if (apiKey) {
-      const user = await prisma.user.findUnique({ where: { apiKey } });
+      const user = await prisma.user.findUnique({
+        where: { apiKey },
+        select: { id: true, name: true, email: true, role: true },
+      });
       if (user?.role === "admin") return user;
       return null;
     }
   }
 
-  // Check session
+  // Session path: role is on the JWT, avoid hitting the DB on the hot path.
   const session = await auth();
-  if (!session?.user?.id) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { id: true, name: true, email: true, role: true },
-  });
-
-  if (user?.role !== "admin") return null;
-  return user;
+  const sUser = session?.user as { id?: string; name?: string | null; email?: string | null; role?: string } | undefined;
+  if (!sUser?.id || sUser.role !== "admin") return null;
+  return {
+    id: sUser.id,
+    name: sUser.name ?? null,
+    email: sUser.email ?? null,
+    role: sUser.role,
+  };
 }
 
 export function unauthorized() {

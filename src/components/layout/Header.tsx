@@ -50,6 +50,9 @@ export default function Header() {
             <Link href="/skills" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Browse
             </Link>
+            <Link href="/agents" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              Agents
+            </Link>
             <Link href="/trending" className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
               <TrendingUp className="h-3.5 w-3.5" />
               Trending
@@ -126,6 +129,9 @@ export default function Header() {
             <div className="flex flex-col gap-2">
               <Link href="/skills" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
                 Browse Skills
+              </Link>
+              <Link href="/agents" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                Agents
               </Link>
               <Link href="/trending" className="text-sm text-gray-600 py-1 flex items-center gap-1" onClick={() => setMenuOpen(false)}>
                 <TrendingUp className="h-3.5 w-3.5" />
