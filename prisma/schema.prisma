@@ -8,23 +8,28 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?        @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  apiKey        String?   @unique
-  provider      String?   // "email" | "google" | "apple" | "openclaw"
-  role          String    @default("user") // "user" | "admin"
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts  Account[]
-  sessions  Session[]
-  skills    Skill[]
-  likes     Like[]
-  adminLogs AdminLog[]
+  apiKey        String?        @unique
+  provider      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  role          String         @default("user")
+  bio           String?
+  username      String?        @unique
+  website       String?
+  accounts      Account[]
+  adminLogs     AdminLog[]
+  AuthorFollow  AuthorFollow[]
+  BlogPost      BlogPost[]
+  Bookmark      Bookmark[]
+  likes         Like[]
+  sessions      Session[]
+  skills        Skill[]
 }
 
 model Account {
@@ -40,8 +45,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -69,51 +73,58 @@ model Category {
   description String?
   icon        String?
   skillCount  Int     @default(0)
-
-  skills Skill[]
+  skills      Skill[]
 }
 
 model Skill {
-  id             String   @id @default(cuid())
-  name           String
-  slug           String   @unique
-  brief          String?
-  description    String
-  readme         String?  @db.Text
-  githubUrl      String?
-  clawHubUrl     String?
-  clawSkillsUrl  String?
-  installCmd     String?
-  author         String?
-  categoryId     String
-  submitterId    String?
-  status         String   @default("approved") // "pending" | "approved" | "rejected"
-  featured       Boolean  @default(false)
-  likesCount     Int      @default(0)
-  viewsCount     Int      @default(0)
-  downloads      Int      @default(0)
-  stars          Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  category  Category @relation(fields: [categoryId], references: [id])
-  submitter User?    @relation(fields: [submitterId], references: [id])
-  likes     Like[]
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  description   String
+  githubUrl     String?
+  clawHubUrl    String?
+  installCmd    String?
+  author        String?
+  categoryId    String
+  submitterId   String?
+  featured      Boolean    @default(false)
+  likesCount    Int        @default(0)
+  viewsCount    Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  brief         String?
+  clawSkillsUrl String?
+  downloads     Int        @default(0)
+  readme        String?
+  stars         Int        @default(0)
+  status        String     @default("approved")
+  avgRating     Float      @default(0)
+  ghCheckedAt   DateTime?
+  ghStatus      String?
+  ratingCount   Int        @default(0)
+  Bookmark      Bookmark[]
+  likes         Like[]
+  category      Category   @relation(fields: [categoryId], references: [id])
+  submitter     User?      @relation(fields: [submitterId], references: [id])
 
   @@index([categoryId])
   @@index([slug])
   @@index([name])
   @@index([downloads])
   @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([featured, likesCount(sort: Desc)])
+  @@index([likesCount(sort: Desc)])
+  @@index([status, downloads(sort: Desc)])
+  @@index([viewsCount(sort: Desc)])
 }
 
 model Like {
   id      String @id @default(cuid())
   userId  String
   skillId String
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, skillId])
 }
@@ -121,14 +132,157 @@ model Like {
 model AdminLog {
   id         String   @id @default(cuid())
   adminId    String
-  action     String   // "create" | "update" | "delete" | "approve" | "reject" | "feature" | "role_change"
-  targetType String   // "skill" | "category" | "user"
+  action     String
+  targetType String
   targetId   String
   detail     String?
   createdAt  DateTime @default(now())
-
-  admin User @relation(fields: [adminId], references: [id])
+  admin      User     @relation(fields: [adminId], references: [id])
 
   @@index([createdAt])
   @@index([adminId])
+}
+
+model AdCampaign {
+  id          String    @id
+  name        String
+  platform    String
+  status      String    @default("draft")
+  budget      Float     @default(0)
+  spent       Float     @default(0)
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+  conversions Int       @default(0)
+  cpc         Float?
+  ctr         Float?
+  startDate   DateTime?
+  endDate     DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+
+  @@index([platform])
+  @@index([status])
+}
+
+model AuthorFollow {
+  id        String   @id
+  userId    String
+  author    String
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, author])
+  @@index([author])
+}
+
+model BlogPost {
+  id          String    @id
+  slug        String    @unique
+  title       String
+  description String
+  content     String
+  coverImage  String?
+  tags        String?
+  authorId    String?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  User        User?     @relation(fields: [authorId], references: [id])
+
+  @@index([published])
+  @@index([slug])
+}
+
+model Bookmark {
+  id        String   @id
+  userId    String
+  skillId   String
+  createdAt DateTime @default(now())
+  Skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+  @@index([userId])
+}
+
+model KolContact {
+  id          String        @id
+  name        String
+  author      String?
+  email       String?
+  twitter     String?
+  linkedin    String?
+  website     String?
+  tier        String        @default("3")
+  skills      Int           @default(0)
+  downloads   Int           @default(0)
+  stars       Int           @default(0)
+  notes       String?
+  status      String        @default("pending")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  avgComments Int           @default(0)
+  avgLikes    Int           @default(0)
+  avgViews    Int           @default(0)
+  lastPostAt  DateTime?
+  platform    String        @default("github")
+  subscribers Int           @default(0)
+  youtube     String?
+  KolOutreach KolOutreach[]
+
+  @@index([platform])
+  @@index([status])
+  @@index([tier])
+}
+
+model KolOutreach {
+  id         String     @id
+  kolId      String
+  channel    String
+  subject    String?
+  content    String?
+  sentAt     DateTime   @default(now())
+  replied    Boolean    @default(false)
+  repliedAt  DateTime?
+  replyNote  String?
+  KolContact KolContact @relation(fields: [kolId], references: [id], onDelete: Cascade)
+
+  @@index([kolId])
+}
+
+model Rating {
+  id        String   @id
+  userId    String
+  skillId   String
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@unique([userId, skillId])
+  @@index([skillId])
+}
+
+model SkillEvent {
+  id        String   @id
+  skillId   String
+  type      String
+  referrer  String?
+  country   String?
+  createdAt DateTime @default(now())
+
+  @@index([skillId, createdAt])
+  @@index([skillId, type])
+}
+
+model Subscriber {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }
