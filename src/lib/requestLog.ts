@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 import { prisma } from "./prisma";
 import { extractClientIp } from "./ratelimit";
 
@@ -10,6 +10,39 @@ type LogInput = {
   userId?: string | null;
   errorCode?: string | null;
 };
+
+type HandlerContext = { userId?: string | null };
+
+export async function withRequestLog<T extends NextResponse>(
+  req: NextRequest,
+  path: string,
+  handler: (ctx: HandlerContext) => Promise<T>
+): Promise<T> {
+  const ctx: HandlerContext = {};
+  const start = Date.now();
+  let response: T;
+  try {
+    response = await handler(ctx);
+  } catch (err) {
+    logRequest({
+      req,
+      path,
+      status: 500,
+      durationMs: Date.now() - start,
+      userId: ctx.userId ?? null,
+      errorCode: "UNCAUGHT",
+    });
+    throw err;
+  }
+  logRequest({
+    req,
+    path,
+    status: response.status,
+    durationMs: Date.now() - start,
+    userId: ctx.userId ?? null,
+  });
+  return response;
+}
 
 const inflight = new Set<Promise<unknown>>();
 

@@ -6,9 +6,22 @@
 
 按顺序执行：
 
-0. **[密钥加固](03-secret-hardening.md)** 🔴 最高优先 — 生产密钥从 Cloud Run env 明文迁入 Secret Manager（进行中）
-1. **[架构与数据库优化](01-architecture-review.md)** — 后端现状分析 + 分批修复方案
-2. **[Coding Agent Skills 支持](02-coding-agent-skills.md)** — 新增 Claude Code / Cursor / Windsurf 等编码代理技能收录
+0. **[密钥加固](03-secret-hardening.md)** ✅ 已完成 — 生产密钥已迁入 Secret Manager，CRON_SECRET / NEXTAUTH_SECRET 已轮换
+1. **[架构与数据库优化](01-architecture-review.md)** ✅ Phase 1A–1C 已上线 — SkillStatus 枚举 / 事务 / 限流 / 审核流程 / Zod 校验 / Tag + RequestLog 表
+2. **[Coding Agent Skills 支持](02-coding-agent-skills.md)** ✅ Phase 2A–2C 已上线 — AgentType + SkillSource schema / GitHub 抓取脚本 / `/agents` 路由
+
+## ✅ 已交付（2026-04-23）
+
+- Prisma 迁移：`001_skill_status_enum`（已应用）、`002_agent_tags_requestlog`（已应用）
+- 新 API 库：`src/lib/api.ts` 统一错误、`src/lib/schemas.ts` Zod 校验、`src/lib/ratelimit.ts` 限流、`src/lib/pagination.ts` 分页、`src/lib/requestLog.ts` 请求日志、`src/lib/github.ts` GitHub API 客户端、`src/lib/agents.ts` agent 元数据
+- 前端：`/agents`、`/agents/[slug]`、`/profile` 新增 "My Submissions" tab、`/skills` 新增 agent 过滤与 stars 排序、Header 增加 Agents 导航
+- 脚本：`scripts/scrape-github-skills.ts`（需 `GITHUB_TOKEN` 运行；见 [02-coding-agent-skills.md](02-coding-agent-skills.md)）
+
+## 🔜 Next up
+
+- 配置 GITHUB_TOKEN secret 并首次运行 scraper 填充各 agent 下的高星技能
+- 扩展请求日志覆盖到剩余 admin / search 路由
+- 添加 rating / bookmark API（表已存在但未暴露）
 
 ## 🏗 基础设施快照
 
