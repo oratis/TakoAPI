@@ -1,0 +1,41 @@
+# Build artifacts and dependencies — installed cleanly inside the image.
+# Including local node_modules (especially macOS-built native binaries) would
+# overwrite the linux ones from the deps stage and break the runtime.
+node_modules
+.next
+.next-build-cache
+
+# Source control + editor + OS noise
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.DS_Store
+**/.DS_Store
+
+# Local databases and env (never bake credentials into the image)
+prisma/dev.db
+prisma/test.db
+*.db
+.env
+.env.local
+.env.*.local
+
+# Project meta — not needed at runtime
+README.md
+CHANGELOG.md
+LICENSE
+docs
+e2e
+scripts/local
+.github
+
+# Logs and TS incremental cache
+*.log
+tsconfig.tsbuildinfo
+
+# Cloud Build / deployment configs — they live outside the image
+cloudbuild.yaml
+.gcloudignore
+.dockerignore
