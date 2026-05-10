@@ -1,43 +1,58 @@
+# Cloud Build pipeline for takoapi (Cloud Run, us-central1).
+#
+# Build → deploy. The deploy step uses --update-env-vars / --update-secrets
+# (NOT --set-env-vars), so any existing bindings on the Cloud Run service —
+# secrets, traffic splits, manual env tweaks — are preserved. Running this
+# pipeline against the live service never wipes production credentials.
+#
+# Manual trigger:
+#   gcloud builds submit --project=takoapi-491505 --config=cloudbuild.yaml .
+#
+# Build-only (rare): comment out the "deploy" step. Both image tags still
+# get pushed via the `images:` block at the bottom.
+#
+# Rollback: each build pushes us-central1-docker.pkg.dev/.../takoapi:$BUILD_ID,
+# which is immutable. To roll back, redeploy the desired BUILD_ID:
+#   gcloud run deploy takoapi --region=us-central1 \
+#     --image=us-central1-docker.pkg.dev/takoapi-491505/takoapi-repo/takoapi:<BUILD_ID>
+
 steps:
-  # Build the container image
-  - name: 'gcr.io/cloud-builders/docker'
+  - id: build
+    name: gcr.io/cloud-builders/docker
     args:
-      - 'build'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
-      - '.'
+      - build
+      - --tag=us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:$BUILD_ID
+      - --tag=us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest
+      - .
 
-  # Push the container image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
-
-  # Deploy container image to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    waitFor: [build]
     entrypoint: gcloud
     args:
-      - 'run'
-      - 'deploy'
-      - 'takoapi'
-      - '--image'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
-      - '--region'
-      - 'us-central1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--port'
-      - '8080'
-      - '--memory'
-      - '512Mi'
-      - '--add-cloudsql-instances'
-      - 'takoapi-491505:us-central1:takoapi-db'
-      - '--set-env-vars'
-      - 'NODE_ENV=production,AUTH_TRUST_HOST=true,DATABASE_URL=postgresql://USER:PASSWORD@localhost/takoapi?host=/cloudsql/PROJECT:REGION:INSTANCE,NEXTAUTH_URL=https://takoapi.com,NEXTAUTH_SECRET=your-secret-here,GOOGLE_CLIENT_ID=your-google-client-id,GOOGLE_CLIENT_SECRET=your-google-client-secret,APPLE_CLIENT_ID=your-apple-client-id,APPLE_CLIENT_SECRET=your-apple-client-secret'
+      - run
+      - deploy
+      - takoapi
+      - --region=us-central1
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:$BUILD_ID
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --cpu=1
+      - --memory=512Mi
+      - --max-instances=20
+      - --add-cloudsql-instances=$PROJECT_ID:us-central1:takoapi-db
+      # --update-* (not --set-*): only the listed keys are touched.
+      # Secrets are bound by reference; their values never appear in this file
+      # or in build logs. Manage values via:
+      #   gcloud secrets versions add <NAME> --data-file=-
+      - --update-env-vars=NODE_ENV=production,AUTH_TRUST_HOST=true,NEXTAUTH_URL=https://takoapi.com,GOOGLE_CLIENT_ID=429522911261-t3s9v8av3n4saed95u4vkij5oqlfjoti.apps.googleusercontent.com,APPLE_CLIENT_ID=com.takoapi.auth
+      - --update-secrets=DATABASE_URL=tako-database-url:latest,NEXTAUTH_SECRET=tako-nextauth-secret:latest,GOOGLE_CLIENT_SECRET=tako-google-client-secret:latest,APPLE_CLIENT_SECRET=tako-apple-client-secret:latest,RESEND_API_KEY=tako-resend-api-key:latest,CRON_SECRET=tako-cron-secret:latest
 
+# Both tags are pushed automatically once all steps succeed.
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest'
+  - us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:$BUILD_ID
+  - us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest
 
 options:
   logging: CLOUD_LOGGING_ONLY

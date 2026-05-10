@@ -1,0 +1,40 @@
+# Files NOT uploaded to Cloud Build's source bundle.
+# Without this file, gcloud auto-derives one from .gitignore — BUT explicit
+# is better, especially for safety-critical exclusions like .env.
+#
+# Reference: https://cloud.google.com/sdk/gcloud/reference/topic/gcloudignore
+
+# Build artifacts (rebuilt inside the container; don't ship local copies)
+node_modules
+.next
+.next-build-cache
+
+# Local databases (have prod credentials in URL; never upload)
+prisma/dev.db
+prisma/test.db
+*.db
+
+# Secrets — defense in depth even though they shouldn't exist in the repo
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Source control + editor + OS noise
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.DS_Store
+**/.DS_Store
+
+# Logs / caches
+*.log
+tsconfig.tsbuildinfo
+
+# Big stuff that doesn't belong in a build context
+docs
+e2e
+scripts/local
