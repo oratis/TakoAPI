@@ -23,6 +23,7 @@ model User {
   username      String?        @unique
   website       String?
   accounts      Account[]
+  agents        Agent[]
   adminLogs     AdminLog[]
   AuthorFollow  AuthorFollow[]
   BlogPost      BlogPost[]
@@ -74,6 +75,7 @@ model Category {
   icon        String?
   skillCount  Int     @default(0)
   skills      Skill[]
+  agents      Agent[]
 }
 
 enum SkillStatus {
@@ -162,6 +164,7 @@ model Tag {
   name      String     @unique
   slug      String     @unique
   skills    SkillTag[]
+  agentTags AgentTag[]
   createdAt DateTime   @default(now())
 }
 
@@ -358,4 +361,106 @@ model Subscriber {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Agent registry — Phase 1 of "One API to access all agents".
+// Invokable third-party agents, described by A2A AgentCards.
+// NOTE: distinct from Skill.agentType, which classifies the coding
+// agents that *consume* skills. Keys/usage/credits models arrive in
+// Phase 2–3. See docs/agent-marketplace/04-data-model.md
+// ─────────────────────────────────────────────────────────────
+
+enum AgentProtocol {
+  A2A
+  OPENAI_COMPAT
+  MCP
+}
+
+enum AgentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+enum PricingModel {
+  FREE
+  PER_CALL
+  PER_TASK
+  PER_TOKEN
+}
+
+model Agent {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String
+  publisherId String
+  categoryId  String?
+  status      AgentStatus @default(PENDING)
+  reviewNote  String?
+
+  // AgentCard (A2A) — discovery + invocation metadata
+  cardUrl               String?
+  endpointUrl           String
+  protocols             AgentProtocol[] @default([])
+  streaming             Boolean         @default(false)
+  pushNotify            Boolean         @default(false)
+  securitySchemes       Json?
+  cardSignatureVerified Boolean         @default(false)
+  namespaceVerified     Boolean         @default(false)
+  cardFetchedAt         DateTime?
+  healthStatus          String?
+  healthCheckedAt       DateTime?
+
+  // Pricing — display metadata only; real billing lands in Phase 3
+  pricingModel  PricingModel @default(FREE)
+  unitPriceUsd  Decimal?     @db.Decimal(12, 6)
+  byokSupported Boolean      @default(false)
+
+  // Presentation + stats
+  homepage   String?
+  logo       String?
+  featured   Boolean  @default(false)
+  likesCount Int      @default(0)
+  callsCount Int      @default(0)
+  avgRating  Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  publisher User            @relation(fields: [publisherId], references: [id])
+  category  Category?       @relation(fields: [categoryId], references: [id])
+  skills    AgentSkillDef[]
+  tags      AgentTag[]
+
+  @@index([status, categoryId])
+  @@index([featured, callsCount(sort: Desc)])
+  @@index([publisherId])
+  @@index([slug])
+  @@index([createdAt(sort: Desc)])
+}
+
+model AgentSkillDef {
+  id          String   @id @default(cuid())
+  agentId     String
+  skillKey    String
+  name        String
+  description String?
+  inputModes  String[] @default([])
+  outputModes String[] @default([])
+  examples    String[] @default([])
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+}
+
+model AgentTag {
+  agentId String
+  tagId   String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([agentId, tagId])
+  @@index([tagId])
 }

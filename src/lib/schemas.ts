@@ -55,3 +55,32 @@ export const autoFillSchema = z.object({
 export const likeParamSchema = z.object({
   id: z.string().min(1).max(200),
 });
+
+// ── Agent registry (Phase 1B) ────────────────────────────────────────────
+// Either submit an A2A AgentCard URL (we fetch + parse it) OR fill in the
+// agent fields manually (name + endpointUrl required).
+export const submitAgentSchema = z
+  .object({
+    cardUrl: z.string().url().max(500).optional(),
+    name: z.string().min(2).max(120).optional(),
+    description: z.string().max(10_000).optional(),
+    endpointUrl: z.string().url().max(500).optional(),
+    homepage: z.string().url().max(500).optional().nullable(),
+    categoryId: z.string().min(1).optional().nullable(),
+    protocols: z.array(z.enum(["A2A", "OPENAI_COMPAT", "MCP"])).max(3).optional(),
+    pricingModel: z.enum(["FREE", "PER_CALL", "PER_TASK", "PER_TOKEN"]).optional(),
+    unitPriceUsd: z.number().nonnegative().max(1_000_000).optional().nullable(),
+  })
+  .refine((v) => !!v.cardUrl || (!!v.name && !!v.endpointUrl), {
+    message: "Provide an AgentCard URL, or both a name and an endpointUrl",
+    path: ["cardUrl"],
+  });
+
+export type SubmitAgentInput = z.infer<typeof submitAgentSchema>;
+
+export const adminAgentUpdateSchema = z.object({
+  status: z.enum(["PENDING", "APPROVED", "REJECTED", "DISABLED"]).optional(),
+  reviewNote: z.string().max(2000).nullable().optional(),
+  featured: z.boolean().optional(),
+  categoryId: z.string().min(1).nullable().optional(),
+});
