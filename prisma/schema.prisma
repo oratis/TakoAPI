@@ -24,6 +24,7 @@ model User {
   website       String?
   accounts      Account[]
   agents        Agent[]
+  apiKeys       ApiKey[]
   adminLogs     AdminLog[]
   AuthorFollow  AuthorFollow[]
   BlogPost      BlogPost[]
@@ -429,10 +430,11 @@ model Agent {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  publisher User            @relation(fields: [publisherId], references: [id])
-  category  Category?       @relation(fields: [categoryId], references: [id])
-  skills    AgentSkillDef[]
-  tags      AgentTag[]
+  publisher   User            @relation(fields: [publisherId], references: [id])
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  skills      AgentSkillDef[]
+  tags        AgentTag[]
+  invocations Invocation[]
 
   @@index([status, categoryId])
   @@index([featured, callsCount(sort: Desc)])
@@ -463,4 +465,50 @@ model AgentTag {
 
   @@id([agentId, tagId])
   @@index([tagId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Gateway (Phase 2) — API keys + per-call usage metering.
+// Billing/credits arrive in Phase 3. See docs/agent-marketplace/04-data-model.md
+// ─────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id           String       @id @default(cuid())
+  userId       String
+  name         String?
+  hashedKey    String       @unique
+  prefix       String
+  scopes       String[]     @default([])
+  rateLimit    Int?
+  monthlyQuota Int?
+  lastUsedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime     @default(now())
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invocations  Invocation[]
+
+  @@index([userId])
+  @@index([prefix])
+}
+
+model Invocation {
+  id          String        @id @default(cuid())
+  apiKeyId    String?
+  userId      String?
+  agentId     String
+  protocol    AgentProtocol
+  status      Int
+  taskState   String?
+  latencyMs   Int?
+  unitsBilled Decimal?      @db.Decimal(14, 6)
+  costUsd     Decimal?      @db.Decimal(14, 6)
+  billedUsd   Decimal?      @db.Decimal(14, 6)
+  errorCode   String?
+  createdAt   DateTime      @default(now())
+  agent       Agent         @relation(fields: [agentId], references: [id])
+  apiKey      ApiKey?       @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([agentId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([userId, createdAt])
 }
