@@ -30,7 +30,7 @@ export default async function HomePage() {
       }),
       prisma.skill.count(),
       prisma.agent.findMany({
-        where: { status: "APPROVED" },
+        where: { status: "APPROVED", kind: "HOSTED" },
         orderBy: [{ featured: "desc" }, { callsCount: "desc" }, { createdAt: "desc" }],
         take: 8,
         include: {
@@ -38,7 +38,7 @@ export default async function HomePage() {
           _count: { select: { skills: true } },
         },
       }),
-      prisma.agent.count({ where: { status: "APPROVED" } }),
+      prisma.agent.count({ where: { status: "APPROVED", kind: "HOSTED" } }),
     ]);
 
   // Show top 12 categories, collapse the rest

@@ -52,6 +52,12 @@ export async function POST(
     select: { id: true, endpointUrl: true },
   });
   if (!agent) return Response.json({ error: "Agent not found" }, { status: 404 });
+  if (!agent.endpointUrl) {
+    return Response.json(
+      { error: "This agent is an open-source project, not an invokable endpoint" },
+      { status: 400 }
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const text =

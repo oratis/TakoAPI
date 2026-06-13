@@ -55,6 +55,12 @@ export async function POST(req: NextRequest) {
       { status: 404 }
     );
   }
+  if (!agent.endpointUrl) {
+    return NextResponse.json(
+      { error: { message: `'${slug}' is an open-source project, not an invokable agent`, type: "invalid_request_error" } },
+      { status: 400 }
+    );
+  }
 
   const rpc = {
     jsonrpc: "2.0",

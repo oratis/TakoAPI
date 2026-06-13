@@ -392,6 +392,11 @@ enum PricingModel {
   PER_TOKEN
 }
 
+enum AgentKind {
+  HOSTED // invokable agent with a live A2A endpoint
+  PROJECT // open-source project (self-host); discovery-only
+}
+
 model Agent {
   id          String      @id @default(cuid())
   slug        String      @unique
@@ -401,10 +406,11 @@ model Agent {
   categoryId  String?
   status      AgentStatus @default(PENDING)
   reviewNote  String?
+  kind        AgentKind   @default(HOSTED)
 
-  // AgentCard (A2A) — discovery + invocation metadata
+  // AgentCard (A2A) — discovery + invocation metadata (HOSTED only)
   cardUrl               String?
-  endpointUrl           String
+  endpointUrl           String?
   protocols             AgentProtocol[] @default([])
   streaming             Boolean         @default(false)
   pushNotify            Boolean         @default(false)
@@ -419,6 +425,12 @@ model Agent {
   pricingModel  PricingModel @default(FREE)
   unitPriceUsd  Decimal?     @db.Decimal(12, 6)
   byokSupported Boolean      @default(false)
+
+  // Open-source project (kind = PROJECT)
+  githubUrl String?
+  stars     Int?
+  repoOwner String?
+  repoName  String?
 
   // Presentation + stats
   homepage   String?
@@ -441,6 +453,8 @@ model Agent {
   @@index([publisherId])
   @@index([slug])
   @@index([createdAt(sort: Desc)])
+  @@index([status, kind])
+  @@index([kind, stars(sort: Desc)])
 }
 
 model AgentSkillDef {
