@@ -13,21 +13,22 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sm text-gray-500 max-w-sm">
-              All in One OpenClaw Skills Marketplace, for you and for your agent.
+              One API to access all agents — plus thousands of OpenClaw skills for your coding agent.
             </p>
             <p className="text-xs text-gray-400 mt-4">
-              Agent endpoint:{" "}
+              Agent registry:{" "}
               <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">
-                https://takoapi.com/api/agent
+                https://takoapi.com/api/registry
               </code>
             </p>
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Platform</h3>
             <ul className="space-y-2">
+              <li><Link href="/agents" className="text-sm text-gray-500 hover:text-gray-700">Browse Agents</Link></li>
+              <li><Link href="/submit-agent" className="text-sm text-gray-500 hover:text-gray-700">Publish an Agent</Link></li>
+              <li><Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">Developer Dashboard</Link></li>
               <li><Link href="/skills" className="text-sm text-gray-500 hover:text-gray-700">Browse Skills</Link></li>
-              <li><Link href="/submit" className="text-sm text-gray-500 hover:text-gray-700">Submit Skill</Link></li>
-              <li><Link href="/api/agent" className="text-sm text-gray-500 hover:text-gray-700">Agent API</Link></li>
             </ul>
           </div>
           <div>

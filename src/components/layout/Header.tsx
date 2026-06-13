@@ -15,7 +15,7 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/skills?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/agents?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -37,7 +37,7 @@ export default function Header() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search skills..."
+                placeholder="Search agents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 bg-gray-50 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all text-sm"
@@ -47,22 +47,22 @@ export default function Header() {
 
           {/* Nav links - desktop */}
           <nav className="hidden md:flex items-center gap-4">
-            <Link href="/skills" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Browse
-            </Link>
             <Link href="/agents" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Agents
+            </Link>
+            <Link href="/skills" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              Skills
             </Link>
             <Link href="/trending" className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
               <TrendingUp className="h-3.5 w-3.5" />
               Trending
             </Link>
             <Link
-              href="/submit"
+              href="/submit-agent"
               className="inline-flex items-center gap-1.5 text-sm bg-purple-600 text-white px-4 py-2 rounded-full hover:bg-purple-700 transition-colors"
             >
               <Plus className="h-4 w-4" />
-              Submit
+              Publish
             </Link>
             {session ? (
               <div className="relative group">
@@ -126,7 +126,7 @@ export default function Header() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search skills..."
+                  placeholder="Search agents..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 bg-gray-50 text-sm"
@@ -134,18 +134,18 @@ export default function Header() {
               </div>
             </form>
             <div className="flex flex-col gap-2">
-              <Link href="/skills" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                Browse Skills
-              </Link>
               <Link href="/agents" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
                 Agents
+              </Link>
+              <Link href="/skills" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                Skills
               </Link>
               <Link href="/trending" className="text-sm text-gray-600 py-1 flex items-center gap-1" onClick={() => setMenuOpen(false)}>
                 <TrendingUp className="h-3.5 w-3.5" />
                 Trending
               </Link>
-              <Link href="/submit" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                Submit Skill
+              <Link href="/submit-agent" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                Publish Agent
               </Link>
               {session ? (
                 <>
