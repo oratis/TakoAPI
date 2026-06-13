@@ -8,11 +8,13 @@ import Footer from "@/components/layout/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TakoAPI - OpenClaw Skills Marketplace",
-  description: "All in One OpenClaw Skills Marketplace, for you and for your agent",
+  title: "TakoAPI — One API to access all agents",
+  description:
+    "One API to access all agents. Discover and invoke AI agents through one unified API — plus thousands of OpenClaw skills for your coding agent.",
   openGraph: {
-    title: "TakoAPI",
-    description: "All in One OpenClaw Skills Marketplace, for you and for your agent",
+    title: "TakoAPI — One API to access all agents",
+    description:
+      "Discover and invoke AI agents through one unified API. Plus thousands of OpenClaw skills.",
     url: "https://takoapi.com",
     siteName: "TakoAPI",
   },
