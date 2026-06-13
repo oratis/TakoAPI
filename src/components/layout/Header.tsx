@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
-import { Search, Menu, X, User, LogOut, Plus, TrendingUp, Shield } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Plus, TrendingUp, Shield, KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -77,6 +77,13 @@ export default function Header() {
                   >
                     My Skills
                   </Link>
+                  <Link
+                    href="/dashboard"
+                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    API &amp; Usage
+                  </Link>
                   {(session.user as { role?: string })?.role === "admin" && (
                     <Link
                       href="/admin"
@@ -144,6 +151,9 @@ export default function Header() {
                 <>
                   <Link href="/profile" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
                     My Skills
+                  </Link>
+                  <Link href="/dashboard" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                    API &amp; Usage
                   </Link>
                   <button onClick={() => signOut()} className="text-left text-sm text-gray-600 py-1">
                     Sign out

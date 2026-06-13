@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import SkillCard from "@/components/ui/SkillCard";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import HomeSearch from "@/components/ui/HomeSearch";
-import { Terminal, Download, TrendingUp } from "lucide-react";
+import AgentCard from "@/components/ui/AgentCard";
+import { Terminal, Download, TrendingUp, Bot } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +15,31 @@ function formatNumber(n: number): string {
 }
 
 export default async function HomePage() {
-  const [categories, mustHaveSkills, latestSkills, totalSkills] = await Promise.all([
-    prisma.category.findMany({ orderBy: { skillCount: "desc" } }),
-    prisma.skill.findMany({
-      orderBy: { downloads: "desc" },
-      take: 8,
-      include: { category: { select: { name: true, slug: true } } },
-    }),
-    prisma.skill.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 12,
-      include: { category: { select: { name: true, slug: true } } },
-    }),
-    prisma.skill.count(),
-  ]);
+  const [categories, mustHaveSkills, latestSkills, totalSkills, agents, totalAgents] =
+    await Promise.all([
+      prisma.category.findMany({ orderBy: { skillCount: "desc" } }),
+      prisma.skill.findMany({
+        orderBy: { downloads: "desc" },
+        take: 8,
+        include: { category: { select: { name: true, slug: true } } },
+      }),
+      prisma.skill.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        include: { category: { select: { name: true, slug: true } } },
+      }),
+      prisma.skill.count(),
+      prisma.agent.findMany({
+        where: { status: "APPROVED" },
+        orderBy: [{ featured: "desc" }, { callsCount: "desc" }, { createdAt: "desc" }],
+        take: 8,
+        include: {
+          category: { select: { name: true, slug: true } },
+          _count: { select: { skills: true } },
+        },
+      }),
+      prisma.agent.count({ where: { status: "APPROVED" } }),
+    ]);
 
   // Show top 12 categories, collapse the rest
   const topCategories = categories.slice(0, 12);
@@ -40,25 +52,64 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-              All in One
+              One API
             </span>{" "}
-            OpenClaw Skills
+            to access all agents
           </h1>
           <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto">
-            Marketplace for you and for your agent. Discover, install, and share{" "}
-            <span className="font-semibold text-gray-700">{totalSkills.toLocaleString()}</span> community-built skills.
+            Discover and invoke{" "}
+            <span className="font-semibold text-gray-700">{totalAgents.toLocaleString()}</span> AI agents through one
+            unified API — plus{" "}
+            <span className="font-semibold text-gray-700">{totalSkills.toLocaleString()}</span> skills for your coding agent.
           </p>
 
-          <HomeSearch />
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/agents"
+              className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700"
+            >
+              <Bot className="h-4 w-4" /> Browse agents
+            </Link>
+            <Link
+              href="/submit-agent"
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:border-purple-300"
+            >
+              Publish an agent
+            </Link>
+          </div>
+
+          <div className="mt-8 max-w-xl mx-auto">
+            <HomeSearch />
+          </div>
 
           <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-400">
-            <span>Agent API:</span>
+            <span>Agent registry:</span>
             <code className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-mono">
-              GET /api/agent
+              GET /api/registry
             </code>
           </div>
         </div>
       </section>
+
+      {/* Featured Agents */}
+      {agents.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-purple-600" />
+              <h2 className="text-xl font-semibold">Featured Agents</h2>
+            </div>
+            <Link href="/agents" className="text-sm text-purple-600 hover:text-purple-700">
+              Browse all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {agents.map((a) => (
+              <AgentCard key={a.slug} agent={a} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Install TakoAPI Skill */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

@@ -3,11 +3,12 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, FolderTree, Users, ScrollText, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Package, Bot, FolderTree, Users, ScrollText, ArrowLeft } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/skills", label: "Skills", icon: Package },
+  { href: "/admin/agents", label: "Agents", icon: Bot },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/logs", label: "Logs", icon: ScrollText },
