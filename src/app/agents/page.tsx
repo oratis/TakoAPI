@@ -14,9 +14,15 @@ const PROTOCOLS = ["A2A", "OPENAI_COMPAT", "MCP"];
 const PRICING = ["FREE", "PER_CALL", "PER_TASK", "PER_TOKEN"];
 const SORTS = [
   { key: "latest", label: "Latest" },
+  { key: "stars", label: "Stars" },
   { key: "popular", label: "Popular" },
   { key: "calls", label: "Most called" },
   { key: "rating", label: "Top rated" },
+];
+const KINDS = [
+  { key: "", label: "All" },
+  { key: "HOSTED", label: "Agents" },
+  { key: "PROJECT", label: "Projects" },
 ];
 const PAGE_SIZE = 24;
 
@@ -48,10 +54,16 @@ export default async function AgentsMarketplacePage({
   const protocol = PROTOCOLS.includes(sp.protocol || "") ? sp.protocol : undefined;
   const pricing = PRICING.includes(sp.pricing || "") ? sp.pricing : undefined;
   const q = sp.q?.trim() || undefined;
-  const sort = SORTS.some((s) => s.key === sp.sort) ? sp.sort! : "latest";
+  const kind = ["HOSTED", "PROJECT"].includes(sp.kind || "") ? sp.kind : undefined;
+  const sort = SORTS.some((s) => s.key === sp.sort)
+    ? sp.sort!
+    : kind === "PROJECT"
+      ? "stars"
+      : "latest";
   const page = Math.max(1, parseInt(sp.page || "1") || 1);
 
   const where: Prisma.AgentWhereInput = { status: "APPROVED" };
+  if (kind) where.kind = kind as Prisma.AgentWhereInput["kind"];
   if (category) where.category = { slug: category };
   if (protocol) where.protocols = { has: protocol } as Prisma.AgentWhereInput["protocols"];
   if (pricing) where.pricingModel = pricing as Prisma.AgentWhereInput["pricingModel"];
@@ -63,13 +75,15 @@ export default async function AgentsMarketplacePage({
   }
 
   const orderBy: Prisma.AgentOrderByWithRelationInput =
-    sort === "popular"
-      ? { likesCount: "desc" }
-      : sort === "calls"
-        ? { callsCount: "desc" }
-        : sort === "rating"
-          ? { avgRating: "desc" }
-          : { createdAt: "desc" };
+    sort === "stars"
+      ? { stars: "desc" }
+      : sort === "popular"
+        ? { likesCount: "desc" }
+        : sort === "calls"
+          ? { callsCount: "desc" }
+          : sort === "rating"
+            ? { avgRating: "desc" }
+            : { createdAt: "desc" };
 
   const [agents, total, categories] = await Promise.all([
     prisma.agent.findMany({
@@ -90,7 +104,14 @@ export default async function AgentsMarketplacePage({
     }),
   ]);
 
-  const base: SP = { category, protocol, pricing, q, sort: sort === "latest" ? undefined : sort };
+  const base: SP = {
+    kind,
+    category,
+    protocol,
+    pricing,
+    q,
+    sort: sort === "latest" ? undefined : sort,
+  };
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -106,6 +127,7 @@ export default async function AgentsMarketplacePage({
 
       {/* Search */}
       <form action="/agents" method="get" className="mb-5 flex gap-2 max-w-xl">
+        {kind && <input type="hidden" name="kind" value={kind} />}
         {protocol && <input type="hidden" name="protocol" value={protocol} />}
         {pricing && <input type="hidden" name="pricing" value={pricing} />}
         {category && <input type="hidden" name="category" value={category} />}
@@ -119,6 +141,19 @@ export default async function AgentsMarketplacePage({
           Search
         </button>
       </form>
+
+      {/* Kind toggle */}
+      <div className="flex items-center gap-2 mb-3">
+        {KINDS.map((k) => (
+          <Link
+            key={k.key || "all"}
+            href={hrefWith(base, { kind: k.key || undefined, page: undefined })}
+            className={chip((kind || "") === k.key)}
+          >
+            {k.label}
+          </Link>
+        ))}
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-2">

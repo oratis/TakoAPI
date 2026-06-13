@@ -1,17 +1,21 @@
 import Link from "next/link";
-import { Zap, Layers, Star } from "lucide-react";
+import { Zap, Layers, Star, GitFork } from "lucide-react";
 
 // Server Component (no client interactivity) — safe to receive Prisma Decimal.
 export type AgentCardData = {
   slug: string;
   name: string;
   description: string;
+  kind?: string;
   pricingModel: string;
   unitPriceUsd: unknown; // Prisma Decimal | number | string | null
   protocols: string[];
   streaming: boolean;
   callsCount: number;
   avgRating: number;
+  stars?: number | null;
+  githubUrl?: string | null;
+  repoOwner?: string | null;
   category: { name: string; slug: string } | null;
   _count?: { skills: number };
 };
@@ -25,7 +29,13 @@ export function priceLabel(model: string, unit: unknown): string {
   return `$${n}${per}`;
 }
 
+function formatStars(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return String(n);
+}
+
 export default function AgentCard({ agent }: { agent: AgentCardData }) {
+  const isProject = agent.kind === "PROJECT";
   return (
     <Link
       href={`/agents/${agent.slug}`}
@@ -35,51 +45,77 @@ export default function AgentCard({ agent }: { agent: AgentCardData }) {
         <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-600 transition-colors">
           {agent.name}
         </h3>
-        {agent.streaming && (
+        {isProject ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">
+            <GitFork className="h-2.5 w-2.5" />
+            project
+          </span>
+        ) : agent.streaming ? (
           <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full shrink-0">
             <Zap className="h-2.5 w-2.5" />
             streaming
           </span>
-        )}
+        ) : null}
       </div>
 
       <p className="text-sm text-gray-600 line-clamp-2 mb-3 min-h-[2.5rem]">{agent.description}</p>
 
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {agent.category && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-600 font-medium truncate">
-              {agent.category.name}
+      {isProject ? (
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
+          <span className="text-xs text-gray-400 truncate">
+            {agent.repoOwner ? `${agent.repoOwner}/${agent.name}` : "open-source"}
+          </span>
+          <span className="inline-flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+              self-host
             </span>
-          )}
-          {agent.protocols.slice(0, 2).map((p) => (
-            <span
-              key={p}
-              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500"
-            >
-              {p === "OPENAI_COMPAT" ? "OpenAI" : p}
-            </span>
-          ))}
+            {typeof agent.stars === "number" && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                {formatStars(agent.stars)}
+              </span>
+            )}
+          </span>
         </div>
-        <span className="text-xs font-semibold text-gray-700 shrink-0">
-          {priceLabel(agent.pricingModel, agent.unitPriceUsd)}
-        </span>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {agent.category && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-600 font-medium truncate">
+                  {agent.category.name}
+                </span>
+              )}
+              {agent.protocols.slice(0, 2).map((p) => (
+                <span
+                  key={p}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500"
+                >
+                  {p === "OPENAI_COMPAT" ? "OpenAI" : p}
+                </span>
+              ))}
+            </div>
+            <span className="text-xs font-semibold text-gray-700 shrink-0">
+              {priceLabel(agent.pricingModel, agent.unitPriceUsd)}
+            </span>
+          </div>
 
-      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-        {agent._count && (
-          <span className="inline-flex items-center gap-1">
-            <Layers className="h-3 w-3" />
-            {agent._count.skills} skill{agent._count.skills === 1 ? "" : "s"}
-          </span>
-        )}
-        {agent.avgRating > 0 && (
-          <span className="inline-flex items-center gap-1">
-            <Star className="h-3 w-3" />
-            {agent.avgRating.toFixed(1)}
-          </span>
-        )}
-      </div>
+          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+            {agent._count && (
+              <span className="inline-flex items-center gap-1">
+                <Layers className="h-3 w-3" />
+                {agent._count.skills} skill{agent._count.skills === 1 ? "" : "s"}
+              </span>
+            )}
+            {agent.avgRating > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <Star className="h-3 w-3" />
+                {agent.avgRating.toFixed(1)}
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </Link>
   );
 }

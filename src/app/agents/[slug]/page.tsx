@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Zap, Bell, ShieldCheck, BadgeCheck } from "lucide-react";
+import { Zap, Bell, ShieldCheck, BadgeCheck, Star, GitFork } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { priceLabel } from "@/components/ui/AgentCard";
 
@@ -28,7 +28,10 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
   });
   if (!agent) notFound();
 
-  const publisherName = agent.publisher.username || agent.publisher.name || "unknown";
+  const isProject = agent.kind === "PROJECT";
+  const publisherName = isProject
+    ? agent.repoOwner || "open-source"
+    : agent.publisher.username || agent.publisher.name || "unknown";
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -44,12 +47,17 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
               {agent.category.name}
             </span>
           )}
-          {agent.cardSignatureVerified && (
+          {isProject && (
+            <span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+              <GitFork className="h-3 w-3" /> Open-source project
+            </span>
+          )}
+          {!isProject && agent.cardSignatureVerified && (
             <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
               <BadgeCheck className="h-3 w-3" /> Signed card
             </span>
           )}
-          {agent.namespaceVerified && (
+          {!isProject && agent.namespaceVerified && (
             <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
               <ShieldCheck className="h-3 w-3" /> Verified publisher
             </span>
@@ -60,27 +68,40 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
         <p className="text-base text-gray-600 mt-3 max-w-2xl">{agent.description}</p>
       </div>
 
-      {/* Capability + pricing row */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {agent.protocols.map((p) => (
-          <span key={p} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
-            {p === "OPENAI_COMPAT" ? "OpenAI-compatible" : p}
+      {/* Capability / project row */}
+      {isProject ? (
+        <div className="flex flex-wrap gap-2 mb-8">
+          {typeof agent.stars === "number" && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {agent.stars.toLocaleString()} stars
+            </span>
+          )}
+          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
+            Self-host
           </span>
-        ))}
-        {agent.streaming && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700">
-            <Zap className="h-3 w-3" /> Streaming
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2 mb-8">
+          {agent.protocols.map((p) => (
+            <span key={p} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
+              {p === "OPENAI_COMPAT" ? "OpenAI-compatible" : p}
+            </span>
+          ))}
+          {agent.streaming && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700">
+              <Zap className="h-3 w-3" /> Streaming
+            </span>
+          )}
+          {agent.pushNotify && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-sky-50 text-sky-700">
+              <Bell className="h-3 w-3" /> Push notifications
+            </span>
+          )}
+          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white">
+            {priceLabel(agent.pricingModel, agent.unitPriceUsd)}
           </span>
-        )}
-        {agent.pushNotify && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-sky-50 text-sky-700">
-            <Bell className="h-3 w-3" /> Push notifications
-          </span>
-        )}
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white">
-          {priceLabel(agent.pricingModel, agent.unitPriceUsd)}
-        </span>
-      </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Skills */}
@@ -89,7 +110,11 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
             Skills {agent.skills.length > 0 && <span className="text-gray-400 font-normal">({agent.skills.length})</span>}
           </h2>
           {agent.skills.length === 0 ? (
-            <p className="text-sm text-gray-500">This agent did not advertise structured skills in its AgentCard.</p>
+            <p className="text-sm text-gray-500">
+              {isProject
+                ? "An open-source project — explore the code and self-host it from GitHub."
+                : "This agent did not advertise structured skills in its AgentCard."}
+            </p>
           ) : (
             <div className="space-y-3">
               {agent.skills.map((s) => (
@@ -122,47 +147,77 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
           )}
         </div>
 
-        {/* Integration panel */}
+        {/* Side panel */}
         <aside className="space-y-4">
-          <div className="rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-3">Integration</h3>
-            <dl className="space-y-2 text-xs">
-              <div>
-                <dt className="text-gray-400">Endpoint</dt>
-                <dd className="text-gray-700 break-all">{agent.endpointUrl}</dd>
-              </div>
-              {agent.cardUrl && (
-                <div>
-                  <dt className="text-gray-400">AgentCard</dt>
-                  <dd>
-                    <a href={agent.cardUrl} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline break-all">
-                      {agent.cardUrl.replace(/^https?:\/\//, "")}
-                    </a>
-                  </dd>
-                </div>
+          {isProject ? (
+            <div className="rounded-xl border border-gray-200 p-4">
+              <h3 className="text-sm font-semibold mb-2">Open-source project</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Self-host or explore the code. Not invokable through the TakoAPI gateway.
+              </p>
+              {agent.githubUrl && (
+                <a
+                  href={agent.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm bg-gray-900 text-white rounded-lg px-3 py-2 hover:bg-gray-800"
+                >
+                  <GitFork className="h-4 w-4" /> View on GitHub
+                </a>
               )}
               {agent.homepage && (
-                <div>
-                  <dt className="text-gray-400">Homepage</dt>
-                  <dd>
-                    <a href={agent.homepage} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline break-all">
-                      {agent.homepage.replace(/^https?:\/\//, "")}
-                    </a>
-                  </dd>
-                </div>
+                <p className="mt-3 text-xs">
+                  <a href={agent.homepage} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline break-all">
+                    {agent.homepage.replace(/^https?:\/\//, "")}
+                  </a>
+                </p>
               )}
-            </dl>
-          </div>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-gray-200 p-4">
+                <h3 className="text-sm font-semibold mb-3">Integration</h3>
+                <dl className="space-y-2 text-xs">
+                  {agent.endpointUrl && (
+                    <div>
+                      <dt className="text-gray-400">Endpoint</dt>
+                      <dd className="text-gray-700 break-all">{agent.endpointUrl}</dd>
+                    </div>
+                  )}
+                  {agent.cardUrl && (
+                    <div>
+                      <dt className="text-gray-400">AgentCard</dt>
+                      <dd>
+                        <a href={agent.cardUrl} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline break-all">
+                          {agent.cardUrl.replace(/^https?:\/\//, "")}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                  {agent.homepage && (
+                    <div>
+                      <dt className="text-gray-400">Homepage</dt>
+                      <dd>
+                        <a href={agent.homepage} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline break-all">
+                          {agent.homepage.replace(/^https?:\/\//, "")}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
 
-          <div className="rounded-xl border border-dashed border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-2">Call it through TakoAPI</h3>
-            <p className="text-xs text-gray-400 mb-2">Unified gateway — invocation ships in Phase 2.</p>
-            <pre className="text-[11px] bg-gray-900 text-gray-100 rounded-lg p-3 overflow-x-auto">
+              <div className="rounded-xl border border-dashed border-gray-200 p-4">
+                <h3 className="text-sm font-semibold mb-2">Call it through TakoAPI</h3>
+                <p className="text-xs text-gray-400 mb-2">Unified gateway — invocation ships in Phase 2.</p>
+                <pre className="text-[11px] bg-gray-900 text-gray-100 rounded-lg p-3 overflow-x-auto">
 {`curl https://takoapi.com/v1/agents/${agent.slug}/message \\
   -H "Authorization: Bearer $TAKO_KEY" \\
   -d '{"text": "..."}'`}
-            </pre>
-          </div>
+                </pre>
+              </div>
+            </>
+          )}
         </aside>
       </div>
     </div>
