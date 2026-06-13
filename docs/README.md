@@ -2,6 +2,14 @@
 
 项目工程计划与技术文档索引。
 
+## 🚀 新方向（设计中）：One API to access all agents
+
+把 TakoAPI 从「OpenClaw Skills Marketplace」升级为「**agent 市集 + 统一调用 API**」的转型设计轨道，见 **[agent-marketplace/](agent-marketplace/README.md)**（调研 + 方案，**尚未动手实现**，等用户拍板 [待决策清单](agent-marketplace/06-open-questions.md)）。
+
+下面 00–03 是**现有 skills 业务**的工程文档（均已上线），与新方向并行。
+
+---
+
 ## 📋 当前路线图
 
 按顺序执行：
