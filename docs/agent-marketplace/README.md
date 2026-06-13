@@ -19,6 +19,7 @@
 
 | # | 文档 | 内容 |
 |---|---|---|
+| ⭐ | [**HANDOFF 交接**](HANDOFF.md) | **跨机器/跨 session 接手:现状、部署手册、环境坑、下一步。本机 memory 不随 git —— 换机器先看这里。** |
 | 00 | [愿景与定位](00-vision-and-positioning.md) | 为什么转、转成什么、目标用户、战略选项与推荐、与现有 skills 业务的关系 |
 | 01 | [格局与标准调研](01-landscape-and-standards.md) | A2A / MCP 等开放标准 + 竞争格局 + 市场空白（**带来源链接**） |
 | 02 | [产品方案](02-product-spec.md) | 三层产品面：Registry（发现）/ Gateway（调用）/ Console（控制台与变现） |
