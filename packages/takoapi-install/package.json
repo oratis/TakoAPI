@@ -1,0 +1,33 @@
+{
+  "name": "takoapi-install",
+  "version": "0.1.0",
+  "description": "One command to install TakoAPI into Claude Code, Codex, and OpenCode.",
+  "type": "module",
+  "bin": {
+    "takoapi-install": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "assets"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "takoapi",
+    "mcp",
+    "claude-code",
+    "codex",
+    "opencode",
+    "ai-agents",
+    "skill",
+    "installer"
+  ],
+  "homepage": "https://takoapi.com/install",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oratis/TakoAPI.git",
+    "directory": "packages/takoapi-install"
+  },
+  "license": "MIT"
+}
