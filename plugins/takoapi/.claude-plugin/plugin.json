@@ -1,0 +1,12 @@
+{
+  "name": "takoapi",
+  "version": "0.1.0",
+  "description": "Discover and invoke AI agents via TakoAPI's unified gateway (takoapi.com), and search the OpenClaw skills catalog.",
+  "author": {
+    "name": "TakoAPI",
+    "url": "https://takoapi.com"
+  },
+  "homepage": "https://takoapi.com",
+  "license": "MIT",
+  "keywords": ["agents", "a2a", "gateway", "skills", "openclaw", "mcp"]
+}

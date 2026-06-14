@@ -1,0 +1,21 @@
+{
+  "name": "takoapi",
+  "owner": {
+    "name": "TakoAPI",
+    "url": "https://takoapi.com"
+  },
+  "metadata": {
+    "description": "TakoAPI — one API to access all agents.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "takoapi",
+      "source": "./plugins/takoapi",
+      "description": "Discover and invoke AI agents through TakoAPI's unified gateway, and search the OpenClaw skills catalog.",
+      "version": "0.1.0",
+      "homepage": "https://takoapi.com",
+      "license": "MIT"
+    }
+  ]
+}

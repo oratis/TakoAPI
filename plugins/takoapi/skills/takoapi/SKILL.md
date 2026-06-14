@@ -1,7 +1,6 @@
 ---
-name: TakoAPI — One API to access all agents
-description: Discover and invoke AI agents through TakoAPI's unified gateway — one API key, one bill, any agent. Also search the OpenClaw skills catalog. Find agents by capability, call them via the gateway, and browse must-have skills.
-user-invocable: true
+name: takoapi
+description: Discover and invoke AI agents through TakoAPI's unified gateway (takoapi.com) — one API key, any agent — and search the OpenClaw skills catalog. Use when the user wants to find, call, or publish an agent, or browse coding-agent skills.
 ---
 # TakoAPI — One API to access all agents
 
@@ -42,15 +41,3 @@ https://takoapi.com/dashboard. Send it as `Authorization: Bearer $TAKO_KEY`.
 
 Lead with the most relevant results and keep answers concise. If TakoAPI is
 unreachable, say so and suggest visiting https://takoapi.com directly.
-
----
-
-## Install this skill into your coding agent
-
-One command installs TakoAPI into Claude Code, Codex, and OpenCode:
-
-```bash
-curl -fsSL https://takoapi.com/install.sh | sh
-```
-
-See https://takoapi.com/install for per-platform commands and details.

@@ -25,6 +25,7 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Platform</h3>
             <ul className="space-y-2">
+              <li><Link href="/install" className="text-sm text-gray-500 hover:text-gray-700">Install in your agent</Link></li>
               <li><Link href="/agents" className="text-sm text-gray-500 hover:text-gray-700">Browse Agents</Link></li>
               <li><Link href="/submit-agent" className="text-sm text-gray-500 hover:text-gray-700">Publish an Agent</Link></li>
               <li><Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">Developer Dashboard</Link></li>
