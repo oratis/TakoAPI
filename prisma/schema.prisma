@@ -32,6 +32,8 @@ model User {
   likes         Like[]
   sessions      Session[]
   skills        Skill[]
+  creditBalance CreditBalance?
+  ledgerEntries LedgerEntry[]
 }
 
 model Account {
@@ -525,4 +527,41 @@ model Invocation {
   @@index([agentId, createdAt])
   @@index([apiKeyId, createdAt])
   @@index([userId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Commercial / ledger (Phase 3) — prepaid credits + immutable ledger.
+// Stripe top-up lands later; the gateway debits on each billed invocation.
+// See docs/agent-marketplace/04-data-model.md §2.
+// ─────────────────────────────────────────────────────────────
+
+enum LedgerType {
+  TOPUP // Stripe credit purchase
+  TOPUP_FEE // platform fee on a top-up
+  DEBIT // agent call charge
+  PAYOUT // settlement to a publisher
+  REFUND // credit returned
+  ADJUST // manual / admin correction
+}
+
+model CreditBalance {
+  userId     String   @id
+  balanceUsd Decimal  @default(0) @db.Decimal(14, 6)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LedgerEntry {
+  id           String     @id @default(cuid())
+  userId       String
+  type         LedgerType
+  amountUsd    Decimal    @db.Decimal(14, 6) // +credit / -debit
+  invocationId String? // set for DEBIT entries
+  stripeRef    String? // set for TOPUP / REFUND
+  note         String?
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([invocationId])
 }

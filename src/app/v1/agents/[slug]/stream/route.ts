@@ -2,34 +2,12 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { computeBilledUsd, meterInvocation } from "@/lib/billing";
 
 // Streaming gateway — A2A message/stream passthrough over SSE.
 // Note: behind a Global HTTPS LB + serverless NEG, SSE can be throttled; prefer
 // the direct Cloud Run URL for streaming. See docs/.../03-technical-architecture.md §8.
 const TIMEOUT_MS = 120_000;
-
-function meter(
-  keyRecord: { id: string; userId: string },
-  agentId: string,
-  status: number,
-  latencyMs: number,
-  errorCode: string | null
-) {
-  prisma.invocation
-    .create({
-      data: {
-        apiKeyId: keyRecord.id,
-        userId: keyRecord.userId,
-        agentId,
-        protocol: "A2A",
-        status,
-        latencyMs,
-        unitsBilled: 1,
-        errorCode,
-      },
-    })
-    .catch(() => {});
-}
 
 export async function POST(
   req: NextRequest,
@@ -49,7 +27,7 @@ export async function POST(
 
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
-    select: { id: true, endpointUrl: true },
+    select: { id: true, endpointUrl: true, pricingModel: true, unitPriceUsd: true },
   });
   if (!agent) return Response.json({ error: "Agent not found" }, { status: 404 });
   if (!agent.endpointUrl) {
@@ -88,14 +66,30 @@ export async function POST(
     });
   } catch {
     clearTimeout(timer);
-    meter(keyRecord, agent.id, 502, Date.now() - started, "UPSTREAM_UNREACHABLE");
+    void meterInvocation({
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentId: agent.id,
+      protocol: "A2A",
+      status: 502,
+      latencyMs: Date.now() - started,
+      errorCode: "UPSTREAM_UNREACHABLE",
+      billedUsd: 0,
+    });
     return Response.json({ error: "Agent unreachable" }, { status: 502 });
   }
 
-  meter(keyRecord, agent.id, upstream.status, Date.now() - started, null);
-  prisma.agent
-    .update({ where: { id: agent.id }, data: { callsCount: { increment: 1 } } })
-    .catch(() => {});
+  const billedUsd =
+    upstream.status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
+  void meterInvocation({
+    apiKeyId: keyRecord.id,
+    userId: keyRecord.userId,
+    agentId: agent.id,
+    protocol: "A2A",
+    status: upstream.status,
+    latencyMs: Date.now() - started,
+    billedUsd,
+  });
 
   if (!upstream.body) {
     clearTimeout(timer);

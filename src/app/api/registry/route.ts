@@ -4,6 +4,11 @@ import type { Prisma } from "@prisma/client";
 
 const BASE = process.env.NEXTAUTH_URL?.replace(/\/$/, "") || "https://takoapi.com";
 
+// Default high enough to return the full catalog (493 today, room to grow);
+// ?limit= overrides, clamped to MAX_LIMIT to bound response size.
+const DEFAULT_LIMIT = 1000;
+const MAX_LIMIT = 2000;
+
 // Agent-readable curated registry: the "one API to discover all agents" directory.
 // Defaults to Markdown (for agents/LLMs); ?format=json for structured A2A-style data.
 export async function GET(req: NextRequest) {
@@ -12,6 +17,8 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q");
   const category = searchParams.get("category");
   const protocol = searchParams.get("protocol");
+  const limitRaw = parseInt(searchParams.get("limit") || "", 10);
+  const take = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, MAX_LIMIT) : DEFAULT_LIMIT;
 
   const where: Prisma.AgentWhereInput = { status: "APPROVED" };
   if (category) where.category = { slug: category };
@@ -32,7 +39,7 @@ export async function GET(req: NextRequest) {
       skills: { select: { skillKey: true, name: true } },
     },
     orderBy: [{ featured: "desc" }, { callsCount: "desc" }, { createdAt: "desc" }],
-    take: 200,
+    take,
   });
 
   if (format === "json") {
