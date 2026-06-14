@@ -97,6 +97,16 @@ export default function InstallPage() {
               and gateway over HTTP — no extra dependencies, no server to run.
             </li>
             <li>
+              Prefer hosted tools? Register the TakoAPI <strong>MCP server</strong> instead —{" "}
+              <code className="text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5">
+                claude mcp add --transport http takoapi https://takoapi.com/mcp
+              </code>{" "}
+              — exposing <code className="text-xs font-mono">search_agents</code>,{" "}
+              <code className="text-xs font-mono">get_agent</code>,{" "}
+              <code className="text-xs font-mono">search_skills</code>, and{" "}
+              <code className="text-xs font-mono">invoke_agent</code> as native MCP tools.
+            </li>
+            <li>
               Is idempotent (safe to re-run) and fully reversible with{" "}
               <code className="text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5">
                 --uninstall
@@ -116,7 +126,9 @@ export default function InstallPage() {
             </li>
           </ul>
           <p className="mt-4 text-xs text-gray-400">
-            Prefer to read the script first? It&apos;s plain shell at{" "}
+            On Windows or already in Node? Use{" "}
+            <code className="font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5">npx takoapi-install</code>
+            . Prefer to read the script first? It&apos;s plain shell at{" "}
             <a href="/install.sh" className="text-purple-600 hover:text-purple-700">
               takoapi.com/install.sh
             </a>

@@ -27,12 +27,28 @@ It auto-detects which agents you have and drops a small, namespaced TakoAPI skil
 | Codex | `~/.agents/skills/takoapi/SKILL.md` | `$takoapi` or `/skills` |
 | OpenCode | `~/.config/opencode/{agent,command}/takoapi.md` | `/takoapi` or `@takoapi` |
 
-Target a single agent with `… | sh -s -- --claude` (or `--codex` / `--opencode`). Claude Code users can also install the native plugin:
+Target a single agent with `… | sh -s -- --claude` (or `--codex` / `--opencode`). On Windows or in Node, use the npx installer instead:
+
+```bash
+npx takoapi-install
+```
+
+Claude Code users can also install the native plugin:
 
 ```bash
 claude plugin marketplace add oratis/TakoAPI
 claude plugin install takoapi@takoapi
 ```
+
+### As an MCP server
+
+TakoAPI is also a hosted **MCP server** — register it with one command and get `search_agents`, `get_agent`, `search_skills`, and `invoke_agent` as native tools, no local install:
+
+```bash
+claude mcp add --transport http takoapi https://takoapi.com/mcp
+```
+
+For Codex, add a `[mcp_servers.takoapi]` block (`url = "https://takoapi.com/mcp"`) to `~/.codex/config.toml`; for OpenCode, add a `remote` entry under `mcp` in `opencode.json`. Read tools are anonymous; `invoke_agent` needs your API key as a Bearer token. Run `npx takoapi-install --mcp` to print all three.
 
 Full walkthrough and copy-paste commands: <https://takoapi.com/install>.
 
@@ -132,6 +148,14 @@ GET  /api/skills/search?q=     # Full-text search
 GET  /api/skills/:id           # Skill detail (by ID or slug)
 POST /api/skills/submit        # Submit a new skill (auth required)
 ```
+
+### MCP server
+
+```
+POST /mcp                      # Streamable-HTTP MCP endpoint (JSON-RPC 2.0)
+```
+
+Tools: `search_agents`, `get_agent`, `search_skills` (anonymous), and `invoke_agent` (send your key as `Authorization: Bearer $TAKO_KEY`). Register in any MCP client, e.g. `claude mcp add --transport http takoapi https://takoapi.com/mcp`.
 
 ## Project Structure
 

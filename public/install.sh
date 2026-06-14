@@ -181,6 +181,28 @@ uninstall_opencode() {
   ok "Removed OpenCode agent + command."
 }
 
+# Print the native MCP-server register commands (the hosted alternative to skills).
+print_mcp() {
+  say "${BOLD}Register the TakoAPI MCP server (native, hosted):${RESET}"
+  say ""
+  say "${CYAN}Claude Code${RESET}"
+  say "  claude mcp add --transport http takoapi https://takoapi.com/mcp"
+  say "  # gateway (invoke_agent) — add your key:"
+  say "  #   claude mcp add --transport http takoapi https://takoapi.com/mcp --header \"Authorization: Bearer \$TAKO_KEY\""
+  say ""
+  say "${CYAN}Codex${RESET}  (~/.codex/config.toml)"
+  say "  [mcp_servers.takoapi]"
+  say "  url = \"https://takoapi.com/mcp\""
+  say "  bearer_token_env_var = \"TAKO_KEY\""
+  say ""
+  say "${CYAN}OpenCode${RESET}  (~/.config/opencode/opencode.json)"
+  say '  { "mcp": { "takoapi": {'
+  say '      "type": "remote", "url": "https://takoapi.com/mcp", "enabled": true,'
+  say '      "headers": { "Authorization": "Bearer YOUR_TAKO_KEY" } } } }'
+  say ""
+  info "Read tools are anonymous; invoke_agent needs your key: https://takoapi.com/dashboard"
+}
+
 usage() {
   cat <<EOF
 ${BOLD}TakoAPI installer${RESET} v$VERSION — one API to access all agents.
@@ -196,6 +218,7 @@ ${BOLD}Options:${RESET}
   --claude       Install into Claude Code only
   --codex        Install into Codex only
   --opencode     Install into OpenCode only
+  --mcp          Print native MCP-server register commands (no files written)
   --uninstall    Remove TakoAPI from the selected (or all) agents
   -h, --help     Show this help
 
@@ -208,7 +231,7 @@ EOF
 # Parse args
 # ---------------------------------------------------------------------------
 WANT_CLAUDE=0; WANT_CODEX=0; WANT_OPENCODE=0
-EXPLICIT=0; ALL=0; UNINSTALL=0
+EXPLICIT=0; ALL=0; UNINSTALL=0; PRINT_MCP=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -216,12 +239,19 @@ while [ $# -gt 0 ]; do
     --claude)    WANT_CLAUDE=1;   EXPLICIT=1 ;;
     --codex)     WANT_CODEX=1;    EXPLICIT=1 ;;
     --opencode)  WANT_OPENCODE=1; EXPLICIT=1 ;;
+    --mcp)       PRINT_MCP=1 ;;
     --uninstall) UNINSTALL=1 ;;
     -h|--help)   usage; exit 0 ;;
     *)           die "unknown option: $1 (try --help)" ;;
   esac
   shift
 done
+
+# --mcp: print the native MCP register commands and exit (no files written).
+if [ "$PRINT_MCP" -eq 1 ]; then
+  print_mcp
+  exit 0
+fi
 
 # Resolve target set.
 if [ "$ALL" -eq 1 ]; then
@@ -257,4 +287,5 @@ say ""
 [ "$WANT_OPENCODE" -eq 1 ] && install_opencode
 say ""
 ok "Done. Get an API key for the gateway at ${CYAN}https://takoapi.com/dashboard${RESET}"
-info "Set it once: export TAKO_KEY=sk-…   ·   Docs: https://takoapi.com/install"
+info "Set it once: export TAKO_KEY=tako_live_…   ·   Docs: https://takoapi.com/install"
+info "Prefer a hosted MCP server (no files)? re-run with --mcp"
