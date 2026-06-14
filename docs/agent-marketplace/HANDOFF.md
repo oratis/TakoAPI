@@ -1,7 +1,7 @@
 # 交接文档 / HANDOFF
 
 > 跨机器、跨 session 的接手说明。本机的 `~/.claude` memory 不随 git 同步,所以把关键信息都落在这里。
-> 最后更新:2026-06-13。
+> 最后更新:2026-06-14。
 
 ---
 
@@ -23,17 +23,16 @@ TakoAPI 正从「OpenClaw skills 市集」转型为 **「One API to access all a
 
 ---
 
-## 2. 现状(2026-06-13)
+## 2. 现状(2026-06-14)
 
-- 线上 **takoapi.com**;GCP 项目 `takoapi-491505`,region `us-central1`,Cloud Run 服务 `takoapi`,当前 revision **`takoapi-00048-x5r`**(回滚见 §5)。
-- 市集共 **493 个 agent**:
-  - **43 个 HOSTED**(在线可调用,A2A;来自 a2aregistry.org + awesome-a2a)
-  - **450 个 PROJECT**(GitHub 开源项目,按 stars;`kind=PROJECT`,仅发现、不接网关调用)
+- 线上 **takoapi.com**;GCP 项目 `takoapi-491505`,region `us-central1`,Cloud Run 服务 `takoapi`,**最新 revision 以 `gcloud run services describe takoapi --region us-central1 --project=takoapi-491505` 为准**(2026-06-14 场景分类上线;回滚见 §5)。
+- 市集 agent 总数已增至 **~1336**(PROJECT 目录随 scraper 持续扩充):**HOSTED**(在线可调用,A2A)+ **PROJECT**(GitHub 开源,按 stars,`kind=PROJECT`,仅发现)两类。
+- **场景分类(2026-06-14 上线)**:`Agent.scenarios String[]` —— 用例/场景维度,**区别于技能 `Category`(技术维度)**。17 个中英双语场景 + 关键词分类器都在 `src/lib/scenarios.ts`;GitHub 抓取与 `/submit-agent` 提交时**自动分类**,`/admin/agents` 可人工改;存量回填脚本 `scripts/backfill-scenarios.ts`(`--dry`/`--only-empty`,已跑,**848/1336 命中**)。前台:首页「按场景浏览」磁贴 + `/agents?scenario=<slug>` 筛选 + 卡片/详情双语标签。调分类法只动 `scenarios.ts` 再重跑回填即可(回填直连库,改关键词无需重新发版;但抓取/提交分类器是镜像内的,要全量一致需重新部署)。
 - **网关**:`POST /v1/agents/{slug}/message`(A2A 透传)、`/v1/agents/{slug}/stream`(SSE)、`/v1/chat/completions`(OpenAI 兼容 shim);API key 在 `/dashboard`;每次调用落 `Invocation` 表计量。
 - **页面**:`/`(slogan 首页 + Featured Agents=HOSTED)、`/agents`(市集,有 Agents/Projects 切换 + 排序)、`/agents/[slug]`(详情)、`/submit-agent`、`/admin/agents`(审核)、`/dashboard`(开发者控制台);旧 skills 功能(`/skills` 等)完好。
-- **数据模型**:`prisma/schema.prisma`(`Agent`/`AgentSkillDef`/`AgentTag`/`ApiKey`/`Invocation`;`Agent.kind` = HOSTED|PROJECT;迁移 `003`–`005` 均已应用到生产)。
+- **数据模型**:`prisma/schema.prisma`(`Agent`/`AgentSkillDef`/`AgentTag`/`ApiKey`/`Invocation`/`CreditBalance`/`LedgerEntry`;`Agent.kind` = HOSTED|PROJECT;`Agent.scenarios String[]`;迁移 `003`–`007` 均已应用到生产,含 `006` ledger、`007` scenarios)。
 - **GitHub token**:`tako-github-token` secret **现已有效**(认证后 search 30/min)。
-- **已合并 PR**:#2 docs、#3 backend、#8 ui+gateway+dashboard+streaming、#9 rebrand、#10 projects-directory、#11 scraper-expand。(#4/#6 关闭、#5/#7 作废,内容都在 main。)
+- **已合并 PR**:#2 docs、#3 backend、#8 ui+gateway+dashboard+streaming、#9 rebrand、#10 projects-directory、#11 scraper-expand、#12 handoff、#13 registry/ingestion/ledger/health、#14 场景分类(scenarios)。(#4/#6 关闭、#5/#7 作废,内容都在 main。)
 
 设计文档全集见同目录 `00`–`06`(愿景/调研/产品/架构/数据模型/路线图/决策)。
 
