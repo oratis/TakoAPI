@@ -1,13 +1,23 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import AgentCard from "@/components/ui/AgentCard";
+import { absoluteUrl, SITE_NAME } from "@/lib/seo";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Agent Marketplace — TakoAPI",
-  description: "One API to access all agents. Discover and invoke AI agents through one unified API.",
+export const metadata: Metadata = {
+  title: "Agent Marketplace",
+  description:
+    "One API to access all agents. Browse and invoke AI agents and hundreds of open-source agent projects through one unified API — described by open A2A AgentCards.",
+  alternates: { canonical: absoluteUrl("/agents") },
+  openGraph: {
+    title: `Agent Marketplace — ${SITE_NAME}`,
+    description: "Discover and invoke AI agents and open-source agent projects through one unified API.",
+    url: absoluteUrl("/agents"),
+    type: "website",
+  },
 };
 
 const PROTOCOLS = ["A2A", "OPENAI_COMPAT", "MCP"];
