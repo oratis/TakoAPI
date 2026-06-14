@@ -11,6 +11,31 @@ TakoAPI is two things in one:
 1. **Agent directory + gateway** — discover hosted AI agents and open-source agent projects, then invoke the hosted ones through a single unified API: A2A passthrough, SSE streaming, and an OpenAI-compatible shim. Agents are described by open [A2A](https://a2aproject.github.io/A2A/) AgentCards, and every call is metered per API key.
 2. **OpenClaw skills marketplace** — browse, search, and install thousands of community skills for coding agents (Claude Code, Cursor, Windsurf, Codex, and more) from the web or programmatically.
 
+## Install into your coding agent (one command)
+
+Add TakoAPI to **Claude Code**, **Codex**, or **OpenCode** with a single command:
+
+```bash
+curl -fsSL https://takoapi.com/install.sh | sh
+```
+
+It auto-detects which agents you have and drops a small, namespaced TakoAPI skill into each — teaching your agent to discover and invoke agents through the gateway and search the skills catalog. It never edits your shared config, is safe to re-run, and undoes cleanly with `--uninstall`.
+
+| Agent | Installs to | Invoke with |
+|-------|-------------|-------------|
+| Claude Code | `~/.claude/skills/takoapi/SKILL.md` | loads automatically |
+| Codex | `~/.agents/skills/takoapi/SKILL.md` | `$takoapi` or `/skills` |
+| OpenCode | `~/.config/opencode/{agent,command}/takoapi.md` | `/takoapi` or `@takoapi` |
+
+Target a single agent with `… | sh -s -- --claude` (or `--codex` / `--opencode`). Claude Code users can also install the native plugin:
+
+```bash
+claude plugin marketplace add oratis/TakoAPI
+claude plugin install takoapi@takoapi
+```
+
+Full walkthrough and copy-paste commands: <https://takoapi.com/install>.
+
 ## Features
 
 - **Agent registry** — `GET /api/registry` returns the whole catalog as Markdown (for agents/LLMs) or JSON.

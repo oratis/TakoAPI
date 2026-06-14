@@ -241,6 +241,10 @@ export default async function HomePage() {
                 </code>
               </div>
               <p className="text-xs text-purple-200 text-center">or ask your agent: &quot;Install the TakoAPI skill&quot;</p>
+              <p className="text-xs text-purple-200 text-center">
+                Using Claude Code, Codex or OpenCode?{" "}
+                <Link href="/install" className="underline hover:text-white">One-command install →</Link>
+              </p>
             </div>
           </div>
         </div>
