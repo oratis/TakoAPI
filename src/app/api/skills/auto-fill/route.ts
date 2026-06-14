@@ -40,7 +40,7 @@ function extractGithubInfo(url: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, { key: "autofill", windowMs: 60 * 60 * 1000, max: 60 });
+  const rl = await checkRateLimit(req, { key: "autofill", windowMs: 60 * 60 * 1000, max: 60 });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   const parsed = await parseJson(req, autoFillSchema);
