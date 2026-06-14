@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-// In-memory fixed-window counter. Suitable for Cloud Run single-instance deployments.
-// For multi-instance, swap for a Redis-backed limiter (e.g. @upstash/ratelimit).
-type Bucket = { count: number; resetAt: number };
-const buckets = new Map<string, Bucket>();
-
-// Periodic cleanup to prevent unbounded growth
-const CLEAN_INTERVAL_MS = 60_000;
-let lastCleanAt = 0;
-function maybeClean(now: number) {
-  if (now - lastCleanAt < CLEAN_INTERVAL_MS) return;
-  lastCleanAt = now;
-  for (const [k, b] of buckets) {
-    if (b.resetAt <= now) buckets.delete(k);
-  }
-}
+// Shared fixed-window rate limiter backed by Postgres (RateLimitBucket). A single
+// window now holds across every Cloud Run instance — the previous in-memory Map gave
+// each replica its own counter, so the effective limit was max × instance-count and
+// the gateway limit (gw:<keyId>) scaled out with the fleet. The window is advanced and
+// the counter incremented atomically in one INSERT … ON CONFLICT statement, so replicas
+// serialize on the bucket's row lock instead of racing.
 
 export type RateLimitConfig = {
-  key: string;          // namespace, e.g. "submit"
-  windowMs: number;     // window length
-  max: number;          // max requests per window
+  key: string; // namespace, e.g. "submit" or "gw:<keyId>"
+  windowMs: number; // window length
+  max: number; // max requests per window
 };
 
 export function extractClientIp(req: NextRequest): string {
@@ -30,24 +22,52 @@ export function extractClientIp(req: NextRequest): string {
   return "anon";
 }
 
-export function checkRateLimit(
+// Best-effort sweep of long-expired buckets, throttled per instance to once a minute.
+// Live buckets are reset in place on each hit, so this only reclaims keys that fell
+// idle (e.g. rotated client IPs). Fire-and-forget; never blocks or fails a request.
+const CLEAN_INTERVAL_MS = 60_000;
+let lastCleanAt = 0;
+function maybeClean() {
+  const now = Date.now();
+  if (now - lastCleanAt < CLEAN_INTERVAL_MS) return;
+  lastCleanAt = now;
+  prisma
+    .$executeRaw`DELETE FROM "RateLimitBucket" WHERE "resetAt" <= now() - interval '1 hour'`
+    .catch(() => {});
+}
+
+export async function checkRateLimit(
   req: NextRequest,
   config: RateLimitConfig
-): { ok: true } | { ok: false; retryAfterMs: number } {
-  const now = Date.now();
-  maybeClean(now);
-  const ip = extractClientIp(req);
-  const key = `${config.key}:${ip}`;
-  const bucket = buckets.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + config.windowMs });
+): Promise<{ ok: true } | { ok: false; retryAfterMs: number }> {
+  const key = `${config.key}:${extractClientIp(req)}`;
+  maybeClean();
+  try {
+    // Atomic upsert: start a fresh window when the bucket is missing or expired,
+    // otherwise increment. RETURNING reflects the post-update row, with the remaining
+    // window computed against the DB clock so replicas agree without clock-skew.
+    const rows = await prisma.$queryRaw<Array<{ count: number; retryAfterMs: number }>>`
+      INSERT INTO "RateLimitBucket" ("key", "count", "resetAt")
+      VALUES (${key}, 1, now() + ${config.windowMs}::int * interval '1 millisecond')
+      ON CONFLICT ("key") DO UPDATE SET
+        "count" = CASE WHEN "RateLimitBucket"."resetAt" <= now()
+                       THEN 1 ELSE "RateLimitBucket"."count" + 1 END,
+        "resetAt" = CASE WHEN "RateLimitBucket"."resetAt" <= now()
+                         THEN now() + ${config.windowMs}::int * interval '1 millisecond'
+                         ELSE "RateLimitBucket"."resetAt" END
+      RETURNING
+        "count" AS "count",
+        GREATEST(0, CEIL(EXTRACT(EPOCH FROM ("resetAt" - now())) * 1000))::int AS "retryAfterMs"
+    `;
+    const row = rows[0];
+    if (row && row.count > config.max) {
+      return { ok: false, retryAfterMs: row.retryAfterMs };
+    }
+    return { ok: true };
+  } catch {
+    // Never hard-fail a request because the limiter store is briefly unavailable.
     return { ok: true };
   }
-  if (bucket.count >= config.max) {
-    return { ok: false, retryAfterMs: bucket.resetAt - now };
-  }
-  bucket.count++;
-  return { ok: true };
 }
 
 export function rateLimitResponse(retryAfterMs: number) {

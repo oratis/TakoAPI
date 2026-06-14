@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
 
 // OpenAI-compatible shim: point any OpenAI SDK at this base URL and set
 // `model` to an agent slug. Low-friction on-ramp to the gateway.
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const rl = checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
+  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   const body = await req.json().catch(() => ({}));
@@ -60,6 +60,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: { message: `'${slug}' is an open-source project, not an invokable agent`, type: "invalid_request_error" } },
       { status: 400 }
+    );
+  }
+
+  // Pre-flight credit gate — reject before the (billable) upstream call so a looping
+  // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
+  const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
+  if (!credit.ok) {
+    return NextResponse.json(
+      {
+        error: {
+          message: `Insufficient credit: '${slug}' costs $${credit.requiredUsd} per call but your balance is $${credit.balanceUsd}. Add credit to continue.`,
+          type: "insufficient_quota",
+          code: "insufficient_quota",
+        },
+      },
+      { status: 402 }
     );
   }
 

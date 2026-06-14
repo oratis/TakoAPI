@@ -7,7 +7,7 @@ import { badRequest, conflict, parseJson, serverError } from "@/lib/api";
 import { registerSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, { key: "register", windowMs: 60 * 60 * 1000, max: 5 });
+  const rl = await checkRateLimit(req, { key: "register", windowMs: 60 * 60 * 1000, max: 5 });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   const parsed = await parseJson(req, registerSchema);

@@ -21,7 +21,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withRequestLog(req, "/api/skills/[id]/like", async (logCtx) => {
-    const rl = checkRateLimit(req, { key: "like", windowMs: 60_000, max: 60 });
+    const rl = await checkRateLimit(req, { key: "like", windowMs: 60_000, max: 60 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
     const user = await getUser(req);

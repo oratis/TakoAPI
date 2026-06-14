@@ -107,3 +107,56 @@ export async function getBalance(userId: string): Promise<number> {
   const cb = await prisma.creditBalance.findUnique({ where: { userId } });
   return cb ? Number(cb.balanceUsd) : 0;
 }
+
+/**
+ * Lowest credit balance (USD) a user may reach before billed calls are rejected.
+ * Default 0 — no overdraft. Set TAKO_CREDIT_FLOOR_USD negative to tolerate a small
+ * float (e.g. "-1" absorbs concurrent/in-flight debits that slip past zero), or
+ * positive to require headroom. Unset / non-numeric → 0.
+ */
+export function creditFloorUsd(): number {
+  const n = Number(process.env.TAKO_CREDIT_FLOOR_USD);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export type CreditCheck =
+  | { ok: true }
+  | { ok: false; balanceUsd: number; requiredUsd: number; floorUsd: number };
+
+/**
+ * Pre-flight credit gate for the gateway, run BEFORE the upstream call. FREE agents
+ * and zero-price calls pass without touching the DB. For a billed call it loads the
+ * caller's balance and rejects when charging it would drop the balance below the
+ * configured floor.
+ *
+ * This is the guard `meterInvocation` can't be: metering debits *after* the upstream
+ * call, fire-and-forget, and lets the balance go negative — so without this check a
+ * looping client (or an LLM via the MCP `invoke_agent` tool) could run a balance
+ * arbitrarily negative. Callers should return 402 when `ok` is false.
+ *
+ * Fails open: a balance-read error allows the call. A DB outage also blocks the debit,
+ * so no runaway balance accrues, and the gateway is never hard-failed by this check.
+ *
+ * Residual race: metering is async, so a burst of concurrent calls can each read the
+ * same balance and pass before any debit lands. The shared rate limiter bounds that
+ * concurrency; widen the floor if you want extra tolerance.
+ */
+export async function checkCreditPreflight(
+  userId: string | null | undefined,
+  pricingModel: PricingModel,
+  unitPriceUsd: unknown
+): Promise<CreditCheck> {
+  const requiredUsd = computeBilledUsd(pricingModel, unitPriceUsd);
+  if (requiredUsd <= 0) return { ok: true }; // FREE or unpriced — nothing to bill
+  if (!userId) return { ok: true }; // unattributable; meterInvocation skips the debit too
+  const floorUsd = creditFloorUsd();
+  try {
+    const balanceUsd = await getBalance(userId);
+    if (balanceUsd - requiredUsd < floorUsd) {
+      return { ok: false, balanceUsd, requiredUsd, floorUsd };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: true };
+  }
+}

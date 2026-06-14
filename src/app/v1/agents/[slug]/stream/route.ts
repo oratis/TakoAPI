@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
 
 // Streaming gateway — A2A message/stream passthrough over SSE.
 // Note: behind a Global HTTPS LB + serverless NEG, SSE can be throttled; prefer
@@ -22,7 +22,7 @@ export async function POST(
     return Response.json({ error: "Invalid or missing API key" }, { status: 401 });
   }
 
-  const rl = checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
+  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   const agent = await prisma.agent.findFirst({
@@ -34,6 +34,21 @@ export async function POST(
     return Response.json(
       { error: "This agent is an open-source project, not an invokable endpoint" },
       { status: 400 }
+    );
+  }
+
+  // Pre-flight credit gate — reject before the (billable) upstream call so a looping
+  // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
+  const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
+  if (!credit.ok) {
+    return Response.json(
+      {
+        error: "Insufficient credit",
+        detail: `This agent costs $${credit.requiredUsd} per call; your balance is $${credit.balanceUsd}. Add credit to continue.`,
+        balanceUsd: credit.balanceUsd,
+        requiredUsd: credit.requiredUsd,
+      },
+      { status: 402 }
     );
   }
 

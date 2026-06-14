@@ -27,7 +27,7 @@ async function getSubmitter(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   return withRequestLog(req, "/api/agents/submit", async (logCtx) => {
-    const rl = checkRateLimit(req, { key: "agent-submit", windowMs: 60 * 60 * 1000, max: 20 });
+    const rl = await checkRateLimit(req, { key: "agent-submit", windowMs: 60 * 60 * 1000, max: 20 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
     const ctx = await getSubmitter(req);

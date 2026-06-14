@@ -565,3 +565,20 @@ model LedgerEntry {
   @@index([userId, createdAt])
   @@index([invocationId])
 }
+
+// ─────────────────────────────────────────────────────────────
+// Shared rate-limit store. Backs src/lib/ratelimit.ts so a fixed
+// window holds across all Cloud Run instances (an in-memory Map
+// gave each replica its own counter → effective limit × replicas).
+// One row per "namespace:clientIp" bucket; advanced + incremented
+// atomically via INSERT … ON CONFLICT. resetAt is an absolute
+// instant (timestamptz) so the window is timezone-independent.
+// ─────────────────────────────────────────────────────────────
+
+model RateLimitBucket {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime @db.Timestamptz(3)
+
+  @@index([resetAt])
+}
