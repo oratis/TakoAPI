@@ -59,6 +59,37 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    slug: "coding",
+    name: "Coding & Dev",
+    nameZh: "编程开发",
+    emoji: "💻",
+    blurb: "编程开发 · Coding agents, code-gen, and software engineering",
+    keywords: [
+      "coding", "coding agent", "code generation", "code-generation", "codegen",
+      "code assistant", "codex", "cursor", "copilot", "pair programming",
+      "software engineering", "software development", "code review", "autocomplete",
+      "claude code", "opencode", "gemini cli", "gemini-cli", "refactor",
+      "refactoring", "debugging", "swe-bench", "swe agent", "vibe coding",
+      "vscode", "vs code", "jetbrains", "code editor", "编程", "代码生成", "编程助手",
+    ],
+  },
+  {
+    slug: "agent-frameworks",
+    name: "Agent Frameworks",
+    nameZh: "Agent框架",
+    emoji: "🧰",
+    blurb: "Agent框架 · Build, orchestrate & run autonomous agents",
+    keywords: [
+      "multi-agent", "multi agent", "agentic", "agent framework",
+      "agentic framework", "framework", "agent orchestration", "autonomous agent",
+      "autonomous agents", "agent runtime", "agent harness", "build agents",
+      "deploy agents", "agentic workflow", "workflow orchestration", "swarm",
+      "crew ai", "crewai", "autogpt", "langchain", "llamaindex", "mcp",
+      "model context protocol", "mcp server", "agent memory", "function calling",
+      "openclaw", "智能体框架", "多智能体", "智能体编排",
+    ],
+  },
+  {
     slug: "devops",
     name: "DevOps & Automation",
     nameZh: "运维自动化",
@@ -79,8 +110,9 @@ export const SCENARIOS: Scenario[] = [
     keywords: [
       "data analysis", "data analytics", "analytics", "dashboard",
       "business intelligence", "pandas", "jupyter", "sql query", "text-to-sql",
-      "data visualization", "etl", "data pipeline", "spreadsheet",
-      "数据分析", "报表", "数据可视化",
+      "natural language to sql", "data visualization", "etl", "data pipeline",
+      "spreadsheet", "data science", "semantic layer", "duckdb",
+      "数据分析", "报表", "数据可视化", "数据科学",
     ],
   },
   {
@@ -103,9 +135,11 @@ export const SCENARIOS: Scenario[] = [
     blurb: "创意设计 · Image/video generation and media editing",
     keywords: [
       "image generation", "text-to-image", "video generation", "text-to-video",
-      "illustration", "logo design", "photo editing", "stable diffusion",
-      "midjourney", "art generation", "generative art", "creative tool",
-      "绘画", "图像生成", "视频生成", "设计创意",
+      "illustration", "logo design", "photo editing", "image editing",
+      "stable diffusion", "midjourney", "art generation", "generative art",
+      "creative tool", "music generation", "music", "3d model", "3d",
+      "text to speech", "text-to-speech", "voice generation", "绘画", "图像生成",
+      "视频生成", "设计创意", "语音合成",
     ],
   },
   {
@@ -189,8 +223,10 @@ export const SCENARIOS: Scenario[] = [
     blurb: "研究检索 · Deep research, web search, and retrieval",
     keywords: [
       "research", "deep research", "web search", "retrieval", "rag",
-      "knowledge base", "scraping", "web scraping", "crawler", "search engine",
-      "literature review", "检索", "研究", "搜索", "知识库",
+      "knowledge base", "scraping", "web scraping", "scrape", "scraper",
+      "crawler", "search engine", "browser automation", "browser-use",
+      "web automation", "answer engine", "perplexity", "literature review",
+      "检索", "研究", "搜索", "知识库", "爬虫",
     ],
   },
   {
@@ -202,7 +238,8 @@ export const SCENARIOS: Scenario[] = [
     keywords: [
       "writing", "content generation", "blog", "article", "copywriter",
       "summarization", "summarize", "translation", "proofreading",
-      "documentation generator", "写作", "文案", "翻译", "内容生成",
+      "documentation generator", "transcription", "transcribe", "subtitle",
+      "写作", "文案", "翻译", "内容生成", "转写",
     ],
   },
   {
@@ -214,7 +251,8 @@ export const SCENARIOS: Scenario[] = [
     keywords: [
       "personal assistant", "productivity", "calendar", "email assistant",
       "note-taking", "task management", "scheduling", "todo", "reminder",
-      "workflow assistant", "助理", "日程", "待办", "效率工具",
+      "workflow assistant", "task automation", "workflow automation",
+      "email automation", "助理", "日程", "待办", "效率工具",
     ],
   },
 ];
