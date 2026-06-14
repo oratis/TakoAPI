@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { classifyScenarios } from "./scenarios";
 
 // Import top open-source agent PROJECTS from GitHub (by stars) into the registry
 // as kind=PROJECT (discovery-only). Re-runnable: upserts by slug and refreshes
@@ -40,6 +41,7 @@ type Repo = {
   owner: { login: string };
   archived: boolean;
   fork: boolean;
+  topics?: string[];
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -139,9 +141,11 @@ export async function scrapeGithubAgents(opts: ScrapeOpts, db: PrismaClient): Pr
   for (const r of repos) {
     const slug = slugify(`${r.owner.login}-${r.name}`);
     const description = (r.description || r.name).slice(0, 500);
+    // Classify by name + description + GitHub topics into use-case scenarios.
+    const scenarios = classifyScenarios([r.name, r.description ?? "", (r.topics ?? []).join(" ")].join(" "));
     await db.agent.upsert({
       where: { slug },
-      update: { stars: r.stargazers_count, description, status: "APPROVED" },
+      update: { stars: r.stargazers_count, description, status: "APPROVED", scenarios },
       create: {
         slug,
         name: r.name,
@@ -155,6 +159,7 @@ export async function scrapeGithubAgents(opts: ScrapeOpts, db: PrismaClient): Pr
         repoName: r.name,
         homepage: r.homepage || null,
         pricingModel: "FREE",
+        scenarios,
       },
     });
     imported++;

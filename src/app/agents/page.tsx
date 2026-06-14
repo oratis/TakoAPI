@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import AgentCard from "@/components/ui/AgentCard";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
+import { SCENARIOS, scenarioLabel, isScenarioSlug } from "@/lib/scenarios";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,7 @@ export default async function AgentsMarketplacePage({
 }) {
   const sp = await searchParams;
   const category = sp.category;
+  const scenario = isScenarioSlug(sp.scenario) ? sp.scenario : undefined;
   const protocol = PROTOCOLS.includes(sp.protocol || "") ? sp.protocol : undefined;
   const pricing = PRICING.includes(sp.pricing || "") ? sp.pricing : undefined;
   const q = sp.q?.trim() || undefined;
@@ -75,6 +77,7 @@ export default async function AgentsMarketplacePage({
   const where: Prisma.AgentWhereInput = { status: "APPROVED" };
   if (kind) where.kind = kind as Prisma.AgentWhereInput["kind"];
   if (category) where.category = { slug: category };
+  if (scenario) where.scenarios = { has: scenario };
   if (protocol) where.protocols = { has: protocol } as Prisma.AgentWhereInput["protocols"];
   if (pricing) where.pricingModel = pricing as Prisma.AgentWhereInput["pricingModel"];
   if (q) {
@@ -116,6 +119,7 @@ export default async function AgentsMarketplacePage({
 
   const base: SP = {
     kind,
+    scenario,
     category,
     protocol,
     pricing,
@@ -138,6 +142,7 @@ export default async function AgentsMarketplacePage({
       {/* Search */}
       <form action="/agents" method="get" className="mb-5 flex gap-2 max-w-xl">
         {kind && <input type="hidden" name="kind" value={kind} />}
+        {scenario && <input type="hidden" name="scenario" value={scenario} />}
         {protocol && <input type="hidden" name="protocol" value={protocol} />}
         {pricing && <input type="hidden" name="pricing" value={pricing} />}
         {category && <input type="hidden" name="category" value={category} />}
@@ -161,6 +166,25 @@ export default async function AgentsMarketplacePage({
             className={chip((kind || "") === k.key)}
           >
             {k.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Scenario — the primary "what would you use it for" dimension */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="text-xs text-gray-400 mr-1">场景 Scenario:</span>
+        <Link href={hrefWith(base, { scenario: undefined, page: undefined })} className={chip(!scenario)}>
+          All
+        </Link>
+        {SCENARIOS.map((s) => (
+          <Link
+            key={s.slug}
+            href={hrefWith(base, { scenario: s.slug, page: undefined })}
+            className={chip(scenario === s.slug)}
+            title={scenarioLabel(s)}
+          >
+            <span className="mr-1">{s.emoji}</span>
+            {scenarioLabel(s)}
           </Link>
         ))}
       </div>

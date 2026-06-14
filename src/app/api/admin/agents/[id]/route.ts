@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, unauthorized, logAdminAction } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { adminAgentUpdateSchema } from "@/lib/schemas";
+import { isScenarioSlug } from "@/lib/scenarios";
 
 export async function PATCH(
   req: NextRequest,
@@ -23,9 +24,14 @@ export async function PATCH(
   const existing = await prisma.agent.findUnique({ where: { id }, select: { id: true } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // Drop unknown scenario slugs before persisting (schema only bounds shape).
+  const data = parsed.data.scenarios
+    ? { ...parsed.data, scenarios: [...new Set(parsed.data.scenarios.filter(isScenarioSlug))] }
+    : parsed.data;
+
   const agent = await prisma.agent.update({
     where: { id },
-    data: parsed.data,
+    data,
     include: { category: { select: { name: true } } },
   });
 
