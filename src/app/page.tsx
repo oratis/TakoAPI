@@ -4,7 +4,9 @@ import SkillCard from "@/components/ui/SkillCard";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import HomeSearch from "@/components/ui/HomeSearch";
 import AgentCard from "@/components/ui/AgentCard";
-import { Terminal, Download, TrendingUp, Bot } from "lucide-react";
+import { Terminal, Download, TrendingUp, Bot, GitFork } from "lucide-react";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_URL, SITE_NAME } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ function formatNumber(n: number): string {
 }
 
 export default async function HomePage() {
-  const [categories, mustHaveSkills, latestSkills, totalSkills, agents, totalAgents] =
+  const [categories, mustHaveSkills, latestSkills, totalSkills, agents, totalAgents, projects, totalProjects] =
     await Promise.all([
       prisma.category.findMany({ orderBy: { skillCount: "desc" } }),
       prisma.skill.findMany({
@@ -39,14 +41,46 @@ export default async function HomePage() {
         },
       }),
       prisma.agent.count({ where: { status: "APPROVED", kind: "HOSTED" } }),
+      prisma.agent.findMany({
+        where: { status: "APPROVED", kind: "PROJECT" },
+        orderBy: [{ stars: "desc" }, { createdAt: "desc" }],
+        take: 8,
+        include: {
+          category: { select: { name: true, slug: true } },
+          _count: { select: { skills: true } },
+        },
+      }),
+      prisma.agent.count({ where: { status: "APPROVED", kind: "PROJECT" } }),
     ]);
 
   // Show top 12 categories, collapse the rest
   const topCategories = categories.slice(0, 12);
   const hasMore = categories.length > 12;
 
+  const siteLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/agents?q={search_term_string}` },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: `${SITE_URL}/icon.svg`,
+    },
+  ];
+
   return (
     <div>
+      <JsonLd data={siteLd} />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
@@ -106,6 +140,27 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {agents.map((a) => (
               <AgentCard key={a.slug} agent={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Popular open-source projects */}
+      {projects.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <GitFork className="h-5 w-5 text-purple-600" />
+              <h2 className="text-xl font-semibold">Popular open-source projects</h2>
+              <span className="text-sm text-gray-400">{totalProjects.toLocaleString()} self-hostable</span>
+            </div>
+            <Link href="/agents?kind=PROJECT" className="text-sm text-purple-600 hover:text-purple-700">
+              Browse all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {projects.map((p) => (
+              <AgentCard key={p.slug} agent={p} />
             ))}
           </div>
         </section>

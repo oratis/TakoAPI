@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { computeBilledUsd, meterInvocation } from "@/lib/billing";
 
 // Unified gateway — A2A passthrough. Authenticate with an API key, route to the
 // agent's endpoint, meter the call. See docs/agent-marketplace/03-technical-architecture.md §2.
@@ -25,7 +26,7 @@ export async function POST(
 
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
-    select: { id: true, endpointUrl: true },
+    select: { id: true, endpointUrl: true, pricingModel: true, unitPriceUsd: true },
   });
   if (!agent) return NextResponse.json({ error: "Agent not found" }, { status: 404 });
   if (!agent.endpointUrl) {
@@ -75,24 +76,19 @@ export async function POST(
 
   const latencyMs = Date.now() - started;
 
-  // Meter (log → aggregate). Never block the response on metering.
-  prisma.invocation
-    .create({
-      data: {
-        apiKeyId: keyRecord.id,
-        userId: keyRecord.userId,
-        agentId: agent.id,
-        protocol: "A2A",
-        status,
-        latencyMs,
-        unitsBilled: 1,
-        errorCode,
-      },
-    })
-    .catch(() => {});
-  prisma.agent
-    .update({ where: { id: agent.id }, data: { callsCount: { increment: 1 } } })
-    .catch(() => {});
+  // Meter + bill (log → aggregate). Never block the response on metering.
+  const billedUsd =
+    !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
+  void meterInvocation({
+    apiKeyId: keyRecord.id,
+    userId: keyRecord.userId,
+    agentId: agent.id,
+    protocol: "A2A",
+    status,
+    latencyMs,
+    errorCode,
+    billedUsd,
+  });
 
   if (errorCode) {
     return NextResponse.json({ error: "Agent unreachable" }, { status: 502 });

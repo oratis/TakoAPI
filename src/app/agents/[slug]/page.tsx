@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Zap, Bell, ShieldCheck, BadgeCheck, Star, GitFork } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { priceLabel } from "@/components/ui/AgentCard";
+import { absoluteUrl, SITE_NAME } from "@/lib/seo";
+import { JsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +14,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     where: { slug, status: "APPROVED" },
     select: { name: true, description: true },
   });
-  if (!agent) return { title: "Agent not found — TakoAPI" };
-  return { title: `${agent.name} — TakoAPI`, description: agent.description };
+  if (!agent) return { title: "Agent not found" };
+  const url = absoluteUrl(`/agents/${slug}`);
+  const description = (agent.description || `${agent.name} on ${SITE_NAME}`).slice(0, 200);
+  return {
+    title: agent.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${agent.name} — ${SITE_NAME}`, description, url, type: "website" },
+    twitter: { card: "summary_large_image", title: `${agent.name} — ${SITE_NAME}`, description },
+  };
 }
 
 export default async function AgentDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -33,8 +43,35 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
     ? agent.repoOwner || "open-source"
     : agent.publisher.username || agent.publisher.name || "unknown";
 
+  const canonical = absoluteUrl(`/agents/${agent.slug}`);
+  const softwareLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: agent.name,
+    description: agent.description,
+    url: canonical,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Any",
+    ...(agent.githubUrl ? { codeRepository: agent.githubUrl } : {}),
+    ...(agent.homepage ? { sameAs: [agent.homepage] } : {}),
+    ...(agent.pricingModel === "FREE"
+      ? { offers: { "@type": "Offer", price: "0", priceCurrency: "USD" } }
+      : {}),
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Agent Marketplace", item: absoluteUrl("/agents") },
+      { "@type": "ListItem", position: 3, name: agent.name, item: canonical },
+    ],
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <JsonLd data={softwareLd} />
+      <JsonLd data={breadcrumbLd} />
       <Link href="/agents" className="text-sm text-gray-500 hover:text-gray-700">
         ← Agent Marketplace
       </Link>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { computeBilledUsd, meterInvocation } from "@/lib/billing";
 
 // OpenAI-compatible shim: point any OpenAI SDK at this base URL and set
 // `model` to an agent slug. Low-friction on-ramp to the gateway.
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
-    select: { id: true, endpointUrl: true },
+    select: { id: true, endpointUrl: true, pricingModel: true, unitPriceUsd: true },
   });
   if (!agent) {
     return NextResponse.json(
@@ -92,23 +93,18 @@ export async function POST(req: NextRequest) {
   }
   const latencyMs = Date.now() - started;
 
-  prisma.invocation
-    .create({
-      data: {
-        apiKeyId: keyRecord.id,
-        userId: keyRecord.userId,
-        agentId: agent.id,
-        protocol: "OPENAI_COMPAT",
-        status,
-        latencyMs,
-        unitsBilled: 1,
-        errorCode,
-      },
-    })
-    .catch(() => {});
-  prisma.agent
-    .update({ where: { id: agent.id }, data: { callsCount: { increment: 1 } } })
-    .catch(() => {});
+  const billedUsd =
+    !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
+  void meterInvocation({
+    apiKeyId: keyRecord.id,
+    userId: keyRecord.userId,
+    agentId: agent.id,
+    protocol: "OPENAI_COMPAT",
+    status,
+    latencyMs,
+    errorCode,
+    billedUsd,
+  });
 
   if (errorCode) {
     return NextResponse.json(
