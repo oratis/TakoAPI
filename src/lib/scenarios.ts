@@ -70,7 +70,8 @@ export const SCENARIOS: Scenario[] = [
       "software engineering", "software development", "code review", "autocomplete",
       "claude code", "opencode", "gemini cli", "gemini-cli", "refactor",
       "refactoring", "debugging", "swe-bench", "swe agent", "vibe coding",
-      "vscode", "vs code", "jetbrains", "code editor", "编程", "代码生成", "编程助手",
+      "vscode", "vs code", "jetbrains", "code editor", "code-first", "编程",
+      "代码生成", "编程助手", "开发平台",
     ],
   },
   {
@@ -86,7 +87,10 @@ export const SCENARIOS: Scenario[] = [
       "deploy agents", "agentic workflow", "workflow orchestration", "swarm",
       "crew ai", "crewai", "autogpt", "langchain", "llamaindex", "mcp",
       "model context protocol", "mcp server", "agent memory", "function calling",
-      "openclaw", "智能体框架", "多智能体", "智能体编排",
+      "openclaw", "build ai agents", "building ai agents", "ai agent platform",
+      "agent platform", "agent platforms", "stateful agent", "memory layer",
+      "sandbox", "no-code", "zero-code", "reinforcement learning",
+      "agent training", "self-evolving", "智能体框架", "多智能体", "智能体编排",
     ],
   },
   {
@@ -98,7 +102,7 @@ export const SCENARIOS: Scenario[] = [
     keywords: [
       "devops", "ci/cd", "cicd", "kubernetes", "k8s", "docker", "terraform",
       "ansible", "deployment", "infrastructure", "monitoring", "observability",
-      "sre", "cloud native", "pipeline automation", "运维", "部署", "自动化运维",
+      "sre", "cloud native", "pipeline automation", "self-hosted", "运维", "部署", "自动化运维",
     ],
   },
   {
@@ -138,8 +142,9 @@ export const SCENARIOS: Scenario[] = [
       "illustration", "logo design", "photo editing", "image editing",
       "stable diffusion", "midjourney", "art generation", "generative art",
       "creative tool", "music generation", "music", "3d model", "3d",
-      "text to speech", "text-to-speech", "voice generation", "绘画", "图像生成",
-      "视频生成", "设计创意", "语音合成",
+      "text to speech", "text-to-speech", "voice generation", "tts",
+      "speech model", "speech synthesis", "voice ai", "film", "绘画", "图像生成",
+      "视频生成", "设计创意", "语音合成", "影视",
     ],
   },
   {
@@ -225,8 +230,9 @@ export const SCENARIOS: Scenario[] = [
       "research", "deep research", "web search", "retrieval", "rag",
       "knowledge base", "scraping", "web scraping", "scrape", "scraper",
       "crawler", "search engine", "browser automation", "browser-use",
-      "web automation", "answer engine", "perplexity", "literature review",
-      "检索", "研究", "搜索", "知识库", "爬虫",
+      "web automation", "answer engine", "answering engine", "perplexity",
+      "browser", "browser agent", "in your browser", "benchmark", "paper",
+      "papers", "literature review", "检索", "研究", "搜索", "知识库", "爬虫", "论文",
     ],
   },
   {
