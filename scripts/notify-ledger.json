@@ -1,0 +1,184 @@
+{
+  "repos": {
+    "datahaven-xyz/datahaven": {
+      "slug": "datahaven-xyz-datahaven",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/datahaven-xyz/datahaven/pull/483",
+      "date": "2026-06-14T01:10:34.607Z"
+    },
+    "GetStream/Vision-Agents": {
+      "slug": "getstream-vision-agents",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/GetStream/Vision-Agents/pull/600",
+      "date": "2026-06-14T01:13:55.543Z"
+    },
+    "Upsonic/Upsonic": {
+      "slug": "upsonic-upsonic",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Upsonic/Upsonic/pull/614",
+      "date": "2026-06-14T01:14:20.525Z"
+    },
+    "EKKOLearnAI/hermes-web-ui": {
+      "slug": "ekkolearnai-hermes-web-ui",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/EKKOLearnAI/hermes-web-ui/pull/1538",
+      "date": "2026-06-14T01:14:45.992Z"
+    },
+    "firerpa/lamda": {
+      "slug": "firerpa-lamda",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/firerpa/lamda/pull/141",
+      "date": "2026-06-14T01:15:11.034Z"
+    },
+    "liyupi/codefather": {
+      "slug": "liyupi-codefather",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/liyupi/codefather/pull/52",
+      "date": "2026-06-14T01:15:36.221Z"
+    },
+    "2FastLabs/agent-squad": {
+      "slug": "2fastlabs-agent-squad",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/2FastLabs/agent-squad/pull/522",
+      "date": "2026-06-14T01:16:01.501Z"
+    },
+    "YaoApp/yao": {
+      "slug": "yaoapp-yao",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/YaoApp/yao/pull/1552",
+      "date": "2026-06-14T01:16:26.420Z"
+    },
+    "AgentWrapper/agent-orchestrator": {
+      "slug": "agentwrapper-agent-orchestrator",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/AgentWrapper/agent-orchestrator/pull/2125",
+      "date": "2026-06-14T01:16:51.452Z"
+    },
+    "ValueCell-ai/ClawX": {
+      "slug": "valuecell-ai-clawx",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ValueCell-ai/ClawX/pull/1122",
+      "date": "2026-06-14T01:17:16.626Z"
+    },
+    "RayVentura/ShortGPT": {
+      "slug": "rayventura-shortgpt",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/RayVentura/ShortGPT/pull/172",
+      "date": "2026-06-14T01:17:41.502Z"
+    },
+    "EverMind-AI/EverOS": {
+      "slug": "evermind-ai-everos",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/EverMind-AI/EverOS/pull/287",
+      "date": "2026-06-14T01:18:06.975Z"
+    },
+    "ringhyacinth/Star-Office-UI": {
+      "slug": "ringhyacinth-star-office-ui",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ringhyacinth/Star-Office-UI/pull/119",
+      "date": "2026-06-14T01:18:31.797Z"
+    },
+    "freestylefly/awesome-gpt-image-2": {
+      "slug": "freestylefly-awesome-gpt-image-2",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/freestylefly/awesome-gpt-image-2/pull/12",
+      "date": "2026-06-14T01:18:56.853Z"
+    },
+    "Narcooo/inkos": {
+      "slug": "narcooo-inkos",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Narcooo/inkos/pull/310",
+      "date": "2026-06-14T01:19:22.859Z"
+    },
+    "steel-dev/steel-browser": {
+      "slug": "steel-dev-steel-browser",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/steel-dev/steel-browser/pull/314",
+      "date": "2026-06-14T01:19:48.254Z"
+    },
+    "flyteorg/flyte": {
+      "slug": "flyteorg-flyte",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/flyteorg/flyte/pull/7519",
+      "date": "2026-06-14T01:20:13.256Z"
+    },
+    "crynta/terax-ai": {
+      "slug": "crynta-terax-ai",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/crynta/terax-ai/pull/804",
+      "date": "2026-06-14T01:20:38.146Z"
+    },
+    "enricoros/big-AGI": {
+      "slug": "enricoros-big-agi",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/enricoros/big-AGI/pull/1132",
+      "date": "2026-06-14T01:21:03.339Z"
+    },
+    "thesysdev/openui": {
+      "slug": "thesysdev-openui",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/thesysdev/openui/pull/652",
+      "date": "2026-06-14T01:21:28.481Z"
+    },
+    "GetBindu/Bindu": {
+      "slug": "getbindu-bindu",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/GetBindu/Bindu/pull/578",
+      "date": "2026-06-14T01:21:53.481Z"
+    },
+    "InternLM/MindSearch": {
+      "slug": "internlm-mindsearch",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/InternLM/MindSearch/pull/319",
+      "date": "2026-06-14T01:22:18.573Z"
+    },
+    "kyegomez/swarms": {
+      "slug": "kyegomez-swarms",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/kyegomez/swarms/pull/1686",
+      "date": "2026-06-14T01:22:43.867Z"
+    },
+    "grab/cursor-talk-to-figma-mcp": {
+      "slug": "grab-cursor-talk-to-figma-mcp",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/grab/cursor-talk-to-figma-mcp/pull/180",
+      "date": "2026-06-14T01:23:08.998Z"
+    },
+    "jo-inc/camofox-browser": {
+      "slug": "jo-inc-camofox-browser",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/jo-inc/camofox-browser/pull/5760",
+      "date": "2026-06-14T01:23:34.122Z"
+    },
+    "nexu-io/html-anything": {
+      "slug": "nexu-io-html-anything",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/nexu-io/html-anything/pull/108",
+      "date": "2026-06-14T01:23:59.301Z"
+    },
+    "ChatLab/ChatLab": {
+      "slug": "chatlab-chatlab",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ChatLab/ChatLab/pull/220",
+      "date": "2026-06-14T01:24:24.290Z"
+    },
+    "Zipstack/unstract": {
+      "slug": "zipstack-unstract",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Zipstack/unstract/pull/2055",
+      "date": "2026-06-14T01:24:49.608Z"
+    },
+    "julep-ai/julep": {
+      "slug": "julep-ai-julep",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/julep-ai/julep/pull/1608",
+      "date": "2026-06-14T01:25:14.847Z"
+    },
+    "BlockRunAI/ClawRouter": {
+      "slug": "blockrunai-clawrouter",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/BlockRunAI/ClawRouter/pull/185",
+      "date": "2026-06-14T01:25:40.182Z"
+    }
+  }
+}
