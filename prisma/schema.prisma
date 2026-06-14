@@ -410,6 +410,12 @@ model Agent {
   reviewNote  String?
   kind        AgentKind   @default(HOSTED)
 
+  // Scenario / use-case classification (job-to-be-done), e.g. "frontend",
+  // "investing", "presentations". Multi-valued; filtered with `has`. The
+  // taxonomy + classifier live in src/lib/scenarios.ts. Distinct from
+  // categoryId (the skill technical taxonomy).
+  scenarios String[] @default([])
+
   // AgentCard (A2A) — discovery + invocation metadata (HOSTED only)
   cardUrl               String?
   endpointUrl           String?

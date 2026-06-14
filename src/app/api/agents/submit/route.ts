@@ -8,6 +8,7 @@ import { badRequest, parseJson, serverError, unauthorized } from "@/lib/api";
 import { submitAgentSchema } from "@/lib/schemas";
 import { withRequestLog } from "@/lib/requestLog";
 import { fetchAgentCard, AgentCardError, type ParsedAgentCard } from "@/lib/agentcard";
+import { classifyScenarios, isScenarioSlug } from "@/lib/scenarios";
 
 async function getSubmitter(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
@@ -82,6 +83,15 @@ export async function POST(req: NextRequest) {
     const status = autoApprove ? "APPROVED" : "PENDING";
     const protocols = input.protocols?.length ? input.protocols : (["A2A"] as const);
 
+    // Use an explicit scenario override (valid slugs only) if provided;
+    // otherwise auto-classify from the name, description, and advertised skills.
+    const overrideScenarios = input.scenarios?.filter(isScenarioSlug) ?? [];
+    const scenarios = overrideScenarios.length
+      ? [...new Set(overrideScenarios)]
+      : classifyScenarios(
+          [name, description, ...cardSkills.map((s) => `${s.name} ${s.description ?? ""}`)].join(" ")
+        );
+
     try {
       const agent = await prisma.agent.create({
         data: {
@@ -102,6 +112,7 @@ export async function POST(req: NextRequest) {
           homepage: input.homepage || null,
           pricingModel: input.pricingModel || "FREE",
           unitPriceUsd: input.unitPriceUsd ?? null,
+          scenarios,
           skills: cardSkills.length
             ? {
                 create: cardSkills.map((s) => ({

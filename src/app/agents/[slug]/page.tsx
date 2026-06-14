@@ -4,6 +4,7 @@ import { Zap, Bell, ShieldCheck, BadgeCheck, Star, GitFork } from "lucide-react"
 import { prisma } from "@/lib/prisma";
 import { priceLabel } from "@/components/ui/AgentCard";
 import { absoluteUrl, SITE_NAME } from "@/lib/seo";
+import { findScenario, scenarioLabel } from "@/lib/scenarios";
 import { JsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
@@ -103,6 +104,25 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ sl
         <h1 className="text-3xl font-bold text-gray-900">{agent.name}</h1>
         <p className="text-sm text-gray-400 mt-1">by {publisherName}</p>
         <p className="text-base text-gray-600 mt-3 max-w-2xl">{agent.description}</p>
+        {agent.scenarios.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <span className="text-xs text-gray-400">场景 Scenario:</span>
+            {agent.scenarios.map((slug) => {
+              const sc = findScenario(slug);
+              if (!sc) return null;
+              return (
+                <Link
+                  key={slug}
+                  href={`/agents?scenario=${slug}`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-600 hover:bg-purple-100"
+                >
+                  <span>{sc.emoji}</span>
+                  {scenarioLabel(sc)}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Capability / project row */}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clampPagination } from "@/lib/pagination";
 import { withRequestLog } from "@/lib/requestLog";
+import { isScenarioSlug } from "@/lib/scenarios";
 import type { Prisma } from "@prisma/client";
 
 const PROTOCOLS = new Set(["A2A", "OPENAI_COMPAT", "MCP"]);
@@ -12,6 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const { page, limit, skip } = clampPagination(searchParams);
     const category = searchParams.get("category");
+    const scenario = searchParams.get("scenario");
     const protocol = searchParams.get("protocol");
     const pricing = searchParams.get("pricing");
     const q = searchParams.get("q");
@@ -19,6 +21,7 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.AgentWhereInput = { status: "APPROVED" };
     if (category) where.category = { slug: category };
+    if (isScenarioSlug(scenario)) where.scenarios = { has: scenario };
     if (protocol) {
       const p = protocol.toUpperCase();
       if (PROTOCOLS.has(p)) where.protocols = { has: p } as Prisma.AgentWhereInput["protocols"];

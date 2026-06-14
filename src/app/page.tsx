@@ -4,9 +4,10 @@ import SkillCard from "@/components/ui/SkillCard";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import HomeSearch from "@/components/ui/HomeSearch";
 import AgentCard from "@/components/ui/AgentCard";
-import { Terminal, Download, TrendingUp, Bot, GitFork } from "lucide-react";
+import { Terminal, Download, TrendingUp, Bot, GitFork, Compass } from "lucide-react";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL, SITE_NAME } from "@/lib/seo";
+import { SCENARIOS } from "@/lib/scenarios";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ function formatNumber(n: number): string {
 }
 
 export default async function HomePage() {
-  const [categories, mustHaveSkills, latestSkills, totalSkills, agents, totalAgents, projects, totalProjects] =
+  const [categories, mustHaveSkills, latestSkills, totalSkills, agents, totalAgents, projects, totalProjects, agentScenarioRows] =
     await Promise.all([
       prisma.category.findMany({ orderBy: { skillCount: "desc" } }),
       prisma.skill.findMany({
@@ -51,11 +52,19 @@ export default async function HomePage() {
         },
       }),
       prisma.agent.count({ where: { status: "APPROVED", kind: "PROJECT" } }),
+      // Just the scenario arrays for all approved agents — one cheap query we
+      // tally in JS for the "Browse by scenario" tile counts.
+      prisma.agent.findMany({ where: { status: "APPROVED" }, select: { scenarios: true } }),
     ]);
 
   // Show top 12 categories, collapse the rest
   const topCategories = categories.slice(0, 12);
   const hasMore = categories.length > 12;
+
+  // Per-scenario agent counts (shown as a subtle badge when > 0).
+  const scenarioCounts = new Map<string, number>();
+  for (const row of agentScenarioRows)
+    for (const slug of row.scenarios) scenarioCounts.set(slug, (scenarioCounts.get(slug) ?? 0) + 1);
 
   const siteLd = [
     {
@@ -122,6 +131,42 @@ export default async function HomePage() {
               GET /api/registry
             </code>
           </div>
+        </div>
+      </section>
+
+      {/* Browse by scenario — primary use-case entry point */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Compass className="h-5 w-5 text-purple-600" />
+            <h2 className="text-xl font-semibold">按场景浏览 · Browse by scenario</h2>
+          </div>
+          <Link href="/agents" className="text-sm text-purple-600 hover:text-purple-700">
+            All agents →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {SCENARIOS.map((s) => {
+            const n = scenarioCounts.get(s.slug) ?? 0;
+            return (
+              <Link
+                key={s.slug}
+                href={`/agents?scenario=${s.slug}`}
+                className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 hover:border-purple-200 hover:bg-purple-50/40 transition-colors"
+              >
+                <span className="text-2xl shrink-0">{s.emoji}</span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-gray-900 truncate group-hover:text-purple-600">
+                    {s.nameZh}
+                  </span>
+                  <span className="block text-xs text-gray-400 truncate">
+                    {s.name}
+                    {n > 0 && <span className="text-gray-300"> · {n}</span>}
+                  </span>
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

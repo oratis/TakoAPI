@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Zap, Layers, Star, GitFork } from "lucide-react";
+import { findScenario, scenarioLabel } from "@/lib/scenarios";
 
 // Server Component (no client interactivity) — safe to receive Prisma Decimal.
 export type AgentCardData = {
@@ -17,6 +18,7 @@ export type AgentCardData = {
   githubUrl?: string | null;
   repoOwner?: string | null;
   category: { name: string; slug: string } | null;
+  scenarios?: string[];
   _count?: { skills: number };
 };
 
@@ -59,6 +61,25 @@ export default function AgentCard({ agent }: { agent: AgentCardData }) {
       </div>
 
       <p className="text-sm text-gray-600 line-clamp-2 mb-3 min-h-[2.5rem]">{agent.description}</p>
+
+      {agent.scenarios && agent.scenarios.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {agent.scenarios.slice(0, 2).map((slug) => {
+            const sc = findScenario(slug);
+            if (!sc) return null;
+            return (
+              <span
+                key={slug}
+                title={scenarioLabel(sc)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-600 max-w-full truncate"
+              >
+                <span>{sc.emoji}</span>
+                {sc.nameZh}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {isProject ? (
         <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
