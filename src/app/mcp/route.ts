@@ -54,7 +54,7 @@ function validateArgs(schema: Record<string, unknown>, args: Record<string, unkn
 
 export async function POST(req: NextRequest) {
   // Per-IP guard for the (partly anonymous) endpoint. Reuses the gateway limiter.
-  const rl = checkRateLimit(req, { key: "mcp", windowMs: 60_000, max: 120 });
+  const rl = await checkRateLimit(req, { key: "mcp", windowMs: 60_000, max: 120 });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   let msg: { jsonrpc?: string; id?: JsonRpcId; method?: string; params?: Record<string, unknown> };

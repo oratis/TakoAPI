@@ -1,11 +1,28 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { SITE_URL } from "@/lib/seo";
+import { localizedUrl } from "@/lib/seo";
+import { routing } from "@/i18n/routing";
 
 // Generated at request time against the live catalog (the app renders DB pages
 // dynamically and the Docker build has no DB), so the sitemap stays fresh as
 // agents/skills are imported. Crawlers hit this infrequently.
 export const dynamic = "force-dynamic";
+
+// hreflang alternates for a path: one entry per locale. The canonical `url` is
+// the unprefixed English URL; `alternates.languages` carries every locale so a
+// single row covers all 15 (the shape Google recommends).
+function languagesFor(path: string): Record<string, string> {
+  return Object.fromEntries(routing.locales.map((l) => [l, localizedUrl(l, path)]));
+}
+
+type SitemapEntry = MetadataRoute.Sitemap[number];
+function entry(path: string, rest: Omit<SitemapEntry, "url" | "alternates">): SitemapEntry {
+  return {
+    url: localizedUrl(routing.defaultLocale, path),
+    alternates: { languages: languagesFor(path) },
+    ...rest,
+  };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let agents: { slug: string; updatedAt: Date }[] = [];
@@ -30,25 +47,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const now = new Date();
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: SITE_URL, lastModified: now, changeFrequency: "daily", priority: 1 },
-    { url: `${SITE_URL}/agents`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${SITE_URL}/skills`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
-    { url: `${SITE_URL}/trending`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    entry("", { lastModified: now, changeFrequency: "daily", priority: 1 }),
+    entry("/agents", { lastModified: now, changeFrequency: "daily", priority: 0.9 }),
+    entry("/skills", { lastModified: now, changeFrequency: "daily", priority: 0.8 }),
+    entry("/trending", { lastModified: now, changeFrequency: "weekly", priority: 0.6 }),
   ];
 
-  const agentRoutes: MetadataRoute.Sitemap = agents.map((a) => ({
-    url: `${SITE_URL}/agents/${a.slug}`,
-    lastModified: a.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.7,
-  }));
+  const agentRoutes: MetadataRoute.Sitemap = agents.map((a) =>
+    entry(`/agents/${a.slug}`, { lastModified: a.updatedAt, changeFrequency: "weekly", priority: 0.7 }),
+  );
 
-  const skillRoutes: MetadataRoute.Sitemap = skills.map((s) => ({
-    url: `${SITE_URL}/skills/${s.slug}`,
-    lastModified: s.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.5,
-  }));
+  const skillRoutes: MetadataRoute.Sitemap = skills.map((s) =>
+    entry(`/skills/${s.slug}`, { lastModified: s.updatedAt, changeFrequency: "weekly", priority: 0.5 }),
+  );
 
   return [...staticRoutes, ...agentRoutes, ...skillRoutes];
 }

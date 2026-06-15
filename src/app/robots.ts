@@ -2,12 +2,17 @@ import type { MetadataRoute } from "next";
 import { absoluteUrl, SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
+  // Auth-gated and machine-only surfaces, blocked at both the unprefixed path
+  // and any locale prefix (e.g. /admin and /zh/admin). `/api/` is never under a
+  // locale, so it needs no wildcard variant.
+  const gated = ["/admin", "/dashboard", "/profile", "/auth/"];
+  const disallow = [...gated, ...gated.map((p) => `/*${p}`), "/api/"];
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Keep auth-gated and machine-only surfaces out of the index.
-      disallow: ["/admin", "/dashboard", "/profile", "/api/", "/auth/"],
+      disallow,
     },
     sitemap: absoluteUrl("/sitemap.xml"),
     host: SITE_URL,

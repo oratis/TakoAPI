@@ -1,0 +1,20 @@
+name: i18n
+
+# Fail the build if any messages/<locale>.json drifts from en.json's keys or
+# contains invalid ICU. Keeps the 15 locale catalogs in lockstep.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check-keys:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run check:i18n
