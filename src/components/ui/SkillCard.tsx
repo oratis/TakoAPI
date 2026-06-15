@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Heart, ExternalLink, Terminal, Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Skill } from "@/lib/types";
 
 function formatNumber(n: number): string {
@@ -17,6 +18,7 @@ export default function SkillCard({
   skill: Skill;
   showDownloads?: boolean;
 }) {
+  const t = useTranslations("Components");
   return (
     <Link
       href={`/skills/${skill.slug}`}
@@ -28,10 +30,10 @@ export default function SkillCard({
             {skill.name}
           </h3>
           {skill.author && (
-            <p className="text-xs text-gray-400 mt-0.5">by {skill.author}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t("skillBy", { author: skill.author })}</p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0 ml-2">
+        <div className="flex items-center gap-2 shrink-0 ms-2">
           {showDownloads && skill.downloads > 0 && (
             <span className="inline-flex items-center gap-1 text-xs text-gray-400">
               <Download className="h-3 w-3" />
@@ -40,7 +42,7 @@ export default function SkillCard({
           )}
           <span className="inline-flex items-center gap-1 text-xs text-gray-400">
             <Heart className="h-3 w-3" />
-            {skill.likesCount}
+            {t("skillLikes", { count: skill.likesCount })}
           </span>
         </div>
       </div>

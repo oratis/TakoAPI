@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Terminal, Copy, Check, FileText, Play, Server, Boxes } from "lucide-react";
 
 const UNIVERSAL = "curl -fsSL https://takoapi.com/install.sh | sh";
@@ -11,48 +12,47 @@ const PLATFORMS = [
   {
     key: "claude",
     name: "Claude Code",
-    tagline: "Anthropic's CLI",
     native: [
       "claude plugin marketplace add oratis/TakoAPI",
       "claude plugin install takoapi@takoapi",
     ],
     writes: ["~/.claude/skills/takoapi/SKILL.md"],
-    use: "Loads automatically — just ask Claude to find an agent on TakoAPI.",
     mcp: "claude mcp add --transport http takoapi https://takoapi.com/mcp",
-    mcpHint: "One command. Add --header \"Authorization: Bearer $TAKO_KEY\" to enable invoke_agent.",
   },
   {
     key: "codex",
     name: "Codex",
-    tagline: "OpenAI's CLI",
     native: ["curl -fsSL https://takoapi.com/install.sh | sh -s -- --codex"],
     writes: [
       "~/.agents/skills/takoapi/SKILL.md",
       "~/.codex/skills/takoapi/SKILL.md",
     ],
-    use: "Invoke with $takoapi, or pick it from the /skills menu.",
     mcp: '[mcp_servers.takoapi]\nurl = "https://takoapi.com/mcp"\nbearer_token_env_var = "TAKO_KEY"',
-    mcpHint: "Add to ~/.codex/config.toml",
   },
   {
     key: "opencode",
     name: "OpenCode",
-    tagline: "opencode.ai",
     native: ["curl -fsSL https://takoapi.com/install.sh | sh -s -- --opencode"],
     writes: [
       "~/.config/opencode/agent/takoapi.md",
       "~/.config/opencode/command/takoapi.md",
     ],
-    use: "Run /takoapi <query>, or hand off to @takoapi.",
     mcp:
       '{\n  "mcp": {\n    "takoapi": {\n      "type": "remote",\n      "url": "https://takoapi.com/mcp",\n      "headers": { "Authorization": "Bearer YOUR_TAKO_KEY" }\n    }\n  }\n}',
-    mcpHint: "Merge into ~/.config/opencode/opencode.json",
   },
 ] as const;
 
 type PlatformKey = (typeof PLATFORMS)[number]["key"];
 
+// Maps each platform to its namespaced translation keys for human prose.
+const PLATFORM_I18N: Record<PlatformKey, { tagline: string; use: string; mcpHint: string }> = {
+  claude: { tagline: "claudeCodeTagline", use: "claudeCodeUse", mcpHint: "claudeCodeMcpHint" },
+  codex: { tagline: "codexTagline", use: "codexUse", mcpHint: "codexMcpHint" },
+  opencode: { tagline: "opencodeTagline", use: "opencodeUse", mcpHint: "opencodeMcpHint" },
+};
+
 function CopyButton({ text }: { text: string }) {
+  const t = useTranslations("InstallTabs");
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -67,7 +67,7 @@ function CopyButton({ text }: { text: string }) {
         }
       }}
       className="shrink-0 px-3 py-2.5 text-gray-400 hover:text-white transition-colors"
-      aria-label={copied ? "Copied" : "Copy"}
+      aria-label={copied ? t("copied") : t("copy")}
     >
       {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
     </button>
@@ -77,7 +77,7 @@ function CopyButton({ text }: { text: string }) {
 function CommandLine({ cmd }: { cmd: string }) {
   return (
     <div className="flex items-center bg-gray-900 rounded-lg overflow-hidden">
-      <Terminal className="h-4 w-4 ml-3 text-gray-500 shrink-0" />
+      <Terminal className="h-4 w-4 ms-3 text-gray-500 shrink-0" />
       <code className="flex-1 px-3 py-2.5 text-sm font-mono text-gray-100 overflow-x-auto whitespace-pre">
         {cmd}
       </code>
@@ -98,8 +98,10 @@ function CodeBlock({ code }: { code: string }) {
 }
 
 export default function InstallTabs() {
+  const t = useTranslations("InstallTabs");
   const [active, setActive] = useState<PlatformKey>("claude");
   const p = PLATFORMS.find((x) => x.key === active) ?? PLATFORMS[0];
+  const i18n = PLATFORM_I18N[p.key];
 
   return (
     <div className="space-y-10">
@@ -107,14 +109,17 @@ export default function InstallTabs() {
       <div>
         <CommandLine cmd={UNIVERSAL} />
         <p className="mt-2 text-sm text-gray-500">
-          Installs the TakoAPI skill into Claude Code, Codex, and OpenCode — auto-detected. Safe to
-          re-run, no root. On Windows or in Node, use <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">{NPX}</code>.
+          {t.rich("universalNote", {
+            npx: () => (
+              <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">{NPX}</code>
+            ),
+          })}
         </p>
       </div>
 
       {/* Per-platform tabs */}
       <div>
-        <div role="tablist" aria-label="Coding agents" className="flex flex-wrap gap-2">
+        <div role="tablist" aria-label={t("tablistLabel")} className="flex flex-wrap gap-2">
           {PLATFORMS.map((x) => {
             const selected = active === x.key;
             return (
@@ -140,25 +145,25 @@ export default function InstallTabs() {
         <div className="mt-5 rounded-2xl border border-gray-200 p-5 sm:p-6 space-y-6">
           <div className="flex items-baseline gap-2">
             <h3 className="text-lg font-semibold">{p.name}</h3>
-            <span className="text-sm text-gray-400">{p.tagline}</span>
+            <span className="text-sm text-gray-400">{t(i18n.tagline)}</span>
           </div>
 
           {/* Method 1 — Skill */}
           <div>
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              <Boxes className="h-3.5 w-3.5" /> Skill — teaches your agent to call TakoAPI
+              <Boxes className="h-3.5 w-3.5" /> {t("skillHeading")}
             </p>
             <div className="space-y-2">
               {p.native.map((cmd) => (
                 <CommandLine key={cmd} cmd={cmd} />
               ))}
             </div>
-            <p className="mt-2 text-xs text-gray-400">…or use the universal command above — it covers {p.name} too.</p>
+            <p className="mt-2 text-xs text-gray-400">{t("skillUniversalHint", { name: p.name })}</p>
 
             <div className="mt-4 grid gap-5 sm:grid-cols-2">
               <div>
                 <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                  <FileText className="h-3.5 w-3.5" /> Writes
+                  <FileText className="h-3.5 w-3.5" /> {t("writesHeading")}
                 </p>
                 <ul className="space-y-1">
                   {p.writes.map((w) => (
@@ -172,9 +177,9 @@ export default function InstallTabs() {
               </div>
               <div>
                 <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                  <Play className="h-3.5 w-3.5" /> How to use
+                  <Play className="h-3.5 w-3.5" /> {t("howToUseHeading")}
                 </p>
-                <p className="text-sm text-gray-600">{p.use}</p>
+                <p className="text-sm text-gray-600">{t(i18n.use)}</p>
               </div>
             </div>
           </div>
@@ -182,15 +187,16 @@ export default function InstallTabs() {
           {/* Method 2 — MCP server */}
           <div className="border-t border-gray-100 pt-5">
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              <Server className="h-3.5 w-3.5" /> MCP server — hosted tools, nothing to install
+              <Server className="h-3.5 w-3.5" /> {t("mcpHeading")}
             </p>
             {p.mcp.includes("\n") ? <CodeBlock code={p.mcp} /> : <CommandLine cmd={p.mcp} />}
-            <p className="mt-2 text-xs text-gray-400">{p.mcpHint}</p>
+            <p className="mt-2 text-xs text-gray-400">{t(i18n.mcpHint)}</p>
             <p className="mt-2 text-sm text-gray-600">
-              Adds tools: <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">search_agents</code>,{" "}
-              <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">get_agent</code>,{" "}
-              <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">search_skills</code>,{" "}
-              <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">invoke_agent</code>.
+              {t.rich("mcpToolsNote", {
+                tool: (chunks) => (
+                  <code className="text-xs font-mono bg-gray-100 rounded px-1 py-0.5">{chunks}</code>
+                ),
+              })}
             </p>
           </div>
         </div>
@@ -198,11 +204,9 @@ export default function InstallTabs() {
 
       {/* Uninstall */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Uninstall</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">{t("uninstallHeading")}</h3>
         <CommandLine cmd={UNINSTALL} />
-        <p className="mt-2 text-sm text-gray-500">
-          Removes only TakoAPI&apos;s own files — it never touches your other agent config.
-        </p>
+        <p className="mt-2 text-sm text-gray-500">{t("uninstallNote")}</p>
       </div>
     </div>
   );

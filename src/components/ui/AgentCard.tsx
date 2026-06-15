@@ -1,6 +1,10 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { Zap, Layers, Star, GitFork } from "lucide-react";
 import { findScenario, scenarioLabel } from "@/lib/scenarios";
+
+// Minimal translator shape so priceLabel can be called with or without i18n.
+type Translator = (key: string, values?: Record<string, string | number>) => string;
 
 // Server Component (no client interactivity) — safe to receive Prisma Decimal.
 export type AgentCardData = {
@@ -22,13 +26,28 @@ export type AgentCardData = {
   _count?: { skills: number };
 };
 
-export function priceLabel(model: string, unit: unknown): string {
-  if (model === "FREE") return "Free";
+export function priceLabel(model: string, unit: unknown, t?: Translator): string {
+  if (model === "FREE") return t ? t("agentFree") : "Free";
+  const n = unit == null ? null : Number(unit);
+  if (n == null || Number.isNaN(n)) {
+    // Fallback when there is no numeric price: a bare human word per model.
+    if (t) {
+      if (model === "PER_CALL") return t("agentPriceFallbackCall");
+      if (model === "PER_TASK") return t("agentPriceFallbackTask");
+      if (model === "PER_TOKEN") return t("agentPriceFallbackToken");
+    }
+    return model.replace("PER_", "").toLowerCase();
+  }
+  const price = `$${n}`;
+  if (t) {
+    if (model === "PER_CALL") return t("agentPerCall", { price });
+    if (model === "PER_TASK") return t("agentPerTask", { price });
+    if (model === "PER_TOKEN") return t("agentPerToken", { price });
+    return price;
+  }
   const per =
     model === "PER_CALL" ? "/call" : model === "PER_TASK" ? "/task" : model === "PER_TOKEN" ? "/1k tok" : "";
-  const n = unit == null ? null : Number(unit);
-  if (n == null || Number.isNaN(n)) return model.replace("PER_", "").toLowerCase();
-  return `$${n}${per}`;
+  return `${price}${per}`;
 }
 
 function formatStars(n: number): string {
@@ -36,7 +55,8 @@ function formatStars(n: number): string {
   return String(n);
 }
 
-export default function AgentCard({ agent }: { agent: AgentCardData }) {
+export default async function AgentCard({ agent }: { agent: AgentCardData }) {
+  const t = await getTranslations("Components");
   const isProject = agent.kind === "PROJECT";
   return (
     <Link
@@ -50,12 +70,12 @@ export default function AgentCard({ agent }: { agent: AgentCardData }) {
         {isProject ? (
           <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">
             <GitFork className="h-2.5 w-2.5" />
-            project
+            {t("agentBadgeProject")}
           </span>
         ) : agent.streaming ? (
           <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full shrink-0">
             <Zap className="h-2.5 w-2.5" />
-            streaming
+            {t("agentBadgeStreaming")}
           </span>
         ) : null}
       </div>
@@ -84,11 +104,11 @@ export default function AgentCard({ agent }: { agent: AgentCardData }) {
       {isProject ? (
         <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
           <span className="text-xs text-gray-400 truncate">
-            {agent.repoOwner ? `${agent.repoOwner}/${agent.name}` : "open-source"}
+            {agent.repoOwner ? `${agent.repoOwner}/${agent.name}` : t("agentOpenSource")}
           </span>
           <span className="inline-flex items-center gap-2 shrink-0">
             <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-              self-host
+              {t("agentSelfHost")}
             </span>
             {typeof agent.stars === "number" && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
@@ -117,7 +137,7 @@ export default function AgentCard({ agent }: { agent: AgentCardData }) {
               ))}
             </div>
             <span className="text-xs font-semibold text-gray-700 shrink-0">
-              {priceLabel(agent.pricingModel, agent.unitPriceUsd)}
+              {priceLabel(agent.pricingModel, agent.unitPriceUsd, t)}
             </span>
           </div>
 
@@ -125,7 +145,7 @@ export default function AgentCard({ agent }: { agent: AgentCardData }) {
             {agent._count && (
               <span className="inline-flex items-center gap-1">
                 <Layers className="h-3 w-3" />
-                {agent._count.skills} skill{agent._count.skills === 1 ? "" : "s"}
+                {t("agentSkills", { count: agent._count.skills })}
               </span>
             )}
             {agent.avgRating > 0 && (
