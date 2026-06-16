@@ -50,6 +50,7 @@ export default function AdminAgentsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<string[]>([]);
   const t = useTranslations("Admin");
+  const tScenario = useTranslations("Scenarios");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -152,7 +153,7 @@ export default function AdminAgentsPage() {
                             className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600"
                           >
                             <span>{sc.emoji}</span>
-                            {sc.nameZh}
+                            {tScenario(slug)}
                           </span>
                         ) : null;
                       })}
