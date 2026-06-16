@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Zap, Layers, Star, GitFork } from "lucide-react";
-import { findScenario, scenarioLabel } from "@/lib/scenarios";
+import { findScenario } from "@/lib/scenarios";
 
 // Minimal translator shape so priceLabel can be called with or without i18n.
 type Translator = (key: string, values?: Record<string, string | number>) => string;
@@ -57,6 +57,7 @@ function formatStars(n: number): string {
 
 export default async function AgentCard({ agent }: { agent: AgentCardData }) {
   const t = await getTranslations("Components");
+  const tScenario = await getTranslations("Scenarios");
   const isProject = agent.kind === "PROJECT";
   return (
     <Link
@@ -87,14 +88,15 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
           {agent.scenarios.slice(0, 2).map((slug) => {
             const sc = findScenario(slug);
             if (!sc) return null;
+            const label = tScenario(slug);
             return (
               <span
                 key={slug}
-                title={scenarioLabel(sc)}
+                title={label}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-600 max-w-full truncate"
               >
                 <span>{sc.emoji}</span>
-                {sc.nameZh}
+                {label}
               </span>
             );
           })}
