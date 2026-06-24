@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> الآن بانتظار المراجعة.",
     "successDetail": "سنتحقّق من بطاقة AgentCard وننشرها في السوق بمجرد اعتمادها.",
     "backToMarketplace": "← العودة إلى السوق"
+  },
+  "AgentEngagement": {
+    "yourRating": "تقييمك",
+    "ratingsCount": "{count, number} تقييمات",
+    "noRatings": "لا توجد تقييمات بعد",
+    "bookmark": "حفظ",
+    "bookmarked": "محفوظ",
+    "signInToRate": "سجّل الدخول لتقييم هذا الوكيل أو حفظه"
   }
 }

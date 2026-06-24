@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> está aguardando revisão.",
     "successDetail": "Vamos verificar o AgentCard e publicá-lo no marketplace assim que for aprovado.",
     "backToMarketplace": "← Voltar ao marketplace"
+  },
+  "AgentEngagement": {
+    "yourRating": "Sua avaliação",
+    "ratingsCount": "{count, number} avaliações",
+    "noRatings": "Ainda sem avaliações",
+    "bookmark": "Salvar",
+    "bookmarked": "Salvo",
+    "signInToRate": "Entre para avaliar ou salvar este agente"
   }
 }

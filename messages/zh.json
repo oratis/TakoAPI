@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> 现已进入待审核状态。",
     "successDetail": "我们会验证 AgentCard,审核通过后将其发布到市场。",
     "backToMarketplace": "← 返回市场"
+  },
+  "AgentEngagement": {
+    "yourRating": "你的评分",
+    "ratingsCount": "{count, number} 条评分",
+    "noRatings": "暂无评分",
+    "bookmark": "收藏",
+    "bookmarked": "已收藏",
+    "signInToRate": "登录后即可评分或收藏"
   }
 }

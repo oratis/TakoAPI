@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> hiện đang chờ duyệt.",
     "successDetail": "Chúng tôi sẽ xác minh AgentCard và đăng nó lên sàn sau khi được duyệt.",
     "backToMarketplace": "← Quay lại sàn"
+  },
+  "AgentEngagement": {
+    "yourRating": "Đánh giá của bạn",
+    "ratingsCount": "{count, number} đánh giá",
+    "noRatings": "Chưa có đánh giá",
+    "bookmark": "Lưu",
+    "bookmarked": "Đã lưu",
+    "signInToRate": "Đăng nhập để đánh giá hoặc lưu agent này"
   }
 }

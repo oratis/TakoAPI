@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> wartet nun auf die Prüfung.",
     "successDetail": "Wir verifizieren die AgentCard und veröffentlichen sie nach der Genehmigung auf dem Marktplatz.",
     "backToMarketplace": "← Zurück zum Marktplatz"
+  },
+  "AgentEngagement": {
+    "yourRating": "Deine Bewertung",
+    "ratingsCount": "{count, number} Bewertungen",
+    "noRatings": "Noch nicht bewertet",
+    "bookmark": "Merken",
+    "bookmarked": "Gemerkt",
+    "signInToRate": "Melde dich an, um zu bewerten oder zu speichern"
   }
 }

@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> şu anda incelenmeyi bekliyor.",
     "successDetail": "AgentCard'ı doğrulayacağız ve onaylandıktan sonra pazaryerinde yayınlayacağız.",
     "backToMarketplace": "← Pazaryerine dön"
+  },
+  "AgentEngagement": {
+    "yourRating": "Senin puanın",
+    "ratingsCount": "{count, number} değerlendirme",
+    "noRatings": "Henüz değerlendirilmedi",
+    "bookmark": "Kaydet",
+    "bookmarked": "Kaydedildi",
+    "signInToRate": "Bu aracıyı puanlamak veya kaydetmek için giriş yap"
   }
 }

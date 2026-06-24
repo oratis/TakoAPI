@@ -8,6 +8,7 @@ import { absoluteUrl, SITE_NAME, localizedAlternates } from "@/lib/seo";
 import { localeOg } from "@/lib/locales";
 import { findScenario } from "@/lib/scenarios";
 import { JsonLd } from "@/components/JsonLd";
+import { AgentEngagement } from "@/components/AgentEngagement";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,11 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ lo
             })}
           </div>
         )}
+      </div>
+
+      {/* Engagement: community rating, your rating, bookmark */}
+      <div className="mb-8">
+        <AgentEngagement slug={agent.slug} />
       </div>
 
       {/* Capability / project row */}

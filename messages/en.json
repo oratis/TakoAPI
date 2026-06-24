@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> is now pending review.",
     "successDetail": "We'll verify the AgentCard and publish it to the marketplace once approved.",
     "backToMarketplace": "← Back to marketplace"
+  },
+  "AgentEngagement": {
+    "yourRating": "Your rating",
+    "ratingsCount": "{count, number} ratings",
+    "noRatings": "Not yet rated",
+    "bookmark": "Save",
+    "bookmarked": "Saved",
+    "signInToRate": "Sign in to rate or save this agent"
   }
 }

@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> kini menunggu tinjauan.",
     "successDetail": "Kami akan memverifikasi AgentCard dan menerbitkannya ke marketplace setelah disetujui.",
     "backToMarketplace": "← Kembali ke marketplace"
+  },
+  "AgentEngagement": {
+    "yourRating": "Penilaian Anda",
+    "ratingsCount": "{count, number} penilaian",
+    "noRatings": "Belum ada penilaian",
+    "bookmark": "Simpan",
+    "bookmarked": "Tersimpan",
+    "signInToRate": "Masuk untuk menilai atau menyimpan agen ini"
   }
 }

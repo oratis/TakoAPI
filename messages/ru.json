@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> теперь ожидает проверки.",
     "successDetail": "Мы проверим AgentCard и опубликуем её на маркетплейсе после одобрения.",
     "backToMarketplace": "← Назад на маркетплейс"
+  },
+  "AgentEngagement": {
+    "yourRating": "Ваша оценка",
+    "ratingsCount": "{count, number} оценок",
+    "noRatings": "Ещё нет оценок",
+    "bookmark": "Сохранить",
+    "bookmarked": "Сохранено",
+    "signInToRate": "Войдите, чтобы оценить или сохранить агента"
   }
 }

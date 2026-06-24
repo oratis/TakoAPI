@@ -604,5 +604,13 @@
     "pendingReview": "<b>{name}</b> अब समीक्षा के लिए लंबित है।",
     "successDetail": "हम AgentCard सत्यापित करेंगे और स्वीकृत होते ही इसे मार्केटप्लेस पर पब्लिश कर देंगे।",
     "backToMarketplace": "← मार्केटप्लेस पर वापस"
+  },
+  "AgentEngagement": {
+    "yourRating": "आपकी रेटिंग",
+    "ratingsCount": "{count, number} रेटिंग",
+    "noRatings": "अभी तक कोई रेटिंग नहीं",
+    "bookmark": "सहेजें",
+    "bookmarked": "सहेजा गया",
+    "signInToRate": "इस एजेंट को रेट या सहेजने के लिए साइन इन करें"
   }
 }
