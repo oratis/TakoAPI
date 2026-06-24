@@ -32,13 +32,26 @@ export async function GET(req: NextRequest) {
     ];
   }
 
+  // Default ordering matches the historical registry (featured, then most-called,
+  // then newest). ?sort= overrides: stars | calls | rating. Stars sorts nulls last
+  // so HOSTED agents (no star count) don't crowd out high-star PROJECT repos.
+  const sort = (searchParams.get("sort") || "").toLowerCase();
+  const orderBy: Prisma.AgentOrderByWithRelationInput[] =
+    sort === "stars"
+      ? [{ stars: { sort: "desc", nulls: "last" } }, { callsCount: "desc" }]
+      : sort === "calls"
+        ? [{ callsCount: "desc" }, { createdAt: "desc" }]
+        : sort === "rating"
+          ? [{ avgRating: "desc" }, { ratingCount: "desc" }, { callsCount: "desc" }]
+          : [{ featured: "desc" }, { callsCount: "desc" }, { createdAt: "desc" }];
+
   const agents = await prisma.agent.findMany({
     where,
     include: {
       category: { select: { slug: true } },
       skills: { select: { skillKey: true, name: true } },
     },
-    orderBy: [{ featured: "desc" }, { callsCount: "desc" }, { createdAt: "desc" }],
+    orderBy,
     take,
   });
 
