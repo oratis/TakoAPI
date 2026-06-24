@@ -490,7 +490,22 @@
     "tableStatus": "स्थिति",
     "tableLatency": "लेटेंसी",
     "tableWhen": "कब",
-    "noCalls": "अभी तक कोई कॉल नहीं। उपयोग यहाँ देखने के लिए एक की बनाएँ और किसी एजेंट को कॉल करें।"
+    "tableCost": "लागत",
+    "noCalls": "अभी तक कोई कॉल नहीं। उपयोग यहाँ देखने के लिए एक की बनाएँ और किसी एजेंट को कॉल करें।",
+    "billing": "क्रेडिट और बिलिंग",
+    "creditBalance": "क्रेडिट शेष",
+    "totalSpend": "कुल खर्च",
+    "topUpComingSoon": "फ़िलहाल क्रेडिट प्लेटफ़ॉर्म द्वारा जोड़े जाते हैं; Stripe से सेल्फ़-सर्विस टॉप-अप जल्द आ रहा है।",
+    "noLedger": "अभी तक कोई क्रेडिट गतिविधि नहीं।",
+    "ledgerType": "प्रकार",
+    "ledgerAmount": "राशि",
+    "ledgerNote": "टिप्पणी",
+    "ledgerTopUp": "टॉप-अप",
+    "ledgerTopUpFee": "टॉप-अप शुल्क",
+    "ledgerDebit": "कॉल शुल्क",
+    "ledgerPayout": "भुगतान",
+    "ledgerRefund": "रिफ़ंड",
+    "ledgerAdjust": "समायोजन"
   },
   "Profile": {
     "title": "मेरी प्रोफ़ाइल",

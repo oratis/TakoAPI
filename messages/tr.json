@@ -490,7 +490,22 @@
     "tableStatus": "Durum",
     "tableLatency": "Gecikme",
     "tableWhen": "Zaman",
-    "noCalls": "Henüz çağrı yok. Burada kullanımı görmek için bir anahtar oluşturun ve bir ajan çağırın."
+    "tableCost": "Maliyet",
+    "noCalls": "Henüz çağrı yok. Burada kullanımı görmek için bir anahtar oluşturun ve bir ajan çağırın.",
+    "billing": "Krediler ve Faturalama",
+    "creditBalance": "Kredi bakiyesi",
+    "totalSpend": "Toplam harcama",
+    "topUpComingSoon": "Krediler şimdilik platform tarafından yükleniyor; Stripe ile kendin yükle özelliği yakında geliyor.",
+    "noLedger": "Henüz kredi hareketi yok.",
+    "ledgerType": "Tür",
+    "ledgerAmount": "Tutar",
+    "ledgerNote": "Not",
+    "ledgerTopUp": "Yükleme",
+    "ledgerTopUpFee": "Yükleme ücreti",
+    "ledgerDebit": "Çağrı ücreti",
+    "ledgerPayout": "Ödeme",
+    "ledgerRefund": "İade",
+    "ledgerAdjust": "Düzeltme"
   },
   "Profile": {
     "title": "Profilim",

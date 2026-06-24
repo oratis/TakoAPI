@@ -9,7 +9,7 @@ export async function GET() {
   if (!session?.user?.id) return unauthorized();
   const userId = session.user.id;
 
-  const [totalCalls, recent, byAgent] = await Promise.all([
+  const [totalCalls, recent, byAgent, spend] = await Promise.all([
     prisma.invocation.count({ where: { userId } }),
     prisma.invocation.findMany({
       where: { userId },
@@ -18,11 +18,13 @@ export async function GET() {
       include: { agent: { select: { name: true, slug: true } } },
     }),
     prisma.invocation.groupBy({ by: ["agentId"], where: { userId }, _count: { _all: true } }),
+    prisma.invocation.aggregate({ where: { userId }, _sum: { billedUsd: true } }),
   ]);
 
   return NextResponse.json({
     totalCalls,
     agentsUsed: byAgent.length,
+    totalSpendUsd: Number(spend._sum.billedUsd ?? 0),
     recent: recent.map((i) => ({
       id: i.id,
       agent: i.agent?.name ?? "—",
@@ -30,6 +32,7 @@ export async function GET() {
       protocol: i.protocol,
       status: i.status,
       latencyMs: i.latencyMs,
+      billedUsd: i.billedUsd != null ? Number(i.billedUsd) : null,
       createdAt: i.createdAt,
     })),
   });

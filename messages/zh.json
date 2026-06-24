@@ -490,7 +490,22 @@
     "tableStatus": "状态",
     "tableLatency": "延迟",
     "tableWhen": "时间",
-    "noCalls": "暂无调用。创建一个密钥并调用智能体即可在此查看用量。"
+    "tableCost": "费用",
+    "noCalls": "暂无调用。创建一个密钥并调用智能体即可在此查看用量。",
+    "billing": "余额与账单",
+    "creditBalance": "余额",
+    "totalSpend": "累计消费",
+    "topUpComingSoon": "目前余额由平台充值，自助 Stripe 充值即将上线。",
+    "noLedger": "暂无余额变动记录。",
+    "ledgerType": "类型",
+    "ledgerAmount": "金额",
+    "ledgerNote": "备注",
+    "ledgerTopUp": "充值",
+    "ledgerTopUpFee": "充值手续费",
+    "ledgerDebit": "调用扣费",
+    "ledgerPayout": "结算分成",
+    "ledgerRefund": "退款",
+    "ledgerAdjust": "调整"
   },
   "Profile": {
     "title": "我的资料",

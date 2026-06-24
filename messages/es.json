@@ -490,7 +490,22 @@
     "tableStatus": "Estado",
     "tableLatency": "Latencia",
     "tableWhen": "Cuándo",
-    "noCalls": "Aún no hay invocaciones. Crea una clave e invoca un agente para ver el uso aquí."
+    "tableCost": "Coste",
+    "noCalls": "Aún no hay invocaciones. Crea una clave e invoca un agente para ver el uso aquí.",
+    "billing": "Créditos y facturación",
+    "creditBalance": "Saldo de créditos",
+    "totalSpend": "Gasto total",
+    "topUpComingSoon": "Por ahora los créditos los añade la plataforma; la recarga con Stripe llegará pronto.",
+    "noLedger": "Aún no hay movimientos de crédito.",
+    "ledgerType": "Tipo",
+    "ledgerAmount": "Importe",
+    "ledgerNote": "Nota",
+    "ledgerTopUp": "Recarga",
+    "ledgerTopUpFee": "Comisión de recarga",
+    "ledgerDebit": "Cargo por llamada",
+    "ledgerPayout": "Liquidación",
+    "ledgerRefund": "Reembolso",
+    "ledgerAdjust": "Ajuste"
   },
   "Profile": {
     "title": "Mi perfil",

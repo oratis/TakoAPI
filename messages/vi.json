@@ -490,7 +490,22 @@
     "tableStatus": "Trạng thái",
     "tableLatency": "Độ trễ",
     "tableWhen": "Thời điểm",
-    "noCalls": "Chưa có lượt gọi nào. Tạo một key và gọi một agent để xem mức sử dụng tại đây."
+    "tableCost": "Chi phí",
+    "noCalls": "Chưa có lượt gọi nào. Tạo một key và gọi một agent để xem mức sử dụng tại đây.",
+    "billing": "Tín dụng & thanh toán",
+    "creditBalance": "Số dư tín dụng",
+    "totalSpend": "Tổng chi tiêu",
+    "topUpComingSoon": "Hiện tại tín dụng do nền tảng nạp; tính năng tự nạp qua Stripe sẽ sớm ra mắt.",
+    "noLedger": "Chưa có biến động tín dụng.",
+    "ledgerType": "Loại",
+    "ledgerAmount": "Số tiền",
+    "ledgerNote": "Ghi chú",
+    "ledgerTopUp": "Nạp tiền",
+    "ledgerTopUpFee": "Phí nạp tiền",
+    "ledgerDebit": "Phí gọi",
+    "ledgerPayout": "Chi trả",
+    "ledgerRefund": "Hoàn tiền",
+    "ledgerAdjust": "Điều chỉnh"
   },
   "Profile": {
     "title": "Hồ sơ của tôi",

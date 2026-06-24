@@ -490,7 +490,22 @@
     "tableStatus": "الحالة",
     "tableLatency": "زمن الاستجابة",
     "tableWhen": "الوقت",
-    "noCalls": "لا استدعاءات بعد. أنشئ مفتاحًا واستدعِ وكيلًا لرؤية الاستخدام هنا."
+    "tableCost": "التكلفة",
+    "noCalls": "لا استدعاءات بعد. أنشئ مفتاحًا واستدعِ وكيلًا لرؤية الاستخدام هنا.",
+    "billing": "الرصيد والفوترة",
+    "creditBalance": "رصيد الاعتماد",
+    "totalSpend": "إجمالي الإنفاق",
+    "topUpComingSoon": "تتم إضافة الرصيد من قِبل المنصّة حاليًا؛ وسيتوفّر الشحن الذاتي عبر Stripe قريبًا.",
+    "noLedger": "لا توجد حركات رصيد بعد.",
+    "ledgerType": "النوع",
+    "ledgerAmount": "المبلغ",
+    "ledgerNote": "ملاحظة",
+    "ledgerTopUp": "شحن",
+    "ledgerTopUpFee": "رسوم الشحن",
+    "ledgerDebit": "رسوم الاستدعاء",
+    "ledgerPayout": "تسوية",
+    "ledgerRefund": "استرداد",
+    "ledgerAdjust": "تعديل"
   },
   "Profile": {
     "title": "ملفّي الشخصي",
