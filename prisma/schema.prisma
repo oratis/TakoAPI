@@ -574,12 +574,12 @@ model Invocation {
 
 // ─────────────────────────────────────────────────────────────
 // Commercial / ledger (Phase 3) — prepaid credits + immutable ledger.
-// Stripe top-up lands later; the gateway debits on each billed invocation.
+// PayPal top-up lands later; the gateway debits on each billed invocation.
 // See docs/agent-marketplace/04-data-model.md §2.
 // ─────────────────────────────────────────────────────────────
 
 enum LedgerType {
-  TOPUP // Stripe credit purchase
+  TOPUP // credit purchase (PayPal)
   TOPUP_FEE // platform fee on a top-up
   DEBIT // agent call charge
   PAYOUT // settlement to a publisher
@@ -600,7 +600,7 @@ model LedgerEntry {
   type         LedgerType
   amountUsd    Decimal    @db.Decimal(14, 6) // +credit / -debit
   invocationId String? // set for DEBIT entries
-  stripeRef    String? // set for TOPUP / REFUND
+  providerRef  String? // PayPal order/capture id, set for TOPUP / REFUND
   note         String?
   createdAt    DateTime   @default(now())
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)

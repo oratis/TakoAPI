@@ -110,7 +110,7 @@
 5. **统一账单是最尖锐的痛点**：今天对接多 agent = N 合同/N 账单/N 鉴权。**「一个 key、一张账单、任意 agent」可被直接演示**——这正是 OpenRouter 赢过裸 provider key 的原因。营销主打**整合**，而非**目录大小**。
 6. **先赢开发者，别打企业采购的仗**：企业市集都 gated 在 partner program + 销售流程后面。精益打法靠 **self-serve + credits + BYOK + docs-first** 自底向上（OpenRouter/Helicone 的剧本）。
 7. **做中立瑞士**：结构性优势是**不卖一方 agent、不绑一朵云**——和 OpenRouter 对各模型厂的中立信任位一样。把**中立 + 可移植 + BYOK** 当成承重的品牌承诺。
-8. **刻意选开发者基础设施 beachhead**：消费者 storefront 赛道（MuleRun/Replit/agent.ai）正在变挤。去做**每个市集、每个 agent builder 调用其它 agent 时都要打的那个 API/SDK**——像 Stripe 坐在所有 storefront 底下。面更小、嵌入后更难替换，也最贴 slogan。
+8. **刻意选开发者基础设施 beachhead**：消费者 storefront 赛道（MuleRun/Replit/agent.ai）正在变挤。去做**每个市集、每个 agent builder 调用其它 agent 时都要打的那个 API/SDK**——像 PayPal 坐在所有 storefront 底下。面更小、嵌入后更难替换，也最贴 slogan。
 
 ## ⚠️ 下注前要复核的点
 

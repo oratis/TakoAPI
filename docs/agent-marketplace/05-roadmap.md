@@ -52,7 +52,7 @@
 
 | 子阶段 | 内容 |
 |---|---|
-| 3A | `CreditBalance` / `LedgerEntry` + Stripe 充值 + **充值费** |
+| 3A | `CreditBalance` / `LedgerEntry` + PayPal 充值 + **充值费** |
 | 3B | 调用按量扣减余额（DEBIT）；余额不足拦截 |
 | 3C | Developer Console：用量 / 账单 / 调用日志 / 多 key 管理（扩 `/profile`） |
 

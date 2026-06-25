@@ -48,7 +48,7 @@
 - **开发者优先**（API/SDK，self-serve）
 - 消费者优先（浏览/运行 agent 的 storefront）
 
-**推荐**：**开发者优先**——做基础设施（Stripe-under-storefronts），避开变挤的消费者赛道。
+**推荐**：**开发者优先**——做基础设施（PayPal-under-storefronts），避开变挤的消费者赛道。
 **影响**：决定首屏、文档、SDK 投入与 GTM。
 
 ---

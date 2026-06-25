@@ -95,7 +95,7 @@
 
 > 详见 [03 §计费与计量](03-technical-architecture.md)。产品侧规则：
 
-- **预付 credits**（Stripe 充值），调用按量扣减。
+- **预付 credits**（PayPal 充值），调用按量扣减。
 - **充值费 ~5%**（OpenRouter 式，主要收入线）。
 - 计量单位：**per-call / per-task**（不透明第三方 agent）或 **per-token**（模型类 agent）。
 - **BYOK toll**：用户带自己的上游 key 时收薄费（进阶）。
