@@ -15,6 +15,7 @@
     "publishAgent": "エージェントを公開",
     "account": "アカウント",
     "mySkills": "マイスキル",
+    "myBookmarks": "ブックマーク",
     "apiUsage": "API・利用状況",
     "adminPanel": "管理パネル",
     "signIn": "サインイン",
@@ -618,5 +619,13 @@
     "bookmark": "保存",
     "bookmarked": "保存済み",
     "signInToRate": "ログインすると評価・保存できます"
+  },
+  "Bookmarks": {
+    "title": "保存したエージェント",
+    "subtitle": "ブックマークしたエージェント。",
+    "empty": "まだブックマークはありません。",
+    "browseAgents": "エージェントを見る",
+    "signInPrompt": "ログインするとブックマークを表示できます。",
+    "signIn": "ログイン"
   }
 }

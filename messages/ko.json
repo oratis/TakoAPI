@@ -15,6 +15,7 @@
     "publishAgent": "에이전트 게시",
     "account": "계정",
     "mySkills": "내 스킬",
+    "myBookmarks": "북마크",
     "apiUsage": "API 및 사용량",
     "adminPanel": "관리자 패널",
     "signIn": "로그인",
@@ -618,5 +619,13 @@
     "bookmark": "저장",
     "bookmarked": "저장됨",
     "signInToRate": "로그인하면 평가하거나 저장할 수 있습니다"
+  },
+  "Bookmarks": {
+    "title": "저장한 에이전트",
+    "subtitle": "북마크한 에이전트입니다.",
+    "empty": "아직 북마크가 없습니다.",
+    "browseAgents": "에이전트 둘러보기",
+    "signInPrompt": "로그인하면 북마크를 볼 수 있습니다.",
+    "signIn": "로그인"
   }
 }
