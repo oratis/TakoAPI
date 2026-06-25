@@ -58,6 +58,9 @@ export default function DashboardPage() {
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [topupAmount, setTopupAmount] = useState("10");
+  const [topupBusy, setTopupBusy] = useState(false);
+  const [topupMsg, setTopupMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [k, u, b] = await Promise.all([
@@ -73,6 +76,18 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === "authenticated") load();
   }, [status, load]);
+
+  // Surface the PayPal return status (?topup=success|error|cancel) once, then strip
+  // it from the URL so a refresh doesn't re-show it. Balance is refreshed by load().
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const m = sp.get("topup");
+    if (!m) return;
+    setTopupMsg(m);
+    sp.delete("topup");
+    const qs = sp.toString();
+    window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, []);
 
   if (status === "loading") return null;
   if (!session) {
@@ -116,6 +131,38 @@ export default function DashboardPage() {
     navigator.clipboard?.writeText(newKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const topUp = async () => {
+    const amt = Number(topupAmount);
+    if (!Number.isFinite(amt) || amt < 5) {
+      setTopupMsg("error");
+      return;
+    }
+    setTopupBusy(true);
+    try {
+      const res = await fetch("/api/billing/topup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amountUsd: amt }),
+      });
+      const data = await res.json();
+      if (res.ok && data.approveUrl) {
+        window.location.href = data.approveUrl; // off to PayPal for approval
+      } else {
+        setTopupMsg("error");
+        setTopupBusy(false);
+      }
+    } catch {
+      setTopupMsg("error");
+      setTopupBusy(false);
+    }
+  };
+
+  const topupMessages: Record<string, string> = {
+    success: t("topUpSuccess"),
+    error: t("topUpError"),
+    cancel: t("topUpCancel"),
   };
 
   const ledgerLabels: Record<string, string> = {
@@ -225,7 +272,38 @@ curl https://takoapi.com/v1/chat/completions \\
           </div>
         </div>
 
-        {!billing?.topUpEnabled && (
+        {billing?.topUpEnabled ? (
+          <div className="mb-5 rounded-xl border border-gray-200 bg-white p-4">
+            <label htmlFor="topup" className="block text-xs text-gray-500 mb-2">{t("topUpLabel")}</label>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                <input
+                  id="topup"
+                  type="number"
+                  min={5}
+                  max={500}
+                  step={1}
+                  value={topupAmount}
+                  onChange={(e) => setTopupAmount(e.target.value)}
+                  className="w-28 pl-6 pr-3 py-2 rounded-lg border border-gray-200 text-sm"
+                />
+              </div>
+              <button
+                onClick={topUp}
+                disabled={topupBusy}
+                className="inline-flex items-center gap-1.5 bg-[#0070ba] text-white text-sm px-4 py-2 rounded-full font-medium hover:bg-[#005c99] disabled:opacity-50"
+              >
+                {topupBusy ? t("topUpRedirecting") : t("topUpButton")}
+              </button>
+            </div>
+            {topupMsg && topupMessages[topupMsg] && (
+              <p className={`mt-2 text-xs ${topupMsg === "success" ? "text-green-600" : topupMsg === "cancel" ? "text-gray-500" : "text-red-500"}`}>
+                {topupMessages[topupMsg]}
+              </p>
+            )}
+          </div>
+        ) : (
           <p className="mb-5 rounded-xl border border-dashed border-gray-200 p-4 text-xs text-gray-500">
             {t("topUpComingSoon")}
           </p>
