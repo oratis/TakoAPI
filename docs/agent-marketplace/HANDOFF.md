@@ -51,14 +51,14 @@ takoapi.com。先读 docs/agent-marketplace/HANDOFF.md 和 00–06,再动手。�
 ## 4. 接下来做什么
 
 ### 需要用户(做不了)
-- **Stripe key** → Phase 3 计费(credits 充值/扣费;计量已在落 `Invocation`)。
+- **PayPal key** → Phase 3 计费(credits 充值/扣费;计量已在落 `Invocation`)。
 - **Cloud SQL 升配 + PgBouncer + Upstash Redis**(付费/账号)→ 网关上真实流量前。现在是 `db-f1-micro` + 内存限流。
 
 ### 现在就能做(无外部依赖)
 - **扩项目目录**:`scripts/scrape-github-agents.ts`(token 有效;池子 1,105 个唯一,现导入 top 400)。调大 `MAX_AGENTS`/`PAGES`,经 cloud-sql-proxy + `PROD_URL` 跑生产即可扩更多。
 - **首页加「热门开源项目」**(现首页只 feature 43 个 HOSTED)。
 - **提高 `/api/registry` 上限**(现 `take: 200`,库里 493)。
-- **Phase 3 内部账本**(`CreditBalance`/`LedgerEntry` schema + 扣费逻辑,除 Stripe 充值外)。
+- **Phase 3 内部账本**(`CreditBalance`/`LedgerEntry` schema + 扣费逻辑,除 PayPal 充值外)。
 - **agent 健康检查**(schema 有 `healthStatus`/`healthCheckedAt`,做 cron/endpoint ping HOSTED)。
 - **再导真实 HOSTED agent**(从 a2aregistry.org / awesome-a2a 抓 AgentCard 验证后入库)。
 

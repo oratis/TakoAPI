@@ -143,7 +143,7 @@ model LedgerEntry {                                   // 不可变流水
   type          LedgerType
   amountUsd     Decimal    @db.Decimal(14, 6)         // +充值/-扣费
   invocationId  String?                               // DEBIT 关联调用
-  stripeRef     String?                               // 充值/退款
+  providerRef     String?                               // 充值/退款
   note          String?
   createdAt     DateTime   @default(now())
   @@index([userId, createdAt])
@@ -156,7 +156,7 @@ model Payout {                                        // 给 publisher 结算
   periodStart DateTime
   periodEnd   DateTime
   status      String   @default("pending")            // pending/paid/failed
-  stripeRef   String?
+  providerRef   String?
   createdAt   DateTime @default(now())
   @@index([publisherId, status])
 }

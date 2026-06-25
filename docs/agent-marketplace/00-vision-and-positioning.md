@@ -106,4 +106,4 @@
 - 不自建/托管运行第三方 agent（选项 C）。
 - 不做复杂多 metric 定价、不做企业 postpaid 发票（先 prepaid credits）。
 - 不自研支付协议；agentic payments（x402 / AP2 / ACP）**仅观察**，非 v1 依赖（见 [03 §计费](03-technical-architecture.md) 与 [01](01-landscape-and-standards.md)）。
-- 不做又一个「消费者浏览 agent」的 storefront——我们做**开发者基础设施**（storefront 底下的 Stripe）。
+- 不做又一个「消费者浏览 agent」的 storefront——我们做**开发者基础设施**（storefront 底下的 PayPal）。

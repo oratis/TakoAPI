@@ -22,7 +22,7 @@
         ▼ (JSON-RPC / SSE / HTTP)            ┌─ 旁路 ─────────────────┐
    上游第三方 agents                          │ Postgres(经 PgBouncer)  │
    (A2A servers / OpenAI-compat / MCP)        │ Upstash Redis           │
-                                              │ Stripe（credits/账单）   │
+                                              │ PayPal（credits/账单）   │
                                               │ 可观测(OTel/Langfuse)    │
                                               └────────────────────────┘
 ```
@@ -55,7 +55,7 @@
 
 ## 6. 计费
 
-- **Stripe + 预付 credits + 充值费**（OpenRouter 验证过的模型，见 [01](01-landscape-and-standards.md)）。先**不做** postpaid 发票。
+- **PayPal + 预付 credits + 充值费**（OpenRouter 验证过的模型，见 [01](01-landscape-and-standards.md)）。先**不做** postpaid 发票。
 - 余额账本：充值 → 调用扣减 → publisher 分成 → 结算（数据模型见 [04](04-data-model.md)）。
 
 ## 7. 弹性（对付不稳定的上游 agent）
@@ -112,6 +112,6 @@
 | A2A 透传代理（同步 + SSE） | BYOK toll |
 | Redis 限流 + log→agg 计量 | 智能路由（price/latency/success） |
 | OpenAI 兼容 shim | 异步长任务（>60min, task+webhook） |
-| Stripe + prepaid credits + 充值费 | MCP 工具聚合 |
+| PayPal + prepaid credits + 充值费 | MCP 工具聚合 |
 | PgBouncer + 升配 Cloud SQL + Upstash | agentic payments（x402/AP2/ACP）——**仅观察** |
 | 日志脱敏 + 基础 OTel/Langfuse | 沙箱化运行不可信 agent、内容审核、publisher 强验证 |

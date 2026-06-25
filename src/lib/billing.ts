@@ -3,7 +3,8 @@ import type { AgentProtocol, LedgerType, PricingModel } from "@prisma/client";
 
 // Phase 3 billing — metering + prepaid-credit ledger. The gateway records every
 // call and, when it has a cost, debits the caller's balance against an immutable
-// ledger. Stripe top-up is not wired yet; `grantCredit` funds balances meanwhile.
+// ledger. PayPal top-up (src/lib/paypal.ts + /api/billing/topup) credits balances
+// via `grantCredit`; internal grants/admin adjustments use it too.
 // See docs/agent-marketplace/03-technical-architecture.md §5–6 and 04-data-model.md §2.
 
 /**
@@ -79,18 +80,18 @@ export async function meterInvocation(input: MeterInput): Promise<void> {
 
 /**
  * Add credits to a user's balance and record the matching ledger entry, atomically.
- * Used for internal grants / admin adjustments now; the Stripe top-up flow will call
- * this with type=TOPUP once wired. Returns the new balance in USD.
+ * Used by the PayPal top-up capture (type=TOPUP) and for internal grants / admin
+ * adjustments. Returns the new balance in USD.
  */
 export async function grantCredit(
   userId: string,
   amountUsd: number,
-  opts: { type?: LedgerType; note?: string; stripeRef?: string } = {}
+  opts: { type?: LedgerType; note?: string; providerRef?: string } = {}
 ): Promise<number> {
   const type: LedgerType = opts.type ?? "TOPUP";
   const balance = await prisma.$transaction(async (tx) => {
     await tx.ledgerEntry.create({
-      data: { userId, type, amountUsd, note: opts.note ?? null, stripeRef: opts.stripeRef ?? null },
+      data: { userId, type, amountUsd, note: opts.note ?? null, providerRef: opts.providerRef ?? null },
     });
     const cb = await tx.creditBalance.upsert({
       where: { userId },

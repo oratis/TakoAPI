@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getBalance } from "@/lib/billing";
+import { paypalConfigured } from "@/lib/paypal";
 import { unauthorized } from "@/lib/api";
 
 // Credits + ledger summary for the current user. Backs the dashboard billing
 // panel. Balance and the immutable ledger are written by src/lib/billing.ts
-// (DEBIT on each billed call; TOPUP once Stripe is wired). Read-only here.
+// (DEBIT on each billed call; TOPUP on PayPal top-up). Read-only here.
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return unauthorized();
@@ -23,8 +24,9 @@ export async function GET() {
 
   return NextResponse.json({
     balanceUsd,
-    // Stripe top-up isn't wired yet — the UI shows credits as read-only until then.
-    topUpEnabled: false,
+    // PayPal top-up turns on automatically once PAYPAL_CLIENT_ID/SECRET are set;
+    // until then the UI shows credits as read-only.
+    topUpEnabled: paypalConfigured(),
     ledger: ledger.map((e) => ({
       id: e.id,
       type: e.type,
