@@ -490,7 +490,22 @@
     "tableStatus": "ステータス",
     "tableLatency": "レイテンシ",
     "tableWhen": "日時",
-    "noCalls": "呼び出しがまだありません。キーを作成してエージェントを呼び出すと、ここに利用状況が表示されます。"
+    "tableCost": "料金",
+    "noCalls": "呼び出しがまだありません。キーを作成してエージェントを呼び出すと、ここに利用状況が表示されます。",
+    "billing": "クレジットと請求",
+    "creditBalance": "クレジット残高",
+    "totalSpend": "合計利用額",
+    "topUpComingSoon": "現在クレジットはプラットフォームが付与しています。Stripe によるセルフチャージは近日対応予定です。",
+    "noLedger": "クレジットの履歴はまだありません。",
+    "ledgerType": "種類",
+    "ledgerAmount": "金額",
+    "ledgerNote": "メモ",
+    "ledgerTopUp": "チャージ",
+    "ledgerTopUpFee": "チャージ手数料",
+    "ledgerDebit": "呼び出し料金",
+    "ledgerPayout": "支払い",
+    "ledgerRefund": "返金",
+    "ledgerAdjust": "調整"
   },
   "Profile": {
     "title": "マイプロフィール",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b>はレビュー待ちになりました。",
     "successDetail": "AgentCardを検証し、承認され次第マーケットプレイスに公開します。",
     "backToMarketplace": "← マーケットプレイスに戻る"
+  },
+  "AgentEngagement": {
+    "yourRating": "あなたの評価",
+    "ratingsCount": "{count, number} 件の評価",
+    "noRatings": "まだ評価がありません",
+    "bookmark": "保存",
+    "bookmarked": "保存済み",
+    "signInToRate": "ログインすると評価・保存できます"
   }
 }

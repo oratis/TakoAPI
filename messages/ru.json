@@ -490,7 +490,22 @@
     "tableStatus": "Статус",
     "tableLatency": "Задержка",
     "tableWhen": "Когда",
-    "noCalls": "Пока нет вызовов. Создайте ключ и вызовите агента, чтобы увидеть использование здесь."
+    "tableCost": "Стоимость",
+    "noCalls": "Пока нет вызовов. Создайте ключ и вызовите агента, чтобы увидеть использование здесь.",
+    "billing": "Кредиты и оплата",
+    "creditBalance": "Баланс кредитов",
+    "totalSpend": "Всего потрачено",
+    "topUpComingSoon": "Пока кредиты пополняет платформа; самостоятельное пополнение через Stripe появится скоро.",
+    "noLedger": "Пока нет движений по кредитам.",
+    "ledgerType": "Тип",
+    "ledgerAmount": "Сумма",
+    "ledgerNote": "Примечание",
+    "ledgerTopUp": "Пополнение",
+    "ledgerTopUpFee": "Комиссия за пополнение",
+    "ledgerDebit": "Списание за вызов",
+    "ledgerPayout": "Выплата",
+    "ledgerRefund": "Возврат",
+    "ledgerAdjust": "Корректировка"
   },
   "Profile": {
     "title": "Мой профиль",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b> теперь ожидает проверки.",
     "successDetail": "Мы проверим AgentCard и опубликуем её на маркетплейсе после одобрения.",
     "backToMarketplace": "← Назад на маркетплейс"
+  },
+  "AgentEngagement": {
+    "yourRating": "Ваша оценка",
+    "ratingsCount": "{count, number} оценок",
+    "noRatings": "Ещё нет оценок",
+    "bookmark": "Сохранить",
+    "bookmarked": "Сохранено",
+    "signInToRate": "Войдите, чтобы оценить или сохранить агента"
   }
 }

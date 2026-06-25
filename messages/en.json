@@ -490,7 +490,22 @@
     "tableStatus": "Status",
     "tableLatency": "Latency",
     "tableWhen": "When",
-    "noCalls": "No calls yet. Create a key and call an agent to see usage here."
+    "tableCost": "Cost",
+    "noCalls": "No calls yet. Create a key and call an agent to see usage here.",
+    "billing": "Credits & Billing",
+    "creditBalance": "Credit balance",
+    "totalSpend": "Total spend",
+    "topUpComingSoon": "Credits are funded by the platform for now — self-serve Stripe top-up is coming soon.",
+    "noLedger": "No credit activity yet.",
+    "ledgerType": "Type",
+    "ledgerAmount": "Amount",
+    "ledgerNote": "Note",
+    "ledgerTopUp": "Top-up",
+    "ledgerTopUpFee": "Top-up fee",
+    "ledgerDebit": "Call charge",
+    "ledgerPayout": "Payout",
+    "ledgerRefund": "Refund",
+    "ledgerAdjust": "Adjustment"
   },
   "Profile": {
     "title": "My Profile",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b> is now pending review.",
     "successDetail": "We'll verify the AgentCard and publish it to the marketplace once approved.",
     "backToMarketplace": "← Back to marketplace"
+  },
+  "AgentEngagement": {
+    "yourRating": "Your rating",
+    "ratingsCount": "{count, number} ratings",
+    "noRatings": "Not yet rated",
+    "bookmark": "Save",
+    "bookmarked": "Saved",
+    "signInToRate": "Sign in to rate or save this agent"
   }
 }

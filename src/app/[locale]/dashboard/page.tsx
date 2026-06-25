@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { KeyRound, Copy, Check, Trash2, Activity, Zap } from "lucide-react";
+import { KeyRound, Copy, Check, Trash2, Activity, Zap, Wallet } from "lucide-react";
 
 type ApiKeyRow = {
   id: string;
@@ -16,6 +16,7 @@ type ApiKeyRow = {
 type Usage = {
   totalCalls: number;
   agentsUsed: number;
+  totalSpendUsd: number;
   recent: Array<{
     id: string;
     agent: string;
@@ -23,26 +24,50 @@ type Usage = {
     protocol: string;
     status: number;
     latencyMs: number | null;
+    billedUsd: number | null;
     createdAt: string;
   }>;
 };
+type Billing = {
+  balanceUsd: number;
+  topUpEnabled: boolean;
+  ledger: Array<{
+    id: string;
+    type: string;
+    amountUsd: number;
+    note: string | null;
+    createdAt: string;
+  }>;
+};
+
+// USD formatter: 2 decimals normally, more precision for small non-zero amounts
+// (per-call charges can be fractions of a cent).
+function fmtUsd(n: number): string {
+  const abs = Math.abs(n);
+  const decimals = abs > 0 && abs < 0.01 ? 4 : 2;
+  const sign = n < 0 ? "-" : "";
+  return `${sign}$${abs.toFixed(decimals)}`;
+}
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const { data: session, status } = useSession();
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [usage, setUsage] = useState<Usage | null>(null);
+  const [billing, setBilling] = useState<Billing | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
-    const [k, u] = await Promise.all([
+    const [k, u, b] = await Promise.all([
       fetch("/api/keys").then((r) => r.json()).catch(() => ({ keys: [] })),
       fetch("/api/usage").then((r) => r.json()).catch(() => null),
+      fetch("/api/billing").then((r) => r.json()).catch(() => null),
     ]);
     setKeys(k.keys || []);
     setUsage(u);
+    setBilling(b);
   }, []);
 
   useEffect(() => {
@@ -92,6 +117,16 @@ export default function DashboardPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const ledgerLabels: Record<string, string> = {
+    TOPUP: t("ledgerTopUp"),
+    TOPUP_FEE: t("ledgerTopUpFee"),
+    DEBIT: t("ledgerDebit"),
+    PAYOUT: t("ledgerPayout"),
+    REFUND: t("ledgerRefund"),
+    ADJUST: t("ledgerAdjust"),
+  };
+  const ledgerLabel = (type: string) => ledgerLabels[type] ?? type;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -173,6 +208,59 @@ curl https://takoapi.com/v1/chat/completions \\
         </div>
       </section>
 
+      {/* Credits & Billing */}
+      <section className="mb-10">
+        <div className="flex items-center gap-2 mb-4">
+          <Wallet className="h-5 w-5 text-purple-600" />
+          <h2 className="text-lg font-semibold">{t("billing")}</h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-2xl font-bold">{fmtUsd(billing?.balanceUsd ?? 0)}</p>
+            <p className="text-xs text-gray-400">{t("creditBalance")}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-2xl font-bold">{fmtUsd(usage?.totalSpendUsd ?? 0)}</p>
+            <p className="text-xs text-gray-400">{t("totalSpend")}</p>
+          </div>
+        </div>
+
+        {!billing?.topUpEnabled && (
+          <p className="mb-5 rounded-xl border border-dashed border-gray-200 p-4 text-xs text-gray-500">
+            {t("topUpComingSoon")}
+          </p>
+        )}
+
+        {billing && billing.ledger.length > 0 ? (
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-400 text-xs">
+                <tr>
+                  <th className="text-start px-4 py-2 font-medium">{t("ledgerType")}</th>
+                  <th className="text-start px-4 py-2 font-medium">{t("ledgerAmount")}</th>
+                  <th className="text-start px-4 py-2 font-medium">{t("ledgerNote")}</th>
+                  <th className="text-start px-4 py-2 font-medium">{t("tableWhen")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {billing.ledger.map((e) => (
+                  <tr key={e.id} className="border-t border-gray-100">
+                    <td className="px-4 py-2 text-gray-600">{ledgerLabel(e.type)}</td>
+                    <td className="px-4 py-2">
+                      <span className={e.amountUsd >= 0 ? "text-green-600" : "text-red-500"}>{fmtUsd(e.amountUsd)}</span>
+                    </td>
+                    <td className="px-4 py-2 text-gray-500">{e.note || "—"}</td>
+                    <td className="px-4 py-2 text-gray-400">{new Date(e.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">{t("noLedger")}</p>
+        )}
+      </section>
+
       {/* Usage */}
       <section>
         <div className="flex items-center gap-2 mb-4">
@@ -199,6 +287,7 @@ curl https://takoapi.com/v1/chat/completions \\
                   <th className="text-start px-4 py-2 font-medium">{t("tableProtocol")}</th>
                   <th className="text-start px-4 py-2 font-medium">{t("tableStatus")}</th>
                   <th className="text-start px-4 py-2 font-medium">{t("tableLatency")}</th>
+                  <th className="text-start px-4 py-2 font-medium">{t("tableCost")}</th>
                   <th className="text-start px-4 py-2 font-medium">{t("tableWhen")}</th>
                 </tr>
               </thead>
@@ -211,6 +300,7 @@ curl https://takoapi.com/v1/chat/completions \\
                       <span className={r.status >= 200 && r.status < 300 ? "text-green-600" : "text-red-500"}>{r.status}</span>
                     </td>
                     <td className="px-4 py-2 text-gray-500">{r.latencyMs != null ? `${r.latencyMs}ms` : "—"}</td>
+                    <td className="px-4 py-2 text-gray-500">{r.billedUsd != null && r.billedUsd > 0 ? fmtUsd(r.billedUsd) : "—"}</td>
                     <td className="px-4 py-2 text-gray-400">{new Date(r.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}

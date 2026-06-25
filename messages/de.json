@@ -490,7 +490,22 @@
     "tableStatus": "Status",
     "tableLatency": "Latenz",
     "tableWhen": "Wann",
-    "noCalls": "Noch keine Aufrufe. Erstelle einen Schlüssel und rufe einen Agenten auf, um die Nutzung hier zu sehen."
+    "tableCost": "Kosten",
+    "noCalls": "Noch keine Aufrufe. Erstelle einen Schlüssel und rufe einen Agenten auf, um die Nutzung hier zu sehen.",
+    "billing": "Guthaben & Abrechnung",
+    "creditBalance": "Guthaben",
+    "totalSpend": "Gesamtausgaben",
+    "topUpComingSoon": "Guthaben wird vorerst von der Plattform aufgeladen – Self-Service-Aufladung über Stripe folgt in Kürze.",
+    "noLedger": "Noch keine Guthabenbewegungen.",
+    "ledgerType": "Typ",
+    "ledgerAmount": "Betrag",
+    "ledgerNote": "Notiz",
+    "ledgerTopUp": "Aufladung",
+    "ledgerTopUpFee": "Aufladegebühr",
+    "ledgerDebit": "Abrufgebühr",
+    "ledgerPayout": "Auszahlung",
+    "ledgerRefund": "Rückerstattung",
+    "ledgerAdjust": "Anpassung"
   },
   "Profile": {
     "title": "Mein Profil",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b> wartet nun auf die Prüfung.",
     "successDetail": "Wir verifizieren die AgentCard und veröffentlichen sie nach der Genehmigung auf dem Marktplatz.",
     "backToMarketplace": "← Zurück zum Marktplatz"
+  },
+  "AgentEngagement": {
+    "yourRating": "Deine Bewertung",
+    "ratingsCount": "{count, number} Bewertungen",
+    "noRatings": "Noch nicht bewertet",
+    "bookmark": "Merken",
+    "bookmarked": "Gemerkt",
+    "signInToRate": "Melde dich an, um zu bewerten oder zu speichern"
   }
 }

@@ -490,7 +490,22 @@
     "tableStatus": "Status",
     "tableLatency": "Latensi",
     "tableWhen": "Waktu",
-    "noCalls": "Belum ada panggilan. Buat kunci dan panggil agen untuk melihat penggunaan di sini."
+    "tableCost": "Biaya",
+    "noCalls": "Belum ada panggilan. Buat kunci dan panggil agen untuk melihat penggunaan di sini.",
+    "billing": "Kredit & Tagihan",
+    "creditBalance": "Saldo kredit",
+    "totalSpend": "Total pengeluaran",
+    "topUpComingSoon": "Untuk saat ini kredit diisi oleh platform; isi ulang mandiri via Stripe segera hadir.",
+    "noLedger": "Belum ada aktivitas kredit.",
+    "ledgerType": "Jenis",
+    "ledgerAmount": "Jumlah",
+    "ledgerNote": "Catatan",
+    "ledgerTopUp": "Isi ulang",
+    "ledgerTopUpFee": "Biaya isi ulang",
+    "ledgerDebit": "Biaya panggilan",
+    "ledgerPayout": "Pembayaran",
+    "ledgerRefund": "Pengembalian dana",
+    "ledgerAdjust": "Penyesuaian"
   },
   "Profile": {
     "title": "Profil Saya",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b> kini menunggu tinjauan.",
     "successDetail": "Kami akan memverifikasi AgentCard dan menerbitkannya ke marketplace setelah disetujui.",
     "backToMarketplace": "← Kembali ke marketplace"
+  },
+  "AgentEngagement": {
+    "yourRating": "Penilaian Anda",
+    "ratingsCount": "{count, number} penilaian",
+    "noRatings": "Belum ada penilaian",
+    "bookmark": "Simpan",
+    "bookmarked": "Tersimpan",
+    "signInToRate": "Masuk untuk menilai atau menyimpan agen ini"
   }
 }

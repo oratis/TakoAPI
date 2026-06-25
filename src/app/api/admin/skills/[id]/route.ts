@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin, unauthorized, logAdminAction } from "@/lib/admin";
+import { withAdmin, logAdminAction } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import type { SkillStatus } from "@prisma/client";
 
@@ -25,100 +25,98 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin(req);
-  if (!admin) return unauthorized();
+  return withAdmin(req, "/api/admin/skills/[id]", async (admin) => {
+    const { id } = await params;
+    const data = await req.json();
 
-  const { id } = await params;
-  const data = await req.json();
+    const updateData: Record<string, unknown> = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (data[key] !== undefined) updateData[key] = data[key];
+    }
 
-  const updateData: Record<string, unknown> = {};
-  for (const key of ALLOWED_FIELDS) {
-    if (data[key] !== undefined) updateData[key] = data[key];
-  }
+    if (updateData.status && !VALID_STATUSES.includes(updateData.status as SkillStatus)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
 
-  if (updateData.status && !VALID_STATUSES.includes(updateData.status as SkillStatus)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
-
-  const existing = await prisma.skill.findUnique({
-    where: { id },
-    select: { status: true, categoryId: true },
-  });
-  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const skill = await prisma.$transaction(async (tx) => {
-    const updated = await tx.skill.update({
+    const existing = await prisma.skill.findUnique({
       where: { id },
-      data: updateData,
-      include: { category: { select: { name: true } } },
+      select: { status: true, categoryId: true },
+    });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const skill = await prisma.$transaction(async (tx) => {
+      const updated = await tx.skill.update({
+        where: { id },
+        data: updateData,
+        include: { category: { select: { name: true } } },
+      });
+
+      // Keep category.skillCount in sync when status or category change
+      const wasApproved = existing.status === "APPROVED";
+      const isApproved = updated.status === "APPROVED";
+      const categoryChanged = existing.categoryId !== updated.categoryId;
+
+      if (!wasApproved && isApproved) {
+        await tx.category.update({
+          where: { id: updated.categoryId },
+          data: { skillCount: { increment: 1 } },
+        });
+      } else if (wasApproved && !isApproved) {
+        await tx.category.update({
+          where: { id: existing.categoryId },
+          data: { skillCount: { decrement: 1 } },
+        });
+      } else if (wasApproved && isApproved && categoryChanged) {
+        await tx.category.update({
+          where: { id: existing.categoryId },
+          data: { skillCount: { decrement: 1 } },
+        });
+        await tx.category.update({
+          where: { id: updated.categoryId },
+          data: { skillCount: { increment: 1 } },
+        });
+      }
+      return updated;
     });
 
-    // Keep category.skillCount in sync when status or category change
-    const wasApproved = existing.status === "APPROVED";
-    const isApproved = updated.status === "APPROVED";
-    const categoryChanged = existing.categoryId !== updated.categoryId;
+    await logAdminAction(
+      admin.id,
+      "update",
+      "skill",
+      id,
+      `Updated: ${Object.keys(updateData).join(", ")}`
+    );
 
-    if (!wasApproved && isApproved) {
-      await tx.category.update({
-        where: { id: updated.categoryId },
-        data: { skillCount: { increment: 1 } },
-      });
-    } else if (wasApproved && !isApproved) {
-      await tx.category.update({
-        where: { id: existing.categoryId },
-        data: { skillCount: { decrement: 1 } },
-      });
-    } else if (wasApproved && isApproved && categoryChanged) {
-      await tx.category.update({
-        where: { id: existing.categoryId },
-        data: { skillCount: { decrement: 1 } },
-      });
-      await tx.category.update({
-        where: { id: updated.categoryId },
-        data: { skillCount: { increment: 1 } },
-      });
-    }
-    return updated;
+    return NextResponse.json(skill);
   });
-
-  await logAdminAction(
-    admin.id,
-    "update",
-    "skill",
-    id,
-    `Updated: ${Object.keys(updateData).join(", ")}`
-  );
-
-  return NextResponse.json(skill);
 }
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin(req);
-  if (!admin) return unauthorized();
+  return withAdmin(req, "/api/admin/skills/[id]", async (admin) => {
+    const { id } = await params;
 
-  const { id } = await params;
+    const skill = await prisma.skill.findUnique({
+      where: { id },
+      select: { name: true, categoryId: true, status: true },
+    });
+    if (!skill) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const skill = await prisma.skill.findUnique({
-    where: { id },
-    select: { name: true, categoryId: true, status: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.like.deleteMany({ where: { skillId: id } });
+      await tx.skill.delete({ where: { id } });
+      if (skill.status === "APPROVED") {
+        await tx.category.update({
+          where: { id: skill.categoryId },
+          data: { skillCount: { decrement: 1 } },
+        });
+      }
+    });
+
+    await logAdminAction(admin.id, "delete", "skill", id, `Deleted: ${skill.name}`);
+
+    return NextResponse.json({ success: true });
   });
-  if (!skill) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  await prisma.$transaction(async (tx) => {
-    await tx.like.deleteMany({ where: { skillId: id } });
-    await tx.skill.delete({ where: { id } });
-    if (skill.status === "APPROVED") {
-      await tx.category.update({
-        where: { id: skill.categoryId },
-        data: { skillCount: { decrement: 1 } },
-      });
-    }
-  });
-
-  await logAdminAction(admin.id, "delete", "skill", id, `Deleted: ${skill.name}`);
-
-  return NextResponse.json({ success: true });
 }

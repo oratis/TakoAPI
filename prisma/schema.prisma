@@ -34,6 +34,8 @@ model User {
   skills        Skill[]
   creditBalance CreditBalance?
   ledgerEntries LedgerEntry[]
+  agentRatings   AgentRating[]
+  agentBookmarks AgentBookmark[]
 }
 
 model Account {
@@ -444,9 +446,10 @@ model Agent {
   homepage   String?
   logo       String?
   featured   Boolean  @default(false)
-  likesCount Int      @default(0)
-  callsCount Int      @default(0)
-  avgRating  Float    @default(0)
+  likesCount  Int     @default(0)
+  callsCount  Int     @default(0)
+  avgRating   Float   @default(0)
+  ratingCount Int     @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -455,6 +458,8 @@ model Agent {
   skills      AgentSkillDef[]
   tags        AgentTag[]
   invocations Invocation[]
+  ratings     AgentRating[]
+  bookmarks   AgentBookmark[]
 
   @@index([status, categoryId])
   @@index([featured, callsCount(sort: Desc)])
@@ -487,6 +492,38 @@ model AgentTag {
 
   @@id([agentId, tagId])
   @@index([tagId])
+}
+
+// Per-user agent rating (1–5) + optional review. Additive and decoupled from
+// the Skill-scoped Rating model. avgRating/ratingCount on Agent are kept in
+// sync on each write. See src/app/api/agents/[slug]/rating/route.ts.
+model AgentRating {
+  id        String   @id @default(cuid())
+  userId    String
+  agentId   String
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agentId])
+  @@index([agentId])
+}
+
+// Per-user agent bookmark (toggle). Additive; decoupled from Skill Bookmark.
+model AgentBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  agentId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agentId])
+  @@index([userId])
+  @@index([agentId])
 }
 
 // ─────────────────────────────────────────────────────────────

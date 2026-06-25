@@ -490,7 +490,22 @@
     "tableStatus": "Statut",
     "tableLatency": "Latence",
     "tableWhen": "Quand",
-    "noCalls": "Aucun appel pour l'instant. Créez une clé et invoquez un agent pour voir l'utilisation ici."
+    "tableCost": "Coût",
+    "noCalls": "Aucun appel pour l'instant. Créez une clé et invoquez un agent pour voir l'utilisation ici.",
+    "billing": "Crédits et facturation",
+    "creditBalance": "Solde de crédits",
+    "totalSpend": "Dépense totale",
+    "topUpComingSoon": "Les crédits sont alimentés par la plateforme pour l’instant ; la recharge Stripe en libre-service arrive bientôt.",
+    "noLedger": "Aucun mouvement de crédit pour le moment.",
+    "ledgerType": "Type",
+    "ledgerAmount": "Montant",
+    "ledgerNote": "Note",
+    "ledgerTopUp": "Recharge",
+    "ledgerTopUpFee": "Frais de recharge",
+    "ledgerDebit": "Frais d’appel",
+    "ledgerPayout": "Versement",
+    "ledgerRefund": "Remboursement",
+    "ledgerAdjust": "Ajustement"
   },
   "Profile": {
     "title": "Mon profil",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b> est maintenant en attente de validation.",
     "successDetail": "Nous vérifierons l'AgentCard et le publierons sur la marketplace une fois approuvé.",
     "backToMarketplace": "← Retour à la marketplace"
+  },
+  "AgentEngagement": {
+    "yourRating": "Votre note",
+    "ratingsCount": "{count, number} avis",
+    "noRatings": "Pas encore noté",
+    "bookmark": "Enregistrer",
+    "bookmarked": "Enregistré",
+    "signInToRate": "Connectez-vous pour noter ou enregistrer cet agent"
   }
 }

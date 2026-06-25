@@ -490,7 +490,22 @@
     "tableStatus": "상태",
     "tableLatency": "지연 시간",
     "tableWhen": "시점",
-    "noCalls": "아직 호출이 없습니다. 키를 만들고 에이전트를 호출하면 여기에 사용량이 표시됩니다."
+    "tableCost": "비용",
+    "noCalls": "아직 호출이 없습니다. 키를 만들고 에이전트를 호출하면 여기에 사용량이 표시됩니다.",
+    "billing": "크레딧 및 결제",
+    "creditBalance": "크레딧 잔액",
+    "totalSpend": "총 사용액",
+    "topUpComingSoon": "현재 크레딧은 플랫폼에서 충전합니다. Stripe 셀프 충전은 곧 제공될 예정입니다.",
+    "noLedger": "아직 크레딧 내역이 없습니다.",
+    "ledgerType": "유형",
+    "ledgerAmount": "금액",
+    "ledgerNote": "메모",
+    "ledgerTopUp": "충전",
+    "ledgerTopUpFee": "충전 수수료",
+    "ledgerDebit": "호출 요금",
+    "ledgerPayout": "정산",
+    "ledgerRefund": "환불",
+    "ledgerAdjust": "조정"
   },
   "Profile": {
     "title": "내 프로필",
@@ -589,5 +604,13 @@
     "pendingReview": "<b>{name}</b>이(가) 이제 검토 대기 중입니다.",
     "successDetail": "AgentCard를 검증한 뒤 승인되면 마켓플레이스에 게시합니다.",
     "backToMarketplace": "← 마켓플레이스로 돌아가기"
+  },
+  "AgentEngagement": {
+    "yourRating": "내 평가",
+    "ratingsCount": "평가 {count, number}개",
+    "noRatings": "아직 평가 없음",
+    "bookmark": "저장",
+    "bookmarked": "저장됨",
+    "signInToRate": "로그인하면 평가하거나 저장할 수 있습니다"
   }
 }
