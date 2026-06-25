@@ -152,7 +152,7 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
             )}
             {agent.avgRating > 0 && (
               <span className="inline-flex items-center gap-1">
-                <Star className="h-3 w-3" />
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 {agent.avgRating.toFixed(1)}
               </span>
             )}

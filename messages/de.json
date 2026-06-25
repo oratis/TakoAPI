@@ -15,6 +15,7 @@
     "publishAgent": "Agent veröffentlichen",
     "account": "Konto",
     "mySkills": "Meine Skills",
+    "myBookmarks": "Lesezeichen",
     "apiUsage": "API & Nutzung",
     "adminPanel": "Admin-Panel",
     "signIn": "Anmelden",
@@ -618,5 +619,13 @@
     "bookmark": "Merken",
     "bookmarked": "Gemerkt",
     "signInToRate": "Melde dich an, um zu bewerten oder zu speichern"
+  },
+  "Bookmarks": {
+    "title": "Gespeicherte Agents",
+    "subtitle": "Von dir gemerkte Agents.",
+    "empty": "Noch keine Lesezeichen.",
+    "browseAgents": "Agents durchsuchen",
+    "signInPrompt": "Melde dich an, um deine Lesezeichen zu sehen.",
+    "signIn": "Anmelden"
   }
 }

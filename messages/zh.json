@@ -15,6 +15,7 @@
     "publishAgent": "发布智能体",
     "account": "账户",
     "mySkills": "我的技能",
+    "myBookmarks": "收藏",
     "apiUsage": "API 与用量",
     "adminPanel": "管理后台",
     "signIn": "登录",
@@ -618,5 +619,13 @@
     "bookmark": "收藏",
     "bookmarked": "已收藏",
     "signInToRate": "登录后即可评分或收藏"
+  },
+  "Bookmarks": {
+    "title": "收藏的智能体",
+    "subtitle": "你收藏的智能体。",
+    "empty": "还没有收藏。",
+    "browseAgents": "浏览智能体",
+    "signInPrompt": "登录后查看你的收藏。",
+    "signIn": "登录"
   }
 }

@@ -15,6 +15,7 @@
     "publishAgent": "Publier un agent",
     "account": "Compte",
     "mySkills": "Mes skills",
+    "myBookmarks": "Favoris",
     "apiUsage": "API et utilisation",
     "adminPanel": "Panneau d'administration",
     "signIn": "Se connecter",
@@ -618,5 +619,13 @@
     "bookmark": "Enregistrer",
     "bookmarked": "Enregistré",
     "signInToRate": "Connectez-vous pour noter ou enregistrer cet agent"
+  },
+  "Bookmarks": {
+    "title": "Agents enregistrés",
+    "subtitle": "Les agents que vous avez enregistrés.",
+    "empty": "Aucun favori pour l'instant.",
+    "browseAgents": "Parcourir les agents",
+    "signInPrompt": "Connectez-vous pour voir vos favoris.",
+    "signIn": "Se connecter"
   }
 }

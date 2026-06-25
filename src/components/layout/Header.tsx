@@ -81,6 +81,12 @@ export default function Header() {
                     {t("mySkills")}
                   </Link>
                   <Link
+                    href="/bookmarks"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    {t("myBookmarks")}
+                  </Link>
+                  <Link
                     href="/dashboard"
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
@@ -154,6 +160,9 @@ export default function Header() {
                 <>
                   <Link href="/profile" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
                     {t("mySkills")}
+                  </Link>
+                  <Link href="/bookmarks" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                    {t("myBookmarks")}
                   </Link>
                   <Link href="/dashboard" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
                     {t("apiUsage")}

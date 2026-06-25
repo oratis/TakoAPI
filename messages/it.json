@@ -15,6 +15,7 @@
     "publishAgent": "Pubblica agente",
     "account": "Account",
     "mySkills": "Le mie skill",
+    "myBookmarks": "Salvati",
     "apiUsage": "API e utilizzo",
     "adminPanel": "Pannello admin",
     "signIn": "Accedi",
@@ -618,5 +619,13 @@
     "bookmark": "Salva",
     "bookmarked": "Salvato",
     "signInToRate": "Accedi per valutare o salvare questo agente"
+  },
+  "Bookmarks": {
+    "title": "Agenti salvati",
+    "subtitle": "Gli agenti che hai salvato.",
+    "empty": "Ancora nessun salvataggio.",
+    "browseAgents": "Esplora gli agenti",
+    "signInPrompt": "Accedi per vedere i tuoi salvati.",
+    "signIn": "Accedi"
   }
 }

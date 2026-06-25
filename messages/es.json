@@ -15,6 +15,7 @@
     "publishAgent": "Publicar agente",
     "account": "Cuenta",
     "mySkills": "Mis skills",
+    "myBookmarks": "Guardados",
     "apiUsage": "API y uso",
     "adminPanel": "Panel de administración",
     "signIn": "Iniciar sesión",
@@ -618,5 +619,13 @@
     "bookmark": "Guardar",
     "bookmarked": "Guardado",
     "signInToRate": "Inicia sesión para valorar o guardar este agente"
+  },
+  "Bookmarks": {
+    "title": "Agentes guardados",
+    "subtitle": "Agentes que has guardado.",
+    "empty": "Aún no hay guardados.",
+    "browseAgents": "Explorar agentes",
+    "signInPrompt": "Inicia sesión para ver tus guardados.",
+    "signIn": "Iniciar sesión"
   }
 }

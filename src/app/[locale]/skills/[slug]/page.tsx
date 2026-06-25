@@ -22,6 +22,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useSession } from "next-auth/react";
+import { SkillEngagement } from "@/components/SkillEngagement";
 import type { Skill } from "@/lib/types";
 
 function formatNumber(n: number): string {
@@ -305,6 +306,11 @@ export default function SkillDetailPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Engagement: community rating, your rating, bookmark */}
+        <div className="px-6 sm:px-8 py-4 border-b border-gray-100">
+          <SkillEngagement idOrSlug={slug} />
         </div>
 
         {/* Brief */}

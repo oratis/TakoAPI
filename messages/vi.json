@@ -15,6 +15,7 @@
     "publishAgent": "Đăng agent",
     "account": "Tài khoản",
     "mySkills": "Kỹ năng của tôi",
+    "myBookmarks": "Đã lưu",
     "apiUsage": "API & Sử dụng",
     "adminPanel": "Bảng quản trị",
     "signIn": "Đăng nhập",
@@ -618,5 +619,13 @@
     "bookmark": "Lưu",
     "bookmarked": "Đã lưu",
     "signInToRate": "Đăng nhập để đánh giá hoặc lưu agent này"
+  },
+  "Bookmarks": {
+    "title": "Agent đã lưu",
+    "subtitle": "Các agent bạn đã lưu.",
+    "empty": "Chưa có mục đã lưu.",
+    "browseAgents": "Duyệt agent",
+    "signInPrompt": "Đăng nhập để xem mục đã lưu.",
+    "signIn": "Đăng nhập"
   }
 }

@@ -38,11 +38,22 @@ type Repo = {
   html_url: string;
   homepage: string | null;
   stargazers_count: number;
+  forks_count: number;
   owner: { login: string };
   archived: boolean;
   fork: boolean;
   topics?: string[];
 };
+
+// Conservative star-farm heuristic: genuine popular repos accrue forks, padded
+// ones almost never do. Drop only the most extreme mismatches (many stars, a
+// near-zero fork ratio) so real repos are never filtered. See memory note on
+// the star-farmed band polluting the newest-by-recency slice of the catalog.
+function looksStarFarmed(r: Repo): boolean {
+  const stars = r.stargazers_count;
+  if (stars < 150) return false; // small repos: don't judge on fork ratio
+  return (r.forks_count ?? 0) / stars < 0.01; // < 1 fork per 100 stars → suspicious
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -99,7 +110,7 @@ export type ScrapeOpts = {
   onProgress?: (msg: string) => void;
 };
 
-export type ScrapeResult = { found: number; eligible: number; imported: number };
+export type ScrapeResult = { found: number; eligible: number; skipped: number; imported: number };
 
 /**
  * Discover agent projects on GitHub and upsert them as kind=PROJECT. Idempotent.
@@ -133,9 +144,11 @@ export async function scrapeGithubAgents(opts: ScrapeOpts, db: PrismaClient): Pr
   }
 
   const all = [...byName.values()].sort((a, b) => b.stargazers_count - a.stargazers_count);
-  const eligible = minStars ? all.filter((r) => r.stargazers_count >= minStars) : all;
+  const starred = minStars ? all.filter((r) => r.stargazers_count >= minStars) : all;
+  const eligible = starred.filter((r) => !looksStarFarmed(r));
+  const skipped = starred.length - eligible.length;
   const repos = eligible.slice(0, max);
-  log(`found ${all.length} unique repos${minStars ? `, ${eligible.length} with >=${minStars} stars` : ""}; importing top ${repos.length} by stars`);
+  log(`found ${all.length} unique repos${minStars ? `, ${starred.length} with >=${minStars} stars` : ""}${skipped ? `, skipped ${skipped} likely star-farmed` : ""}; importing top ${repos.length} by stars`);
 
   let imported = 0;
   for (const r of repos) {
@@ -166,5 +179,5 @@ export async function scrapeGithubAgents(opts: ScrapeOpts, db: PrismaClient): Pr
     if (imported % 100 === 0) log(`  …${imported}/${repos.length}`);
   }
 
-  return { found: all.length, eligible: eligible.length, imported };
+  return { found: all.length, eligible: eligible.length, skipped, imported };
 }
