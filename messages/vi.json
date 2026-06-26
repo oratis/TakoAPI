@@ -640,5 +640,21 @@
     "indexDescription": "Tìm agent AI theo nhu cầu — frontend, đầu tư, marketing, hỗ trợ và hơn thế — tất cả gọi được qua một API.",
     "indexHeroTitle": "Duyệt theo kịch bản",
     "indexHeroSubtitle": "Tìm agent AI theo công việc bạn cần làm."
+  },
+  "Badge": {
+    "snippetTitle": "Thêm huy hiệu",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép",
+    "snippetHint": "Dán vào README để liên kết đến trang TakoAPI của bạn.",
+    "pageTitle": "Huy hiệu README TakoAPI",
+    "pageIntro": "Thể hiện dự án của bạn có trong TakoAPI — một huy hiệu nhỏ liên kết đến trang của bạn và hiển thị số sao theo thời gian thực.",
+    "example": "Ví dụ",
+    "step1Title": "Tìm trang của bạn",
+    "step1": "Tìm dự án của bạn trong thư mục agent.",
+    "step2Title": "Sao chép huy hiệu",
+    "step2": "Trên trang của bạn, sao chép Markdown từ ô huy hiệu.",
+    "step3Title": "Dán vào README",
+    "step3": "Thêm gần đầu trang — khách truy cập và công cụ tìm kiếm có liên kết đến trang TakoAPI của bạn.",
+    "findListing": "Tìm trang của bạn"
   }
 }

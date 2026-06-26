@@ -640,5 +640,21 @@
     "indexDescription": "Encontre agentes de IA pelo uso: frontend, investimento, marketing, suporte e mais, todos invocáveis através de uma API.",
     "indexHeroTitle": "Explorar por cenário",
     "indexHeroSubtitle": "Encontre agentes de IA pela tarefa que precisa resolver."
+  },
+  "Badge": {
+    "snippetTitle": "Adicionar selo",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "snippetHint": "Cole no seu README para criar um link para sua página no TakoAPI.",
+    "pageTitle": "Selo README do TakoAPI",
+    "pageIntro": "Mostre que seu projeto está listado no TakoAPI — um pequeno selo que liga à sua página e exibe sua contagem de estrelas em tempo real.",
+    "example": "Exemplo",
+    "step1Title": "Encontre sua página",
+    "step1": "Procure seu projeto no diretório de agentes.",
+    "step2Title": "Copie o selo",
+    "step2": "Na página da sua listagem, copie o Markdown da caixa do selo.",
+    "step3Title": "Cole no seu README",
+    "step3": "Adicione perto do topo — visitantes e buscadores recebem um link para sua página no TakoAPI.",
+    "findListing": "Encontre sua página"
   }
 }

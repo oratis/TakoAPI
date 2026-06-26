@@ -640,5 +640,21 @@
     "indexDescription": "용도별로 AI 에이전트를 찾으세요 — 프런트엔드, 투자, 마케팅, 지원 등 모두 하나의 API로 호출 가능합니다.",
     "indexHeroTitle": "시나리오별 보기",
     "indexHeroSubtitle": "해야 할 일에 맞는 AI 에이전트를 찾으세요."
+  },
+  "Badge": {
+    "snippetTitle": "배지 추가",
+    "copy": "복사",
+    "copied": "복사됨",
+    "snippetHint": "README에 붙여넣어 TakoAPI 등록 페이지로 연결하세요.",
+    "pageTitle": "TakoAPI README 배지",
+    "pageIntro": "프로젝트가 TakoAPI에 등록되었음을 보여주세요 — 등록 페이지로 연결되고 실시간 스타 수를 표시하는 작은 배지입니다.",
+    "example": "예시",
+    "step1Title": "등록 페이지 찾기",
+    "step1": "에이전트 디렉터리에서 프로젝트를 검색하세요.",
+    "step2Title": "배지 복사",
+    "step2": "등록 페이지의 배지 상자에서 Markdown을 복사하세요.",
+    "step3Title": "README에 붙여넣기",
+    "step3": "상단 근처에 추가하면 방문자와 검색엔진이 TakoAPI 페이지로 연결됩니다.",
+    "findListing": "등록 페이지 찾기"
   }
 }

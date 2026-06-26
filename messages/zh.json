@@ -640,5 +640,21 @@
     "indexDescription": "按用途查找 AI 智能体——前端、投资、营销、客服等——都可通过一个 API 调用。",
     "indexHeroTitle": "按场景浏览",
     "indexHeroSubtitle": "按你要完成的任务查找 AI 智能体。"
+  },
+  "Badge": {
+    "snippetTitle": "添加徽章",
+    "copy": "复制",
+    "copied": "已复制",
+    "snippetHint": "粘贴到你的 README,即可回链到你的 TakoAPI 收录页。",
+    "pageTitle": "TakoAPI README 徽章",
+    "pageIntro": "展示你的项目已收录于 TakoAPI——一个回链到收录页并显示实时星标数的小徽章。",
+    "example": "示例",
+    "step1Title": "找到你的收录页",
+    "step1": "在智能体目录里搜索你的项目。",
+    "step2Title": "复制徽章",
+    "step2": "在收录页的徽章框里复制 Markdown。",
+    "step3Title": "粘贴到 README",
+    "step3": "放在顶部附近——访客和搜索引擎都能链接到你的 TakoAPI 页面。",
+    "findListing": "找到你的收录页"
   }
 }
