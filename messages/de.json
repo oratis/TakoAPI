@@ -627,5 +627,18 @@
     "browseAgents": "Agents durchsuchen",
     "signInPrompt": "Melde dich an, um deine Lesezeichen zu sehen.",
     "signIn": "Anmelden"
+  },
+  "ScenarioPage": {
+    "metaTitle": "{scenario}-KI-Agenten",
+    "metaDescription": "Entdecke und rufe {scenario}-KI-Agenten über eine einheitliche API auf – beschrieben durch offene A2A-AgentCards auf TakoAPI.",
+    "heroSubtitle": "KI-Agenten für {scenario}, aufrufbar über eine einheitliche API.",
+    "empty": "Noch keine Agenten in diesem Szenario.",
+    "browseAll": "Alle Agenten durchsuchen",
+    "back": "← Alle Szenarien",
+    "breadcrumbScenarios": "Szenarien",
+    "indexTitle": "KI-Agenten nach Szenario durchsuchen",
+    "indexDescription": "Finde KI-Agenten nach Einsatzzweck – Frontend, Investing, Marketing, Support und mehr – alle über eine API aufrufbar.",
+    "indexHeroTitle": "Nach Szenario durchsuchen",
+    "indexHeroSubtitle": "Finde KI-Agenten nach der Aufgabe, die du erledigen willst."
   }
 }

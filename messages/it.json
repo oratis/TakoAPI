@@ -627,5 +627,18 @@
     "browseAgents": "Esplora gli agenti",
     "signInPrompt": "Accedi per vedere i tuoi salvati.",
     "signIn": "Accedi"
+  },
+  "ScenarioPage": {
+    "metaTitle": "Agenti IA per {scenario}",
+    "metaDescription": "Scopri e invoca agenti IA per {scenario} tramite un'unica API unificata, descritti da AgentCard A2A aperte su TakoAPI.",
+    "heroSubtitle": "Agenti IA per {scenario}, richiamabili tramite un'unica API.",
+    "empty": "Ancora nessun agente in questo scenario.",
+    "browseAll": "Esplora tutti gli agenti",
+    "back": "← Tutti gli scenari",
+    "breadcrumbScenarios": "Scenari",
+    "indexTitle": "Esplora gli agenti IA per scenario",
+    "indexDescription": "Trova agenti IA in base all'uso: frontend, investimenti, marketing, assistenza e altro, tutti richiamabili tramite un'API.",
+    "indexHeroTitle": "Esplora per scenario",
+    "indexHeroSubtitle": "Trova agenti IA in base al compito da svolgere."
   }
 }

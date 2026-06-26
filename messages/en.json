@@ -627,5 +627,18 @@
     "browseAgents": "Browse agents",
     "signInPrompt": "Sign in to see your bookmarks.",
     "signIn": "Sign in"
+  },
+  "ScenarioPage": {
+    "metaTitle": "{scenario} AI agents",
+    "metaDescription": "Discover and invoke {scenario} AI agents through one unified API — described by open A2A AgentCards on TakoAPI.",
+    "heroSubtitle": "AI agents for {scenario}, callable through one unified API.",
+    "empty": "No agents in this scenario yet.",
+    "browseAll": "Browse all agents",
+    "back": "← All scenarios",
+    "breadcrumbScenarios": "Scenarios",
+    "indexTitle": "Browse AI agents by scenario",
+    "indexDescription": "Find AI agents by what you'd use them for — frontend, investing, marketing, support, and more — all callable through one API.",
+    "indexHeroTitle": "Browse by scenario",
+    "indexHeroSubtitle": "Find AI agents by the job you need done."
   }
 }

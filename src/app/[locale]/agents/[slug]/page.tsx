@@ -66,6 +66,17 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ lo
     ...(agent.pricingModel === "FREE"
       ? { offers: { "@type": "Offer", price: "0", priceCurrency: "USD" } }
       : {}),
+    ...(agent.ratingCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: agent.avgRating.toFixed(2),
+            ratingCount: agent.ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
   const breadcrumbLd = {
     "@context": "https://schema.org",

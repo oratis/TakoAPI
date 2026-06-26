@@ -627,5 +627,18 @@
     "browseAgents": "Jelajahi agen",
     "signInPrompt": "Masuk untuk melihat yang tersimpan.",
     "signIn": "Masuk"
+  },
+  "ScenarioPage": {
+    "metaTitle": "Agen AI untuk {scenario}",
+    "metaDescription": "Temukan dan panggil agen AI untuk {scenario} melalui satu API terpadu — dijelaskan oleh A2A AgentCard terbuka di TakoAPI.",
+    "heroSubtitle": "Agen AI untuk {scenario}, dapat dipanggil melalui satu API.",
+    "empty": "Belum ada agen untuk skenario ini.",
+    "browseAll": "Jelajahi semua agen",
+    "back": "← Semua skenario",
+    "breadcrumbScenarios": "Skenario",
+    "indexTitle": "Jelajahi agen AI berdasarkan skenario",
+    "indexDescription": "Temukan agen AI berdasarkan kegunaannya — frontend, investasi, marketing, dukungan, dan lainnya — semua dapat dipanggil melalui satu API.",
+    "indexHeroTitle": "Jelajahi berdasarkan skenario",
+    "indexHeroSubtitle": "Temukan agen AI berdasarkan pekerjaan yang perlu diselesaikan."
   }
 }

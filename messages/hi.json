@@ -627,5 +627,18 @@
     "browseAgents": "एजेंट ब्राउज़ करें",
     "signInPrompt": "अपने बुकमार्क देखने के लिए साइन इन करें।",
     "signIn": "साइन इन करें"
+  },
+  "ScenarioPage": {
+    "metaTitle": "{scenario} के लिए AI एजेंट",
+    "metaDescription": "{scenario} के लिए AI एजेंट को एक एकीकृत API से खोजें और कॉल करें — TakoAPI पर खुले A2A AgentCard द्वारा वर्णित।",
+    "heroSubtitle": "{scenario} के लिए AI एजेंट, एक API से कॉल किए जा सकते हैं।",
+    "empty": "इस परिदृश्य में अभी कोई एजेंट नहीं है।",
+    "browseAll": "सभी एजेंट ब्राउज़ करें",
+    "back": "← सभी परिदृश्य",
+    "breadcrumbScenarios": "परिदृश्य",
+    "indexTitle": "परिदृश्य के अनुसार AI एजेंट ब्राउज़ करें",
+    "indexDescription": "उपयोग के अनुसार AI एजेंट खोजें — फ्रंटएंड, निवेश, मार्केटिंग, सपोर्ट और बहुत कुछ — सभी एक API से कॉल किए जा सकते हैं।",
+    "indexHeroTitle": "परिदृश्य के अनुसार ब्राउज़ करें",
+    "indexHeroSubtitle": "जो काम करना है उसके अनुसार AI एजेंट खोजें।"
   }
 }
