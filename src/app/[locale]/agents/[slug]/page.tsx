@@ -18,14 +18,19 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: "AgentDetail" });
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
-    select: { name: true, description: true },
+    select: { name: true, description: true, kind: true, _count: { select: { skills: true } } },
   });
   if (!agent) return { title: t("notFound") };
   const description = (agent.description || `${agent.name} on ${SITE_NAME}`).slice(0, 200);
+  // Thin: a scraped PROJECT entry with no declared skills and a barely-there
+  // description adds little unique value over the GitHub repo itself — keep it out
+  // of the index to limit scaled-content exposure. Substantive entries stay indexed.
+  const thin = agent.kind === "PROJECT" && agent._count.skills === 0 && (agent.description ?? "").trim().length < 80;
   return {
     metadataBase: new URL(absoluteUrl("")),
     title: agent.name,
     description,
+    ...(thin ? { robots: { index: false, follow: true } } : {}),
     alternates: localizedAlternates(locale, `/agents/${slug}`),
     openGraph: { title: `${agent.name} — ${SITE_NAME}`, description, url: absoluteUrl(`/agents/${slug}`), type: "website", locale: localeOg(locale), images: [absoluteUrl("/opengraph-image")] },
     twitter: { card: "summary_large_image", title: `${agent.name} — ${SITE_NAME}`, description },
