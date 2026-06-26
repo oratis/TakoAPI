@@ -640,5 +640,21 @@
     "indexDescription": "用途で AI エージェントを探す——フロントエンド、投資、マーケティング、サポートなど、すべて 1 つの API で呼び出し可能。",
     "indexHeroTitle": "シナリオ別に探す",
     "indexHeroSubtitle": "やりたいことから AI エージェントを探しましょう。"
+  },
+  "Badge": {
+    "snippetTitle": "バッジを追加",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "snippetHint": "README に貼り付けると、TakoAPI の掲載ページにリンクできます。",
+    "pageTitle": "TakoAPI README バッジ",
+    "pageIntro": "あなたのプロジェクトが TakoAPI に掲載されていることを示す小さなバッジ。掲載ページへのリンクと最新のスター数を表示します。",
+    "example": "例",
+    "step1Title": "掲載ページを探す",
+    "step1": "エージェントディレクトリでプロジェクトを検索します。",
+    "step2Title": "バッジをコピー",
+    "step2": "掲載ページのバッジ欄から Markdown をコピーします。",
+    "step3Title": "README に貼り付け",
+    "step3": "上部付近に追加すると、訪問者や検索エンジンが TakoAPI ページへのリンクを得られます。",
+    "findListing": "掲載ページを探す"
   }
 }

@@ -640,5 +640,21 @@
     "indexDescription": "Trova agenti IA in base all'uso: frontend, investimenti, marketing, assistenza e altro, tutti richiamabili tramite un'API.",
     "indexHeroTitle": "Esplora per scenario",
     "indexHeroSubtitle": "Trova agenti IA in base al compito da svolgere."
+  },
+  "Badge": {
+    "snippetTitle": "Aggiungi un badge",
+    "copy": "Copia",
+    "copied": "Copiato",
+    "snippetHint": "Incollalo nel tuo README per collegarti alla tua scheda TakoAPI.",
+    "pageTitle": "Badge README di TakoAPI",
+    "pageIntro": "Mostra che il tuo progetto è elencato su TakoAPI: un piccolo badge che rimanda alla tua scheda e mostra il numero di stelle in tempo reale.",
+    "example": "Esempio",
+    "step1Title": "Trova la tua scheda",
+    "step1": "Cerca il tuo progetto nella directory degli agenti.",
+    "step2Title": "Copia il badge",
+    "step2": "Nella pagina della tua scheda, copia il Markdown dal riquadro del badge.",
+    "step3Title": "Incollalo nel tuo README",
+    "step3": "Aggiungilo in alto: visitatori e motori di ricerca ottengono un link alla tua pagina TakoAPI.",
+    "findListing": "Trova la tua scheda"
   }
 }

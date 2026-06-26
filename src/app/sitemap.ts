@@ -53,6 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry("/scenarios", { lastModified: now, changeFrequency: "weekly", priority: 0.8 }),
     entry("/skills", { lastModified: now, changeFrequency: "daily", priority: 0.8 }),
     entry("/install", { lastModified: now, changeFrequency: "monthly", priority: 0.6 }),
+    entry("/badge", { lastModified: now, changeFrequency: "monthly", priority: 0.5 }),
     entry("/trending", { lastModified: now, changeFrequency: "weekly", priority: 0.6 }),
   ];
 

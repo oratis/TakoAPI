@@ -640,5 +640,21 @@
     "indexDescription": "Find AI agents by what you'd use them for — frontend, investing, marketing, support, and more — all callable through one API.",
     "indexHeroTitle": "Browse by scenario",
     "indexHeroSubtitle": "Find AI agents by the job you need done."
+  },
+  "Badge": {
+    "snippetTitle": "Add a badge",
+    "copy": "Copy",
+    "copied": "Copied",
+    "snippetHint": "Paste into your README to link back to your TakoAPI listing.",
+    "pageTitle": "TakoAPI README badge",
+    "pageIntro": "Show that your project is listed on TakoAPI — a small badge that links back to your listing and shows your live star count.",
+    "example": "Example",
+    "step1Title": "Find your listing",
+    "step1": "Search the agent directory for your project.",
+    "step2Title": "Copy the badge",
+    "step2": "On your listing page, copy the Markdown from the badge box.",
+    "step3Title": "Paste into your README",
+    "step3": "Add it near the top — visitors and search engines get a link to your TakoAPI page.",
+    "findListing": "Find your listing"
   }
 }

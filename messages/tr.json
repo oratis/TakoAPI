@@ -640,5 +640,21 @@
     "indexDescription": "Yapay zekâ aracılarını kullanım amacına göre bulun — frontend, yatırım, pazarlama, destek ve daha fazlası — hepsi tek bir API ile çağrılabilir.",
     "indexHeroTitle": "Senaryoya göre keşfet",
     "indexHeroSubtitle": "Yapmanız gereken işe göre yapay zekâ aracıları bulun."
+  },
+  "Badge": {
+    "snippetTitle": "Rozet ekle",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı",
+    "snippetHint": "TakoAPI sayfanıza bağlanmak için README'nize yapıştırın.",
+    "pageTitle": "TakoAPI README rozeti",
+    "pageIntro": "Projenizin TakoAPI'de listelendiğini gösterin — sayfanıza bağlanan ve güncel yıldız sayınızı gösteren küçük bir rozet.",
+    "example": "Örnek",
+    "step1Title": "Sayfanızı bulun",
+    "step1": "Projenizi aracı dizininde arayın.",
+    "step2Title": "Rozeti kopyalayın",
+    "step2": "Sayfanızda rozet kutusundan Markdown'ı kopyalayın.",
+    "step3Title": "README'nize yapıştırın",
+    "step3": "Üst kısma ekleyin — ziyaretçiler ve arama motorları TakoAPI sayfanıza bağlantı alır.",
+    "findListing": "Sayfanızı bulun"
   }
 }

@@ -9,6 +9,7 @@ import { localeOg } from "@/lib/locales";
 import { findScenario } from "@/lib/scenarios";
 import { JsonLd } from "@/components/JsonLd";
 import { AgentEngagement } from "@/components/AgentEngagement";
+import { BadgeSnippet } from "@/components/BadgeSnippet";
 
 export const dynamic = "force-dynamic";
 
@@ -297,6 +298,7 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ lo
               </div>
             </>
           )}
+          <BadgeSnippet slug={agent.slug} />
         </aside>
       </div>
     </div>

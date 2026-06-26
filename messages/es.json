@@ -640,5 +640,21 @@
     "indexDescription": "Encuentra agentes de IA según para qué los usarías: frontend, inversión, marketing, soporte y más, todos invocables a través de una API.",
     "indexHeroTitle": "Explorar por escenario",
     "indexHeroSubtitle": "Encuentra agentes de IA según la tarea que necesitas resolver."
+  },
+  "Badge": {
+    "snippetTitle": "Añadir insignia",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "snippetHint": "Pégalo en tu README para enlazar a tu ficha de TakoAPI.",
+    "pageTitle": "Insignia README de TakoAPI",
+    "pageIntro": "Muestra que tu proyecto está listado en TakoAPI: una pequeña insignia que enlaza a tu ficha y muestra tu número de estrellas en vivo.",
+    "example": "Ejemplo",
+    "step1Title": "Encuentra tu ficha",
+    "step1": "Busca tu proyecto en el directorio de agentes.",
+    "step2Title": "Copia la insignia",
+    "step2": "En la página de tu ficha, copia el Markdown del cuadro de la insignia.",
+    "step3Title": "Pégala en tu README",
+    "step3": "Añádela cerca del inicio: visitantes y buscadores obtienen un enlace a tu página de TakoAPI.",
+    "findListing": "Encuentra tu ficha"
   }
 }

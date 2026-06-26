@@ -640,5 +640,21 @@
     "indexDescription": "Temukan agen AI berdasarkan kegunaannya — frontend, investasi, marketing, dukungan, dan lainnya — semua dapat dipanggil melalui satu API.",
     "indexHeroTitle": "Jelajahi berdasarkan skenario",
     "indexHeroSubtitle": "Temukan agen AI berdasarkan pekerjaan yang perlu diselesaikan."
+  },
+  "Badge": {
+    "snippetTitle": "Tambahkan lencana",
+    "copy": "Salin",
+    "copied": "Tersalin",
+    "snippetHint": "Tempel ke README Anda untuk menautkan ke halaman TakoAPI Anda.",
+    "pageTitle": "Lencana README TakoAPI",
+    "pageIntro": "Tunjukkan bahwa proyek Anda terdaftar di TakoAPI — lencana kecil yang menautkan ke halaman Anda dan menampilkan jumlah bintang terkini.",
+    "example": "Contoh",
+    "step1Title": "Temukan halaman Anda",
+    "step1": "Cari proyek Anda di direktori agen.",
+    "step2Title": "Salin lencana",
+    "step2": "Di halaman Anda, salin Markdown dari kotak lencana.",
+    "step3Title": "Tempel ke README",
+    "step3": "Tambahkan di dekat atas — pengunjung dan mesin pencari mendapat tautan ke halaman TakoAPI Anda.",
+    "findListing": "Temukan halaman Anda"
   }
 }
