@@ -627,5 +627,18 @@
     "browseAgents": "Aracılara göz at",
     "signInPrompt": "Kayıtlarını görmek için giriş yap.",
     "signIn": "Giriş yap"
+  },
+  "ScenarioPage": {
+    "metaTitle": "{scenario} için yapay zekâ aracıları",
+    "metaDescription": "{scenario} için yapay zekâ aracılarını tek bir birleşik API üzerinden keşfedin ve çağırın — TakoAPI'de açık A2A AgentCard'larıyla tanımlanır.",
+    "heroSubtitle": "{scenario} için yapay zekâ aracıları, tek bir API ile çağrılabilir.",
+    "empty": "Bu senaryoda henüz aracı yok.",
+    "browseAll": "Tüm aracılara göz at",
+    "back": "← Tüm senaryolar",
+    "breadcrumbScenarios": "Senaryolar",
+    "indexTitle": "Yapay zekâ aracılarını senaryoya göre keşfedin",
+    "indexDescription": "Yapay zekâ aracılarını kullanım amacına göre bulun — frontend, yatırım, pazarlama, destek ve daha fazlası — hepsi tek bir API ile çağrılabilir.",
+    "indexHeroTitle": "Senaryoya göre keşfet",
+    "indexHeroSubtitle": "Yapmanız gereken işe göre yapay zekâ aracıları bulun."
   }
 }

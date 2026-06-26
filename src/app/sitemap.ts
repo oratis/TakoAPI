@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { localizedUrl } from "@/lib/seo";
 import { routing } from "@/i18n/routing";
+import { SCENARIOS } from "@/lib/scenarios";
 
 // Generated at request time against the live catalog (the app renders DB pages
 // dynamically and the Docker build has no DB), so the sitemap stays fresh as
@@ -49,7 +50,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     entry("", { lastModified: now, changeFrequency: "daily", priority: 1 }),
     entry("/agents", { lastModified: now, changeFrequency: "daily", priority: 0.9 }),
+    entry("/scenarios", { lastModified: now, changeFrequency: "weekly", priority: 0.8 }),
     entry("/skills", { lastModified: now, changeFrequency: "daily", priority: 0.8 }),
+    entry("/install", { lastModified: now, changeFrequency: "monthly", priority: 0.6 }),
     entry("/trending", { lastModified: now, changeFrequency: "weekly", priority: 0.6 }),
   ];
 
@@ -61,5 +64,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry(`/skills/${s.slug}`, { lastModified: s.updatedAt, changeFrequency: "weekly", priority: 0.5 }),
   );
 
-  return [...staticRoutes, ...agentRoutes, ...skillRoutes];
+  const scenarioRoutes: MetadataRoute.Sitemap = SCENARIOS.map((s) =>
+    entry(`/scenarios/${s.slug}`, { lastModified: now, changeFrequency: "weekly", priority: 0.6 }),
+  );
+
+  return [...staticRoutes, ...scenarioRoutes, ...agentRoutes, ...skillRoutes];
 }

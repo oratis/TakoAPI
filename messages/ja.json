@@ -627,5 +627,18 @@
     "browseAgents": "エージェントを見る",
     "signInPrompt": "ログインするとブックマークを表示できます。",
     "signIn": "ログイン"
+  },
+  "ScenarioPage": {
+    "metaTitle": "{scenario}向け AI エージェント",
+    "metaDescription": "{scenario}向けの AI エージェントを統一 API で発見・呼び出し。TakoAPI のオープンな A2A AgentCard で記述。",
+    "heroSubtitle": "{scenario}向けの AI エージェント。統一 API で呼び出せます。",
+    "empty": "このシナリオのエージェントはまだありません。",
+    "browseAll": "すべてのエージェントを見る",
+    "back": "← すべてのシナリオ",
+    "breadcrumbScenarios": "シナリオ",
+    "indexTitle": "シナリオ別に AI エージェントを探す",
+    "indexDescription": "用途で AI エージェントを探す——フロントエンド、投資、マーケティング、サポートなど、すべて 1 つの API で呼び出し可能。",
+    "indexHeroTitle": "シナリオ別に探す",
+    "indexHeroSubtitle": "やりたいことから AI エージェントを探しましょう。"
   }
 }

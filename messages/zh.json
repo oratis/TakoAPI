@@ -627,5 +627,18 @@
     "browseAgents": "浏览智能体",
     "signInPrompt": "登录后查看你的收藏。",
     "signIn": "登录"
+  },
+  "ScenarioPage": {
+    "metaTitle": "{scenario} AI 智能体",
+    "metaDescription": "通过一个统一 API 发现并调用「{scenario}」AI 智能体——以开放的 A2A AgentCard 描述。",
+    "heroSubtitle": "面向「{scenario}」的 AI 智能体,通过一个统一 API 调用。",
+    "empty": "该场景下暂无智能体。",
+    "browseAll": "浏览全部智能体",
+    "back": "← 全部场景",
+    "breadcrumbScenarios": "场景",
+    "indexTitle": "按场景浏览 AI 智能体",
+    "indexDescription": "按用途查找 AI 智能体——前端、投资、营销、客服等——都可通过一个 API 调用。",
+    "indexHeroTitle": "按场景浏览",
+    "indexHeroSubtitle": "按你要完成的任务查找 AI 智能体。"
   }
 }
