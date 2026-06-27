@@ -33,7 +33,8 @@
     "browseSkills": "스킬 둘러보기",
     "awesomeList": "Awesome 목록",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. OpenClaw 커뮤니티를 위해 만들었습니다."
+    "copyright": "© {year} TakoAPI. OpenClaw 커뮤니티를 위해 만들었습니다.",
+    "blog": "블로그"
   },
   "Home": {
     "heroTitle": "모든 에이전트에 접근하는 <grad>단 하나의 API</grad>",
@@ -656,5 +657,14 @@
     "step3Title": "README에 붙여넣기",
     "step3": "상단 근처에 추가하면 방문자와 검색엔진이 TakoAPI 페이지로 연결됩니다.",
     "findListing": "등록 페이지 찾기"
+  },
+  "Blog": {
+    "title": "블로그",
+    "subtitle": "A2A, 에이전트 게이트웨이, TakoAPI로 빌드하는 방법에 대한 가이드.",
+    "readMore": "더 읽기",
+    "backToBlog": "← 전체 글",
+    "minRead": "{min}분 분량",
+    "published": "게시일",
+    "faqTitle": "자주 묻는 질문"
   }
 }

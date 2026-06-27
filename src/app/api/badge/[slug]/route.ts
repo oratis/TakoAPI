@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logRequest } from "@/lib/requestLog";
 
 export const dynamic = "force-dynamic";
 
@@ -58,16 +59,29 @@ function svgResponse(svg: string, status: number, maxAge: number): NextResponse 
   });
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const start = Date.now();
   const { slug } = await params;
+
+  // Log every render so badge adoption is quantifiable: path is per-slug
+  // (`/api/badge/<slug>`, covered by RequestLog's [path, createdAt] index), so
+  // counting rows per path = renders per repo. Note: when the badge is embedded
+  // in a GitHub README, GitHub's camo proxy fetches it and strips Referer, so
+  // attribution is by slug + volume, not by referring page. Fire-and-forget;
+  // never blocks or fails the SVG response.
+  const log = (status: number) =>
+    logRequest({ req, path: `/api/badge/${slug}`, status, durationMs: Date.now() - start });
+
   const agent = await prisma.agent.findFirst({
     where: { OR: [{ slug }, { id: slug }], status: "APPROVED" },
     select: { kind: true, stars: true },
   });
   if (!agent) {
+    log(404);
     return svgResponse(badgeSvg("TakoAPI", "not listed"), 404, 300);
   }
   const value =
     agent.kind === "PROJECT" && typeof agent.stars === "number" ? `★ ${fmtStars(agent.stars)}` : "listed";
+  log(200);
   return svgResponse(badgeSvg("TakoAPI", value), 200, 600);
 }

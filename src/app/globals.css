@@ -19,3 +19,86 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Article typography for blog posts (trusted HTML from src/lib/blog.ts).
+   Scoped to .blog-prose so it never leaks into the rest of the app — we don't
+   pull in @tailwindcss/typography for a handful of marketing pages. */
+.blog-prose {
+  color: #374151;
+  line-height: 1.75;
+}
+.blog-prose > * + * {
+  margin-top: 1.1rem;
+}
+.blog-prose h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 2.25rem;
+  margin-bottom: 0.5rem;
+}
+.blog-prose h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+.blog-prose a {
+  color: #7c3aed;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.blog-prose a:hover {
+  color: #6d28d9;
+}
+.blog-prose ul,
+.blog-prose ol {
+  padding-left: 1.5rem;
+}
+.blog-prose ul {
+  list-style: disc;
+}
+.blog-prose ol {
+  list-style: decimal;
+}
+.blog-prose li + li {
+  margin-top: 0.35rem;
+}
+.blog-prose pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+.blog-prose :not(pre) > code {
+  background: #f3f4f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+.blog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  display: block;
+  overflow-x: auto;
+}
+.blog-prose th,
+.blog-prose td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+.blog-prose th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #111827;
+}
+.blog-prose strong {
+  color: #111827;
+  font-weight: 600;
+}

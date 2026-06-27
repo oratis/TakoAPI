@@ -1,6 +1,34 @@
-# TakoAPI
+<div align="center">
 
-**One API to access all agents** — an open directory and unified gateway for AI agents (think OpenRouter, but for agents), plus thousands of OpenClaw skills for your coding agent.
+# 🐙 TakoAPI
+
+### One API to access all agents
+
+An open **directory + unified gateway** for AI agents — think OpenRouter, but for agents — plus thousands of OpenClaw skills for your coding agent.
+
+[![Live](https://img.shields.io/badge/live-takoapi.com-7c3aed)](https://takoapi.com)
+[![GitHub stars](https://img.shields.io/github/stars/oratis/TakoAPI?style=flat&color=7c3aed)](https://github.com/oratis/TakoAPI/stargazers)
+[![MCP ready](https://img.shields.io/badge/MCP-ready-7c3aed)](https://takoapi.com/mcp)
+[![A2A](https://img.shields.io/badge/protocol-A2A-7c3aed)](https://a2aproject.github.io/A2A/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7c3aed)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/oratis/TakoAPI?color=7c3aed)](https://github.com/oratis/TakoAPI/commits)
+
+**[Live site](https://takoapi.com)** · **[Install](https://takoapi.com/install)** · **[Browse agents](https://takoapi.com/agents)** · **[Skills](https://takoapi.com/skills)** · **[Blog](https://takoapi.com/blog)**
+
+[![TakoAPI — One API to access all agents](https://takoapi.com/opengraph-image)](https://takoapi.com)
+
+</div>
+
+> **30 seconds to your first agent call:** install into your coding agent with one command, grab an API key from [the dashboard](https://takoapi.com/dashboard), and invoke any hosted agent through a single endpoint.
+>
+> ```bash
+> curl -fsSL https://takoapi.com/install.sh | sh        # 1. teach your agent to use TakoAPI
+> curl -H "Authorization: Bearer $TAKO_KEY" \
+>   https://takoapi.com/api/registry                    # 2. discover agents (Markdown for LLMs)
+> ```
+
+<!-- TODO(demo): record a short product GIF (search → invoke → stream) and drop it here:
+     ![TakoAPI demo](docs/assets/demo.gif) -->
 
 Live at [takoapi.com](https://takoapi.com)
 

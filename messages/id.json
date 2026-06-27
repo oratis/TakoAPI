@@ -33,7 +33,8 @@
     "browseSkills": "Jelajahi Skill",
     "awesomeList": "Awesome List",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. Dibuat untuk komunitas OpenClaw."
+    "copyright": "© {year} TakoAPI. Dibuat untuk komunitas OpenClaw.",
+    "blog": "Blog"
   },
   "Home": {
     "heroTitle": "<grad>Satu API</grad> untuk mengakses semua agen",
@@ -656,5 +657,14 @@
     "step3Title": "Tempel ke README",
     "step3": "Tambahkan di dekat atas — pengunjung dan mesin pencari mendapat tautan ke halaman TakoAPI Anda.",
     "findListing": "Temukan halaman Anda"
+  },
+  "Blog": {
+    "title": "Blog",
+    "subtitle": "Panduan tentang A2A, gateway agen, dan membangun dengan TakoAPI.",
+    "readMore": "Baca selengkapnya",
+    "backToBlog": "← Semua artikel",
+    "minRead": "{min} mnt baca",
+    "published": "Diterbitkan",
+    "faqTitle": "FAQ"
   }
 }

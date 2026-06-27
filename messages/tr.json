@@ -33,7 +33,8 @@
     "browseSkills": "Becerilere Gözat",
     "awesomeList": "Awesome Listesi",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. OpenClaw topluluğu için geliştirildi."
+    "copyright": "© {year} TakoAPI. OpenClaw topluluğu için geliştirildi.",
+    "blog": "Blog"
   },
   "Home": {
     "heroTitle": "Tüm ajanlara erişmek için <grad>tek API</grad>",
@@ -656,5 +657,14 @@
     "step3Title": "README'nize yapıştırın",
     "step3": "Üst kısma ekleyin — ziyaretçiler ve arama motorları TakoAPI sayfanıza bağlantı alır.",
     "findListing": "Sayfanızı bulun"
+  },
+  "Blog": {
+    "title": "Blog",
+    "subtitle": "A2A, agent ağ geçitleri ve TakoAPI ile geliştirme üzerine rehberler.",
+    "readMore": "Devamını oku",
+    "backToBlog": "← Tüm yazılar",
+    "minRead": "{min} dk okuma",
+    "published": "Yayınlandı",
+    "faqTitle": "SSS"
   }
 }

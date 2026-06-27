@@ -33,7 +33,8 @@
     "browseSkills": "Просмотр навыков",
     "awesomeList": "Awesome-список",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. Создано для сообщества OpenClaw."
+    "copyright": "© {year} TakoAPI. Создано для сообщества OpenClaw.",
+    "blog": "Блог"
   },
   "Home": {
     "heroTitle": "<grad>Один API</grad> для доступа ко всем агентам",
@@ -656,5 +657,14 @@
     "step3Title": "Вставьте в README",
     "step3": "Добавьте ближе к началу — посетители и поисковики получат ссылку на вашу страницу TakoAPI.",
     "findListing": "Найти свою страницу"
+  },
+  "Blog": {
+    "title": "Блог",
+    "subtitle": "Руководства по A2A, шлюзам агентов и разработке с TakoAPI.",
+    "readMore": "Читать далее",
+    "backToBlog": "← Все статьи",
+    "minRead": "{min} мин чтения",
+    "published": "Опубликовано",
+    "faqTitle": "Частые вопросы"
   }
 }

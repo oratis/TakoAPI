@@ -33,7 +33,8 @@
     "browseSkills": "تصفّح المهارات",
     "awesomeList": "قائمة Awesome",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. صُمِّم لمجتمع OpenClaw."
+    "copyright": "© {year} TakoAPI. صُمِّم لمجتمع OpenClaw.",
+    "blog": "المدونة"
   },
   "Home": {
     "heroTitle": "<grad>واجهة برمجية واحدة</grad> للوصول إلى جميع الوكلاء",
@@ -656,5 +657,14 @@
     "step3Title": "الصقها في README",
     "step3": "أضِفها قرب الأعلى — يحصل الزوار ومحركات البحث على رابط لصفحتك على TakoAPI.",
     "findListing": "اعثر على صفحتك"
+  },
+  "Blog": {
+    "title": "المدونة",
+    "subtitle": "أدلة حول A2A وبوابات الوكلاء والبناء باستخدام TakoAPI.",
+    "readMore": "اقرأ المزيد",
+    "backToBlog": "← كل المقالات",
+    "minRead": "قراءة {min} دقائق",
+    "published": "نُشر",
+    "faqTitle": "الأسئلة الشائعة"
   }
 }
