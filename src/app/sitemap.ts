@@ -5,10 +5,16 @@ import { routing } from "@/i18n/routing";
 import { SCENARIOS } from "@/lib/scenarios";
 import { getAllPosts } from "@/lib/blog";
 
-// Generated at request time against the live catalog (the app renders DB pages
-// dynamically and the Docker build has no DB), so the sitemap stays fresh as
-// agents/skills are imported. Crawlers hit this infrequently.
-export const dynamic = "force-dynamic";
+// Cached (ISR) rather than force-dynamic: with ~6.8k URLs × 15-locale hreflang,
+// regenerating per request takes ~13s and serializes to ~12MB, which makes
+// Google's sitemap fetcher time out ("Couldn't fetch"). Instead we serve a
+// cached copy and regenerate at most hourly in the background (stale-while-
+// revalidate), so crawlers always get a fast response. The Docker build has no
+// DB, so the build-time render falls back (via the try/catch below) to just the
+// static routes; the first request after deploy fills in agents/skills and
+// caches the full sitemap. Catalog changes propagate within the revalidate
+// window — fine, since crawlers hit this infrequently.
+export const revalidate = 3600;
 
 // hreflang alternates for a path: one entry per locale. The canonical `url` is
 // the unprefixed English URL; `alternates.languages` carries every locale so a
