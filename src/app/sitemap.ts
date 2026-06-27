@@ -5,16 +5,23 @@ import { routing } from "@/i18n/routing";
 import { SCENARIOS } from "@/lib/scenarios";
 import { getAllPosts } from "@/lib/blog";
 
-// Cached (ISR) rather than force-dynamic: with ~6.8k URLs × 15-locale hreflang,
-// regenerating per request takes ~13s and serializes to ~12MB, which makes
-// Google's sitemap fetcher time out ("Couldn't fetch"). Instead we serve a
-// cached copy and regenerate at most hourly in the background (stale-while-
-// revalidate), so crawlers always get a fast response. The Docker build has no
-// DB, so the build-time render falls back (via the try/catch below) to just the
-// static routes; the first request after deploy fills in agents/skills and
-// caches the full sitemap. Catalog changes propagate within the revalidate
-// window — fine, since crawlers hit this infrequently.
-export const revalidate = 3600;
+// Generated at request time against the live catalog (the app renders DB pages
+// dynamically and the Docker build has no DB), so the sitemap stays fresh as
+// agents/skills are imported.
+//
+// Why split (generateSitemaps): there are ~6.8k URLs, each carrying 15-locale
+// hreflang alternates. As ONE document that serialized to ~12MB and ~13s per
+// request, which made Google's sitemap fetcher time out ("Couldn't fetch").
+// Splitting yields a tiny instant index at /sitemap.xml plus small children at
+// /sitemap/{id}.xml that Google fetches independently — each child is fast and
+// the whole catalog still gets covered.
+export const dynamic = "force-dynamic";
+
+// URLs per child sitemap. Well under Google's 50k/50MB cap; kept small because
+// each entity URL expands to 15 hreflang lines, so ~1k URLs ≈ a couple of MB.
+const CHUNK = 1000;
+
+const APPROVED = { status: "APPROVED" } as const;
 
 // hreflang alternates for a path: one entry per locale. The canonical `url` is
 // the unprefixed English URL; `alternates.languages` carries every locale so a
@@ -32,27 +39,32 @@ function entry(path: string, rest: Omit<SitemapEntry, "url" | "alternates">): Si
   };
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let agents: { slug: string; updatedAt: Date }[] = [];
-  let skills: { slug: string; updatedAt: Date }[] = [];
+async function agentCount(): Promise<number> {
   try {
-    [agents, skills] = await Promise.all([
-      prisma.agent.findMany({
-        where: { status: "APPROVED" },
-        select: { slug: true, updatedAt: true },
-        orderBy: { updatedAt: "desc" },
-      }),
-      prisma.skill.findMany({
-        where: { status: "APPROVED" },
-        select: { slug: true, updatedAt: true },
-        orderBy: { updatedAt: "desc" },
-      }),
-    ]);
+    return await prisma.agent.count({ where: APPROVED });
   } catch {
-    // If the DB is unreachable at request time, still serve the static routes
-    // rather than 500-ing the sitemap.
+    return 0;
   }
+}
+async function skillCount(): Promise<number> {
+  try {
+    return await prisma.skill.count({ where: APPROVED });
+  } catch {
+    return 0;
+  }
+}
 
+// Layout of the child sitemaps, by `id`:
+//   0                                  -> static + blog + scenario pages
+//   1 .. agentChunks                   -> APPROVED agents, CHUNK per file
+//   agentChunks+1 .. +skillChunks      -> APPROVED skills, CHUNK per file
+export async function generateSitemaps(): Promise<{ id: number }[]> {
+  const [agents, skills] = await Promise.all([agentCount(), skillCount()]);
+  const count = 1 + Math.ceil(agents / CHUNK) + Math.ceil(skills / CHUNK);
+  return Array.from({ length: count }, (_, id) => ({ id }));
+}
+
+function pageRoutes(): MetadataRoute.Sitemap {
   const now = new Date();
   const staticRoutes: MetadataRoute.Sitemap = [
     entry("", { lastModified: now, changeFrequency: "daily", priority: 1 }),
@@ -73,17 +85,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const agentRoutes: MetadataRoute.Sitemap = agents.map((a) =>
-    entry(`/agents/${a.slug}`, { lastModified: a.updatedAt, changeFrequency: "weekly", priority: 0.7 }),
-  );
-
-  const skillRoutes: MetadataRoute.Sitemap = skills.map((s) =>
-    entry(`/skills/${s.slug}`, { lastModified: s.updatedAt, changeFrequency: "weekly", priority: 0.5 }),
-  );
-
   const scenarioRoutes: MetadataRoute.Sitemap = SCENARIOS.map((s) =>
     entry(`/scenarios/${s.slug}`, { lastModified: now, changeFrequency: "weekly", priority: 0.6 }),
   );
 
-  return [...staticRoutes, ...blogRoutes, ...scenarioRoutes, ...agentRoutes, ...skillRoutes];
+  return [...staticRoutes, ...blogRoutes, ...scenarioRoutes];
+}
+
+// Next passes `id` as a Promise<string> (the value from generateSitemaps).
+export default async function sitemap({ id }: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
+  const n = Number(await id);
+  if (n === 0) return pageRoutes();
+
+  const agents = await agentCount();
+  const agentChunks = Math.ceil(agents / CHUNK);
+  const chunkIndex = n - 1; // 0-based among entity chunks
+
+  if (chunkIndex < agentChunks) {
+    const rows = await prisma.agent.findMany({
+      where: APPROVED,
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      skip: chunkIndex * CHUNK,
+      take: CHUNK,
+    });
+    return rows.map((a) =>
+      entry(`/agents/${a.slug}`, { lastModified: a.updatedAt, changeFrequency: "weekly", priority: 0.7 }),
+    );
+  }
+
+  const skillChunkIndex = chunkIndex - agentChunks;
+  const rows = await prisma.skill.findMany({
+    where: APPROVED,
+    select: { slug: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+    skip: skillChunkIndex * CHUNK,
+    take: CHUNK,
+  });
+  return rows.map((s) =>
+    entry(`/skills/${s.slug}`, { lastModified: s.updatedAt, changeFrequency: "weekly", priority: 0.5 }),
+  );
 }
