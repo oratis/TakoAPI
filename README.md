@@ -145,6 +145,7 @@ Open [http://localhost:3000](http://localhost:3000). The dev server uses SWC and
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth (optional) |
 | `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` | Apple OAuth (optional) |
 | `GITHUB_TOKEN` | Raises the GitHub API rate limit for the scraper scripts (optional) |
+| `GOOGLE_SITE_VERIFICATION` | Google Search Console verification token(s) for the `google-site-verification` meta tag; comma-separated for multiple (optional) |
 
 ## API Reference
 

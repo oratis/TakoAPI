@@ -67,6 +67,18 @@ export async function generateMetadata({
         "max-video-preview": -1,
       },
     },
+    // Search Console domain verification (GTM §0). Set GOOGLE_SITE_VERIFICATION
+    // to the token from the GSC "HTML tag" method and redeploy — Next renders
+    // <meta name="google-site-verification">. Omitted entirely when unset, and
+    // only meaningful on the canonical English pages (others are noindexed),
+    // but harmless to emit everywhere. Supports a comma-separated list.
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? {
+          verification: {
+            google: process.env.GOOGLE_SITE_VERIFICATION.split(",").map((s) => s.trim()),
+          },
+        }
+      : {}),
     category: "technology",
   };
 }
