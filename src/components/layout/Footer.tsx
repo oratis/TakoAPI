@@ -34,6 +34,7 @@ export default async function Footer() {
               <li><Link href="/submit-agent" className="text-sm text-gray-500 hover:text-gray-700">{t("publishAnAgent")}</Link></li>
               <li><Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">{t("developerDashboard")}</Link></li>
               <li><Link href="/skills" className="text-sm text-gray-500 hover:text-gray-700">{t("browseSkills")}</Link></li>
+              <li><Link href="/blog" className="text-sm text-gray-500 hover:text-gray-700">{t("blog")}</Link></li>
             </ul>
           </div>
           <div>

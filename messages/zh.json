@@ -33,7 +33,8 @@
     "browseSkills": "浏览技能",
     "awesomeList": "精选清单",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI。为 OpenClaw 社区打造。"
+    "copyright": "© {year} TakoAPI。为 OpenClaw 社区打造。",
+    "blog": "博客"
   },
   "Home": {
     "heroTitle": "<grad>一个 API</grad>,访问所有智能体",
@@ -656,5 +657,14 @@
     "step3Title": "粘贴到 README",
     "step3": "放在顶部附近——访客和搜索引擎都能链接到你的 TakoAPI 页面。",
     "findListing": "找到你的收录页"
+  },
+  "Blog": {
+    "title": "博客",
+    "subtitle": "关于 A2A、Agent 网关，以及如何用 TakoAPI 构建的指南。",
+    "readMore": "阅读全文",
+    "backToBlog": "← 所有文章",
+    "minRead": "约 {min} 分钟阅读",
+    "published": "发布于",
+    "faqTitle": "常见问题"
   }
 }

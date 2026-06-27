@@ -33,7 +33,8 @@
     "browseSkills": "Duyệt kỹ năng",
     "awesomeList": "Awesome List",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. Xây dựng cho cộng đồng OpenClaw."
+    "copyright": "© {year} TakoAPI. Xây dựng cho cộng đồng OpenClaw.",
+    "blog": "Blog"
   },
   "Home": {
     "heroTitle": "<grad>Một API</grad> để truy cập mọi agent",
@@ -656,5 +657,14 @@
     "step3Title": "Dán vào README",
     "step3": "Thêm gần đầu trang — khách truy cập và công cụ tìm kiếm có liên kết đến trang TakoAPI của bạn.",
     "findListing": "Tìm trang của bạn"
+  },
+  "Blog": {
+    "title": "Blog",
+    "subtitle": "Hướng dẫn về A2A, cổng agent và xây dựng với TakoAPI.",
+    "readMore": "Đọc thêm",
+    "backToBlog": "← Tất cả bài viết",
+    "minRead": "Đọc {min} phút",
+    "published": "Đã đăng",
+    "faqTitle": "Câu hỏi thường gặp"
   }
 }

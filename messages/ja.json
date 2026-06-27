@@ -33,7 +33,8 @@
     "browseSkills": "スキルを見る",
     "awesomeList": "Awesomeリスト",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. OpenClawコミュニティのために構築。"
+    "copyright": "© {year} TakoAPI. OpenClawコミュニティのために構築。",
+    "blog": "ブログ"
   },
   "Home": {
     "heroTitle": "<grad>ひとつのAPI</grad>で、すべてのエージェントに",
@@ -656,5 +657,14 @@
     "step3Title": "README に貼り付け",
     "step3": "上部付近に追加すると、訪問者や検索エンジンが TakoAPI ページへのリンクを得られます。",
     "findListing": "掲載ページを探す"
+  },
+  "Blog": {
+    "title": "ブログ",
+    "subtitle": "A2A、エージェントゲートウェイ、TakoAPI での構築に関するガイド。",
+    "readMore": "続きを読む",
+    "backToBlog": "← 記事一覧",
+    "minRead": "約 {min} 分で読めます",
+    "published": "公開日",
+    "faqTitle": "よくある質問"
   }
 }

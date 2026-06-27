@@ -33,7 +33,8 @@
     "browseSkills": "Explorar skills",
     "awesomeList": "Lista Awesome",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. Creado para la comunidad de OpenClaw."
+    "copyright": "© {year} TakoAPI. Creado para la comunidad de OpenClaw.",
+    "blog": "Blog"
   },
   "Home": {
     "heroTitle": "<grad>Una API</grad> para acceder a todos los agentes",
@@ -656,5 +657,14 @@
     "step3Title": "Pégala en tu README",
     "step3": "Añádela cerca del inicio: visitantes y buscadores obtienen un enlace a tu página de TakoAPI.",
     "findListing": "Encuentra tu ficha"
+  },
+  "Blog": {
+    "title": "Blog",
+    "subtitle": "Guías sobre A2A, gateways de agentes y cómo construir con TakoAPI.",
+    "readMore": "Leer más",
+    "backToBlog": "← Todas las entradas",
+    "minRead": "{min} min de lectura",
+    "published": "Publicado",
+    "faqTitle": "Preguntas frecuentes"
   }
 }

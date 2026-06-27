@@ -33,7 +33,8 @@
     "browseSkills": "स्किल्स ब्राउज़ करें",
     "awesomeList": "Awesome सूची",
     "clawHub": "ClawHub",
-    "copyright": "© {year} TakoAPI. OpenClaw समुदाय के लिए बनाया गया।"
+    "copyright": "© {year} TakoAPI. OpenClaw समुदाय के लिए बनाया गया।",
+    "blog": "ब्लॉग"
   },
   "Home": {
     "heroTitle": "सभी एजेंट्स तक पहुँचने के लिए <grad>एक API</grad>",
@@ -656,5 +657,14 @@
     "step3Title": "README में पेस्ट करें",
     "step3": "इसे ऊपर की ओर जोड़ें — विज़िटर और सर्च इंजन को आपके TakoAPI पेज का लिंक मिलता है।",
     "findListing": "अपनी लिस्टिंग खोजें"
+  },
+  "Blog": {
+    "title": "ब्लॉग",
+    "subtitle": "A2A, एजेंट गेटवे और TakoAPI के साथ निर्माण पर गाइड।",
+    "readMore": "और पढ़ें",
+    "backToBlog": "← सभी लेख",
+    "minRead": "{min} मिनट का पठन",
+    "published": "प्रकाशित",
+    "faqTitle": "अक्सर पूछे जाने वाले प्रश्न"
   }
 }
