@@ -269,6 +269,90 @@
       "status": "pr-opened",
       "prUrl": "https://github.com/PrefectHQ/marvin/pull/1357",
       "date": "2026-06-27T08:06:20.268Z"
+    },
+    "alvinunreal/oh-my-opencode-slim": {
+      "slug": "alvinunreal-oh-my-opencode-slim",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/alvinunreal/oh-my-opencode-slim/pull/644",
+      "date": "2026-07-01T16:53:34.785Z"
+    },
+    "backnotprop/plannotator": {
+      "slug": "backnotprop-plannotator",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/backnotprop/plannotator/pull/987",
+      "date": "2026-07-01T16:54:03.020Z"
+    },
+    "genkit-ai/genkit": {
+      "slug": "genkit-ai-genkit",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/genkit-ai/genkit/pull/5669",
+      "date": "2026-07-01T16:54:30.972Z"
+    },
+    "UfoMiao/zcf": {
+      "slug": "ufomiao-zcf",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/UfoMiao/zcf/pull/379",
+      "date": "2026-07-01T16:54:59.018Z"
+    },
+    "Sylinko/Everywhere": {
+      "slug": "sylinko-everywhere",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Sylinko/Everywhere/pull/451",
+      "date": "2026-07-01T16:55:29.228Z"
+    },
+    "zai-org/GLM-5": {
+      "slug": "zai-org-glm-5",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/zai-org/GLM-5/pull/101",
+      "date": "2026-07-01T16:55:56.902Z"
+    },
+    "ParthJadhav/app-store-screenshots": {
+      "slug": "parthjadhav-app-store-screenshots",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ParthJadhav/app-store-screenshots/pull/27",
+      "date": "2026-07-01T16:56:25.043Z"
+    },
+    "aiwaves-cn/agents": {
+      "slug": "aiwaves-cn-agents",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/aiwaves-cn/agents/pull/226",
+      "date": "2026-07-01T16:56:52.630Z"
+    },
+    "MrLesk/Backlog.md": {
+      "slug": "mrlesk-backlog-md",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/MrLesk/Backlog.md/pull/702",
+      "date": "2026-07-01T16:57:20.245Z"
+    },
+    "samchon/typia": {
+      "slug": "samchon-typia",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/samchon/typia/pull/1987",
+      "date": "2026-07-01T16:57:47.814Z"
+    },
+    "omnigent-ai/omnigent": {
+      "slug": "omnigent-ai-omnigent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/omnigent-ai/omnigent/pull/1800",
+      "date": "2026-07-01T16:58:15.750Z"
+    },
+    "ashishps1/learn-ai-engineering": {
+      "slug": "ashishps1-learn-ai-engineering",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ashishps1/learn-ai-engineering/pull/17",
+      "date": "2026-07-01T16:58:43.457Z"
+    },
+    "Klavis-AI/klavis": {
+      "slug": "klavis-ai-klavis",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Klavis-AI/klavis/pull/1670",
+      "date": "2026-07-01T16:59:11.239Z"
+    },
+    "PySpur-Dev/pyspur": {
+      "slug": "pyspur-dev-pyspur",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/PySpur-Dev/pyspur/pull/312",
+      "date": "2026-07-01T16:59:38.840Z"
     }
   }
 }
