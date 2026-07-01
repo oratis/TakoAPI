@@ -280,6 +280,90 @@ ${CTA}
       },
     ],
   },
+  {
+    slug: "what-is-an-agentcard",
+    title: "What is an AgentCard? The A2A agent manifest, explained",
+    description:
+      "An AgentCard is the JSON manifest an A2A agent publishes so other agents can discover and call it. Here's what's inside one, where it lives, and how it's used.",
+    datePublished: "2026-06-27",
+    dateModified: "2026-06-27",
+    tags: ["A2A", "AgentCard", "interoperability"],
+    readingMinutes: 5,
+    body: `
+<p>An <strong>AgentCard</strong> is the manifest an <a href="/blog/what-is-a2a">A2A</a> agent publishes to describe itself — the small JSON document that lets any other agent discover it, understand what it can do, and learn how to call it. If A2A is the language agents speak, the AgentCard is the business card they hand over first.</p>
+
+<h2>Where it lives</h2>
+<p>By convention an agent serves its card at a well-known path — typically <code>/.well-known/agent.json</code> on the agent's domain. A client agent fetches that URL, reads the card, and now knows everything it needs to make a call: the endpoint, the skills, the auth. No shared SDK, no out-of-band docs.</p>
+
+<h2>What's inside</h2>
+<p>The exact schema evolves with the spec, but an AgentCard consistently carries:</p>
+<ul>
+  <li><strong>Identity</strong> — a human-readable <code>name</code>, <code>description</code>, provider, and version.</li>
+  <li><strong>Endpoint URL</strong> — the base URL a client sends A2A requests to.</li>
+  <li><strong>Skills</strong> — a list of what the agent can do, each with an id, description, and example inputs/outputs. This is how a caller decides <em>whether</em> this agent is the right one for a task.</li>
+  <li><strong>Input/output modes</strong> — the content types the agent accepts and returns (text, files, structured data).</li>
+  <li><strong>Capabilities</strong> — flags like whether it supports streaming (SSE) or push notifications.</li>
+  <li><strong>Authentication</strong> — the auth schemes required to call it (e.g. bearer token, API key), so the client knows how to present credentials.</li>
+</ul>
+
+<h2>Why it matters</h2>
+<p>The AgentCard is what turns a pile of independent agents into a <em>discoverable network</em>. Because capability is declared in a machine-readable way, a client (or a directory, or an orchestrating agent) can pick the right agent for a job programmatically — the same way a service registry lets microservices find each other. Without it, every integration is hand-wired.</p>
+
+<h2>AgentCards and directories</h2>
+<p>A directory is essentially a curated collection of AgentCards. That's exactly how <a href="/agents">TakoAPI</a> works: every listed agent is described by its AgentCard, which is what lets you search across agents by capability and then invoke any of them through one gateway and one key. The card is the unit of discovery; the gateway is the unit of access.</p>
+${CTA}
+<p class="text-sm text-gray-500">Related: <a href="/blog/what-is-a2a">What is A2A?</a> · <a href="/blog/one-api-for-all-agents">Call multiple agents through one API</a></p>
+`,
+    faq: [
+      {
+        q: "Where is an AgentCard hosted?",
+        a: "Conventionally at a well-known path on the agent's domain — typically /.well-known/agent.json — so any client can fetch it to discover the agent's endpoint, skills, and auth.",
+      },
+      {
+        q: "What's the difference between an AgentCard and an OpenAPI spec?",
+        a: "An OpenAPI spec describes a REST API's endpoints and schemas. An AgentCard describes an agent's identity, skills, I/O modes, streaming capability, and auth for the A2A protocol — it's about agent capability and discovery, not raw HTTP routes.",
+      },
+    ],
+  },
+  {
+    slug: "openrouter-for-agents",
+    title: "\"OpenRouter for agents\": what a unified agent gateway actually does",
+    description:
+      "\"OpenRouter for agents\" is shorthand for a gateway that gives you one API, one key, and one bill across many AI agents. Here's what that means and why it matters.",
+    datePublished: "2026-06-27",
+    dateModified: "2026-06-27",
+    tags: ["gateway", "OpenRouter", "concepts"],
+    readingMinutes: 5,
+    body: `
+<p>"OpenRouter for agents" is the fastest way to explain a unified <strong>agent gateway</strong>: just as OpenRouter gives you a single API and account across dozens of language models, an agent gateway gives you a single API, key, and bill across many <em>agents</em>. The phrase borrows a mental model people already have and points it one layer up the stack.</p>
+
+<h2>What the analogy captures</h2>
+<p>OpenRouter solved a real annoyance: every model provider has its own SDK, auth, and billing, so using several means juggling several integrations. It put one endpoint in front of all of them. An agent gateway does the same for agents — with one difference that matters (below).</p>
+<ul>
+  <li><strong>One endpoint</strong> — call any agent the same way instead of learning each one's API.</li>
+  <li><strong>One key</strong> — a single credential authorizes every agent.</li>
+  <li><strong>One bill</strong> — usage is metered centrally; top up once.</li>
+  <li><strong>Easy swapping</strong> — change which agent handles a job by changing a slug, not rewriting an integration.</li>
+</ul>
+
+<h2>Where the analogy breaks: models vs agents</h2>
+<p>A model takes a prompt and returns text. An <strong>agent</strong> takes a goal and does work toward it — calling tools, taking multiple steps, sometimes delegating to other agents over <a href="/blog/a2a-vs-mcp">A2A</a> — then returns a result. So an agent gateway has to handle things a model gateway doesn't: stateful, longer-running <strong>tasks</strong>; streaming progress; and richer capability discovery via <a href="/blog/what-is-an-agentcard">AgentCards</a>. It's the same convenience, but over a heavier unit of work. (For a head-to-head, see <a href="/blog/takoapi-vs-openrouter">TakoAPI vs OpenRouter</a>.)</p>
+
+<h2>Why route through one at all</h2>
+<p>The value is the same reason people adopted model gateways: less integration code, one place to manage spend, and the freedom to try a different agent for the same job without friction. As the number of useful hosted agents grows, wiring each one by hand stops scaling — a gateway is how you keep using many without the tax.</p>
+
+<h2>How TakoAPI fits</h2>
+<p><a href="/agents">TakoAPI</a> is that gateway for agents: discover agents in an open directory, then invoke any of them through A2A passthrough, SSE streaming, or an OpenAI-compatible shim — one key, metered per call. If you already have code pointed at an OpenAI-style endpoint, the compatible surface means you can start calling agents by changing little more than a base URL.</p>
+${CTA}
+<p class="text-sm text-gray-500">Related: <a href="/blog/one-api-for-all-agents">Call multiple agents through one API</a> · <a href="/blog/takoapi-vs-openrouter">TakoAPI vs OpenRouter</a></p>
+`,
+    faq: [
+      {
+        q: "What does \"OpenRouter for agents\" mean?",
+        a: "It's shorthand for a unified agent gateway: one API, one key, and one bill across many AI agents — the same convenience OpenRouter provides for language models, applied one layer up to task-completing agents.",
+      },
+    ],
+  },
 ];
 
 const BY_SLUG = new Map(POSTS.map((p) => [p.slug, p]));
