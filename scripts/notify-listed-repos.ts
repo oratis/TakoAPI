@@ -98,10 +98,20 @@ async function gh(method: string, path: string, body?: unknown): Promise<GhRes> 
   return { status: 0, data: null, headers: new Headers() };
 }
 
-const BADGE_MARKERS = [/takoapi\.com\/agents\//i, /Listed%20on-TakoAPI/i, /Listed on TakoAPI/i];
+const BADGE_MARKERS = [
+  /takoapi\.com\/agents\//i,
+  /takoapi\.com\/api\/badge\//i,
+  /Listed%20on-TakoAPI/i,
+  /Listed on TakoAPI/i,
+];
 
 function badgeFor(slug: string): string {
-  return `[![Listed on TakoAPI](https://img.shields.io/badge/Listed%20on-TakoAPI-7c3aed)](${SITE}/agents/${slug})`;
+  // Dynamic SVG served by our own /api/badge/<slug> (shows a live star count, or
+  // "listed"). Using our endpoint instead of a static shields.io image means
+  // every render is logged for adoption metrics, and the value stays fresh.
+  // GitHub's camo proxy fetches + caches it; the alt text stays "Listed on
+  // TakoAPI" so the BADGE_MARKERS dedup still recognizes it.
+  return `[![Listed on TakoAPI](${SITE}/api/badge/${slug})](${SITE}/agents/${slug})`;
 }
 
 function insertBadge(readme: string, slug: string): { changed: boolean; reason: string; content: string } {
