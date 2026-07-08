@@ -353,6 +353,12 @@
       "status": "pr-opened",
       "prUrl": "https://github.com/PySpur-Dev/pyspur/pull/312",
       "date": "2026-07-01T16:59:38.840Z"
+    },
+    "cobusgreyling/loop-engineering": {
+      "slug": "cobusgreyling-loop-engineering",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/cobusgreyling/loop-engineering/pull/213",
+      "date": "2026-07-08T03:55:24.947Z"
     }
   }
 }
