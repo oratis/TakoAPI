@@ -8,9 +8,11 @@ Ready-to-post drafts for the coordinated launch. **Post Show HN + Reddit + Twitt
 
 ## 1. Show HN
 
-**Title** (≤80 chars, no hype/caps, no trailing period):
+**Title** (≤80 chars, no hype/caps, no trailing period) — pick one. **B** tends to land fastest on HN because the OpenRouter analogy is instantly legible:
 ```
-Show HN: TakoAPI – One API to discover and call any AI agent (A2A directory)
+A) Show HN: TakoAPI – One API to discover and call any AI agent (A2A directory)
+B) Show HN: TakoAPI – OpenRouter for AI agents (open A2A directory + gateway)
+C) Show HN: A neutral directory + one API for the fragmenting AI-agent world
 ```
 
 **Body** (the text field — or paste as your first comment right after posting):
@@ -25,7 +27,7 @@ moment for agents.
 TakoAPI is two things:
 
 - Directory — hosted A2A agents (described by open AgentCards) alongside
-  thousands of open-source agent projects. Browsable, plus a registry API:
+  hundreds of open-source agent projects. Browsable, plus a registry API:
   `GET /api/registry` returns the whole catalog as Markdown or JSON (handy to
   paste straight into an LLM).
 - Gateway — call any hosted agent through one API: A2A passthrough, SSE
@@ -37,13 +39,37 @@ command, and runs as a hosted MCP server (search_agents, invoke_agent, …).
 Live: https://takoapi.com — open source (MIT): https://github.com/oratis/TakoAPI
 Stack: Next.js + Postgres/Prisma on Cloud Run.
 
-Honest status: early. The directory is real (dozens of hosted agents + thousands
+Honest status: early. The directory is real (50+ hosted agents + hundreds
 of indexed projects), the gateway + per-key metering work, prepaid credits are
 live. Two-sided payouts and smart routing across agents are next.
 
 I'd love feedback on two things especially: (1) the directory model — is a
 neutral catalog useful, or does everyone just want their own storefront? and
 (2) the A2A-vs-MCP framing — where do you see the line?
+```
+
+**First comment** — post this as your own first reply immediately after submitting. On Show HN this comment carries the most weight (context + credibility) and seeds the discussion:
+```
+(Author here.) A bit of backstory and the decisions I went back and forth on,
+since Show HN readers usually want the "why":
+
+Why: every agent — A2A, OpenAI-compatible, or MCP — has its own endpoint, auth,
+and card format, and there's no neutral place to find them or call them the same
+way. OpenRouter solved discovery + access for LLMs; nothing equivalent existed
+for agents. So TakoAPI is deliberately two layers: a directory (discovery, open
+AgentCards) and a thin gateway (one API, per-key metering) on top.
+
+Things I'm genuinely unsure about and would love HN's take on:
+- Directory vs storefront: I list everyone (including projects that compete with
+  each other) instead of curating a storefront. Bet: the neutral discovery layer
+  is more defensible than any single storefront. Is that right?
+- A2A vs MCP: I treat them as complementary — MCP for tools a model calls, A2A
+  for agents calling agents — and the gateway speaks both plus an OpenAI shim so
+  existing clients work unchanged. Where would you draw the line?
+- Payments: prepaid credits + metering are live; two-sided payouts (so listed
+  agents can charge) are next — the harder trust/settlement problem.
+
+Stack: Next.js on Cloud Run, Postgres/Prisma. Happy to go deep on any of it.
 ```
 
 ---
