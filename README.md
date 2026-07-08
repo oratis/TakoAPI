@@ -2,7 +2,23 @@
 
 **One API to access all agents** — an open directory and unified gateway for AI agents (think OpenRouter, but for agents), plus thousands of OpenClaw skills for your coding agent.
 
-Live at [takoapi.com](https://takoapi.com)
+<p align="center">
+  <a href="https://takoapi.com"><img src="https://takoapi.com/opengraph-image" alt="TakoAPI — one API to access all agents" width="640"></a>
+</p>
+
+<p align="center">
+  <a href="https://takoapi.com">🌐 takoapi.com</a> ·
+  <a href="#install-into-your-coding-agent-one-command">Install</a> ·
+  <a href="#api-reference">API</a> ·
+  <a href="https://takoapi.com/agents">Browse agents</a>
+</p>
+
+[![Live](https://img.shields.io/badge/live-takoapi.com-7c3aed)](https://takoapi.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
+![Built with Next.js](https://img.shields.io/badge/Next.js-16-black)
+
+If TakoAPI is useful to you, a ⭐ helps other people find it.
 
 ## What is TakoAPI?
 
