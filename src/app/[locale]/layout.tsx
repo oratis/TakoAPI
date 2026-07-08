@@ -10,6 +10,7 @@ import "../globals.css";
 import Providers from "../providers";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import Analytics from "@/components/Analytics";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -68,6 +69,9 @@ export async function generateMetadata({
       },
     },
     category: "technology",
+    verification: process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : undefined,
   };
 }
 
@@ -100,6 +104,7 @@ export default async function LocaleLayout({
             <Footer />
           </Providers>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );
