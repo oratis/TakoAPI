@@ -359,6 +359,125 @@
       "status": "pr-opened",
       "prUrl": "https://github.com/cobusgreyling/loop-engineering/pull/213",
       "date": "2026-07-08T03:55:24.947Z"
+    },
+    "jacklandrin/OnlySwitch": {
+      "slug": "jacklandrin-onlyswitch",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/jacklandrin/OnlySwitch/pull/209",
+      "date": "2026-07-08T04:04:02.589Z"
+    },
+    "datawhalechina/vibe-vibe": {
+      "slug": "datawhalechina-vibe-vibe",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/datawhalechina/vibe-vibe/pull/191",
+      "date": "2026-07-08T04:04:29.495Z"
+    },
+    "rllm-org/rllm": {
+      "slug": "rllm-org-rllm",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/rllm-org/rllm/pull/735",
+      "date": "2026-07-08T04:04:54.911Z"
+    },
+    "vercel-labs/open-agents": {
+      "slug": "vercel-labs-open-agents",
+      "status": "skip:pr-unavailable(flagged?)",
+      "date": "2026-07-08T04:05:37.022Z"
+    },
+    "zhouxiaoka/autoclip": {
+      "slug": "zhouxiaoka-autoclip",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/zhouxiaoka/autoclip/pull/76",
+      "date": "2026-07-08T04:06:02.914Z"
+    },
+    "SWE-agent/mini-swe-agent": {
+      "slug": "swe-agent-mini-swe-agent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/SWE-agent/mini-swe-agent/pull/901",
+      "date": "2026-07-08T04:06:28.623Z"
+    },
+    "mahseema/awesome-ai-tools": {
+      "slug": "mahseema-awesome-ai-tools",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/mahseema/awesome-ai-tools/pull/1746",
+      "date": "2026-07-08T04:06:54.263Z"
+    },
+    "liyupi/mianshiya": {
+      "slug": "liyupi-mianshiya",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/liyupi/mianshiya/pull/58",
+      "date": "2026-07-08T04:07:19.741Z"
+    },
+    "heilcheng/awesome-agent-skills": {
+      "slug": "heilcheng-awesome-agent-skills",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/heilcheng/awesome-agent-skills/pull/332",
+      "date": "2026-07-08T04:07:45.473Z"
+    },
+    "ModelEngine-Group/nexent": {
+      "slug": "modelengine-group-nexent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ModelEngine-Group/nexent/pull/3386",
+      "date": "2026-07-08T04:08:10.777Z"
+    },
+    "areal-project/AReaL": {
+      "slug": "areal-project-areal",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/areal-project/AReaL/pull/1495",
+      "date": "2026-07-08T04:08:36.470Z"
+    },
+    "holaboss-ai/holaOS": {
+      "slug": "holaboss-ai-holaos",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/holaboss-ai/holaOS/pull/430",
+      "date": "2026-07-08T04:09:02.135Z"
+    },
+    "potpie-ai/potpie": {
+      "slug": "potpie-ai-potpie",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/potpie-ai/potpie/pull/1001",
+      "date": "2026-07-08T04:09:27.976Z"
+    },
+    "netease-youdao/LobsterAI": {
+      "slug": "netease-youdao-lobsterai",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/netease-youdao/LobsterAI/pull/2294",
+      "date": "2026-07-08T04:09:53.764Z"
+    },
+    "unicity-sphere/sphere-sdk": {
+      "slug": "unicity-sphere-sphere-sdk",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/unicity-sphere/sphere-sdk/pull/647",
+      "date": "2026-07-08T04:10:19.419Z"
+    },
+    "zenml-io/zenml": {
+      "slug": "zenml-io-zenml",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/zenml-io/zenml/pull/5044",
+      "date": "2026-07-08T04:10:45.457Z"
+    },
+    "Mai-with-u/MaiBot": {
+      "slug": "mai-with-u-maibot",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Mai-with-u/MaiBot/pull/1890",
+      "date": "2026-07-08T04:11:10.918Z"
+    },
+    "qodo-ai/qodo-cover": {
+      "slug": "qodo-ai-qodo-cover",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/qodo-ai/qodo-cover/pull/353",
+      "date": "2026-07-08T04:11:36.431Z"
+    },
+    "czlonkowski/n8n-skills": {
+      "slug": "czlonkowski-n8n-skills",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/czlonkowski/n8n-skills/pull/39",
+      "date": "2026-07-08T04:12:02.406Z"
+    },
+    "the-open-agent/openagent": {
+      "slug": "the-open-agent-openagent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/the-open-agent/openagent/pull/2456",
+      "date": "2026-07-08T04:12:28.051Z"
     }
   }
 }
