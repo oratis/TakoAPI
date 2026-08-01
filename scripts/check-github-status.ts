@@ -27,7 +27,9 @@ async function worker(queue: { id: string; githubUrl: string }[], stats: Record<
     if (!skill) break;
     const status = await checkOne(skill);
     stats[status] = (stats[status] || 0) + 1;
-    if ((stats.ok || 0) + (stats["404"] || 0) + (stats.error || 0) % 100 === 0) {
+    // Parenthesize the sum: `%` binds tighter than `+`, so without these the
+    // condition was `ok + 404 + (error % 100) === 0` and only ever fired at zero.
+    if (((stats.ok || 0) + (stats["404"] || 0) + (stats.error || 0)) % 100 === 0) {
       console.log(`  Progress: ok=${stats.ok || 0}, 404=${stats["404"] || 0}, error=${stats.error || 0}`);
     }
   }

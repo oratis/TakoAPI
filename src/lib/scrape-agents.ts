@@ -90,6 +90,14 @@ async function search(q: string, page: number, token: string | undefined, log: (
       await sleep(Math.min(waitMs, 120_000));
       continue;
     }
+    // 401 = the token is missing/invalid/expired. Fail loudly rather than
+    // returning []: a swallowed 401 makes the run look successful (HTTP 200,
+    // 0 results) while the catalog quietly stops growing — exactly how a PAT
+    // expiry went unnoticed for 19 days. Throwing surfaces a 500 that the
+    // scheduler records as a failed job.
+    if (res.status === 401) {
+      throw new Error("GitHub auth failed (HTTP 401) — GITHUB_TOKEN is missing, invalid, or expired");
+    }
     if (!res.ok) {
       log(`search "${q}" p${page} -> HTTP ${res.status}`);
       return [];
@@ -149,6 +157,14 @@ export async function scrapeGithubAgents(opts: ScrapeOpts, db: PrismaClient): Pr
   }
 
   const all = [...byName.values()].sort((a, b) => b.stargazers_count - a.stargazers_count);
+
+  // Backstop for the silent-no-op failure mode: a healthy run always finds repos
+  // across 20 topic queries, so zero means every search failed (rate-limit
+  // exhaustion, an API change, a revoked token). Report it as an error instead of
+  // a "successful" run that imported nothing.
+  if (all.length === 0) {
+    throw new Error("GitHub search returned no repositories across all queries — check GITHUB_TOKEN and rate limits");
+  }
   const starred = minStars ? all.filter((r) => r.stargazers_count >= minStars) : all;
   const eligible = starred.filter((r) => !looksStarFarmed(r));
   const skipped = starred.length - eligible.length;
