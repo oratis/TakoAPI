@@ -21,13 +21,14 @@ async function handle(req: NextRequest) {
   if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const startedAt = Date.now();
   const sp = new URL(req.url).searchParams;
   // 0 = no cap. Bounded to protect the request from an over-large registry.
   const max = intParam(sp.get("max"), 0, 0, 1000);
   try {
     // Default status PENDING — third-party agents await admin review.
     const result = await importHostedAgents({ max, status: "PENDING" }, prisma);
-    return NextResponse.json({ ...result, max, ranAt: new Date().toISOString() });
+    return NextResponse.json({ ...result, max, durationMs: Date.now() - startedAt, ranAt: new Date().toISOString() });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "import failed" }, { status: 500 });
   }

@@ -8,6 +8,10 @@ import { scrapeGithubAgents } from "@/lib/scrape-agents";
 // catalog fresh and adds newly-popular repos. Wire to Cloud Scheduler with
 // `Authorization: Bearer <CRON_SECRET>`. Tunable via ?pages=&minStars=&max=.
 export const dynamic = "force-dynamic";
+// NOTE: on Cloud Run (output: "standalone") the effective ceiling is the
+// service's request timeout, not this Vercel-style export — keep the Cloud Run
+// timeout ≥ this. `durationMs` in the response lets the scheduler log spot runs
+// that approach the limit (a truncated run leaves partial, non-transactional writes).
 export const maxDuration = 300;
 
 function intParam(v: string | null, def: number, min: number, max: number): number {
@@ -20,6 +24,7 @@ async function handle(req: NextRequest) {
   if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const startedAt = Date.now();
   const sp = new URL(req.url).searchParams;
   // Defaults match the live catalog (PAGES=1 keeps it fast enough for a sync
   // request; raise pages for a deeper backfill). Bounded to protect the request.
@@ -31,7 +36,14 @@ async function handle(req: NextRequest) {
       { token: process.env.GITHUB_TOKEN, pages, minStars, maxAgents, reqDelayMs: 900 },
       prisma
     );
-    return NextResponse.json({ ...result, pages, minStars, maxAgents, ranAt: new Date().toISOString() });
+    return NextResponse.json({
+      ...result,
+      pages,
+      minStars,
+      maxAgents,
+      durationMs: Date.now() - startedAt,
+      ranAt: new Date().toISOString(),
+    });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "scrape failed" }, { status: 500 });
   }

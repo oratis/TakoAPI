@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, AgentStatus } from "@prisma/client";
 import { classifyScenarios } from "./scenarios";
 
 // Import top open-source agent PROJECTS from GitHub (by stars) into the registry
@@ -51,6 +51,11 @@ type Repo = {
 // the star-farmed band polluting the newest-by-recency slice of the catalog.
 function looksStarFarmed(r: Repo): boolean {
   const stars = r.stargazers_count;
+  // The 150 floor is deliberately permissive to avoid false positives on small
+  // real projects. Note: the observed star-farm band sits higher (~340★), so
+  // some farmed repos in 150–400★ can slip past the fork-ratio test. That's an
+  // accepted trade-off — the durable backstop is admin REJECT/DISABLE, which a
+  // scheduled re-scrape now honors (see scenarios loop below), not this heuristic.
   if (stars < 150) return false; // small repos: don't judge on fork ratio
   return (r.forks_count ?? 0) / stars < 0.01; // < 1 fork per 100 stars → suspicious
 }
@@ -84,6 +89,14 @@ async function search(q: string, page: number, token: string | undefined, log: (
       log(`rate limited on "${q}" p${page}; waiting ${Math.ceil(waitMs / 1000)}s`);
       await sleep(Math.min(waitMs, 120_000));
       continue;
+    }
+    // 401 = the token is missing/invalid/expired. Fail loudly rather than
+    // returning []: a swallowed 401 makes the run look successful (HTTP 200,
+    // 0 results) while the catalog quietly stops growing — exactly how a PAT
+    // expiry went unnoticed for 19 days. Throwing surfaces a 500 that the
+    // scheduler records as a failed job.
+    if (res.status === 401) {
+      throw new Error("GitHub auth failed (HTTP 401) — GITHUB_TOKEN is missing, invalid, or expired");
     }
     if (!res.ok) {
       log(`search "${q}" p${page} -> HTTP ${res.status}`);
@@ -144,21 +157,45 @@ export async function scrapeGithubAgents(opts: ScrapeOpts, db: PrismaClient): Pr
   }
 
   const all = [...byName.values()].sort((a, b) => b.stargazers_count - a.stargazers_count);
+
+  // Backstop for the silent-no-op failure mode: a healthy run always finds repos
+  // across 20 topic queries, so zero means every search failed (rate-limit
+  // exhaustion, an API change, a revoked token). Report it as an error instead of
+  // a "successful" run that imported nothing.
+  if (all.length === 0) {
+    throw new Error("GitHub search returned no repositories across all queries — check GITHUB_TOKEN and rate limits");
+  }
   const starred = minStars ? all.filter((r) => r.stargazers_count >= minStars) : all;
   const eligible = starred.filter((r) => !looksStarFarmed(r));
   const skipped = starred.length - eligible.length;
   const repos = eligible.slice(0, max);
-  log(`found ${all.length} unique repos${minStars ? `, ${starred.length} with >=${minStars} stars` : ""}${skipped ? `, skipped ${skipped} likely star-farmed` : ""}; importing top ${repos.length} by stars`);
+
+  // Respect human governance: never resurrect a repo an admin has REJECTED or
+  // DISABLED. Load those slugs up front (one query) so the loop can skip them —
+  // otherwise the update path below would flip them back to APPROVED, and a prior
+  // deletion would be re-created as APPROVED, silently undoing the moderation.
+  const repoSlugs = repos.map((r) => slugify(`${r.owner.login}-${r.name}`));
+  const governed = await db.agent.findMany({
+    where: { slug: { in: repoSlugs }, status: { in: ["REJECTED", "DISABLED"] as AgentStatus[] } },
+    select: { slug: true },
+  });
+  const tombstoned = new Set(governed.map((g) => g.slug));
+
+  log(`found ${all.length} unique repos${minStars ? `, ${starred.length} with >=${minStars} stars` : ""}${skipped ? `, skipped ${skipped} likely star-farmed` : ""}${tombstoned.size ? `, skipping ${tombstoned.size} admin-rejected/disabled` : ""}; importing top ${repos.length} by stars`);
 
   let imported = 0;
   for (const r of repos) {
     const slug = slugify(`${r.owner.login}-${r.name}`);
+    if (tombstoned.has(slug)) continue; // admin REJECTED/DISABLED — leave it alone
     const description = (r.description || r.name).slice(0, 500);
     // Classify by name + description + GitHub topics into use-case scenarios.
     const scenarios = classifyScenarios([r.name, r.description ?? "", (r.topics ?? []).join(" ")].join(" "));
+    // NOTE: the update branch deliberately does NOT set `status` — a scheduled
+    // refresh must not override an admin's moderation decision. Only newly
+    // discovered repos (the create branch) land as APPROVED.
     await db.agent.upsert({
       where: { slug },
-      update: { stars: r.stargazers_count, description, status: "APPROVED", scenarios },
+      update: { stars: r.stargazers_count, description, scenarios },
       create: {
         slug,
         name: r.name,

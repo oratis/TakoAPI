@@ -6,13 +6,16 @@ import { isAuthorizedCron } from "@/lib/cron-auth";
 // healthStatus / healthCheckedAt. Wire to Cloud Scheduler, which sends
 // `Authorization: Bearer <CRON_SECRET>` (the tako-cron-secret value).
 export const dynamic = "force-dynamic";
+// Bounded probes (8-wide, 8s each) — give the run headroom as HOSTED count grows.
+export const maxDuration = 120;
 
 async function handle(req: NextRequest) {
   if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const startedAt = Date.now();
   const summary = await runHealthChecks();
-  return NextResponse.json(summary);
+  return NextResponse.json({ ...summary, durationMs: Date.now() - startedAt });
 }
 
 export const GET = handle;

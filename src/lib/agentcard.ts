@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { lookup } from "node:dns/promises";
 
 // ── A2A AgentCard parsing ────────────────────────────────────────────────
 // Fetches and validates an A2A AgentCard (the canonical machine-readable
@@ -13,6 +14,7 @@ const WELL_KNOWN_LEGACY = "/.well-known/agent.json"; // pre-v1 path, still in th
 
 const MAX_BYTES = 256 * 1024;
 const TIMEOUT_MS = 8000;
+const MAX_REDIRECTS = 3;
 
 const AgentSkillSchema = z.object({
   id: z.string().min(1).max(200),
@@ -57,8 +59,12 @@ export type ParsedAgentCard = {
   }[];
 };
 
-// Best-effort SSRF guard. Full protection needs DNS-resolution checks
-// (a hardening TODO, see docs/agent-marketplace/03-technical-architecture.md §11).
+// SSRF guard — first line: reject non-http(s) and literal private/loopback
+// hosts from the URL string. Paired with assertPublicHost() (DNS/IP resolution)
+// and manual per-hop redirect revalidation in fetchOne(), this closes the
+// redirect-to-metadata and DNS-rebinding vectors. Residual: a connect-level
+// TOCTOU (rebind between resolve and connect) still needs socket-level pinning —
+// see docs/agent-marketplace/03-technical-architecture.md §11.
 function assertSafeUrl(raw: string): URL {
   let u: URL;
   try {
@@ -83,6 +89,55 @@ function assertSafeUrl(raw: string): URL {
     if (blocked) throw new AgentCardError("Refusing to fetch a private/loopback address");
   }
   return u;
+}
+
+// True if an IPv4 literal is in a private / loopback / link-local / CGNAT range.
+// Unparseable input is treated as unsafe (fail closed).
+function ipv4IsPrivate(ip: string): boolean {
+  const p = ip.split(".").map((n) => Number(n));
+  if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
+  const [a, b] = p;
+  if (a === 0 || a === 127) return true; // 0.0.0.0/8, loopback
+  if (a === 10) return true; // 10/8
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16/12
+  if (a === 192 && b === 168) return true; // 192.168/16
+  if (a === 169 && b === 254) return true; // 169.254/16 link-local (cloud metadata)
+  if (a === 100 && b >= 64 && b <= 127) return true; // 100.64/10 CGNAT
+  if (a === 198 && (b === 18 || b === 19)) return true; // 198.18/15 benchmarking, non-routable
+  return false;
+}
+
+// True if a resolved address (v4 or v6) is one we must not fetch from.
+function ipIsPrivate(address: string, family: number): boolean {
+  if (family === 4) return ipv4IsPrivate(address);
+  const ip = address.toLowerCase();
+  // IPv4-mapped / -embedded (e.g. ::ffff:169.254.169.254) → check the v4 part.
+  const embedded = ip.match(/((?:\d{1,3}\.){3}\d{1,3})$/);
+  if (embedded) return ipv4IsPrivate(embedded[1]);
+  if (ip === "::1" || ip === "::") return true; // loopback / unspecified
+  if (ip.startsWith("fc") || ip.startsWith("fd")) return true; // fc00::/7 unique-local
+  if (/^fe[89ab]/.test(ip)) return true; // fe80::/10 link-local
+  return false;
+}
+
+// Resolve a hostname and refuse if ANY resolved address is private/loopback/
+// link-local. Closes the DNS-rebinding gap that the string-only host check in
+// assertSafeUrl can't catch (e.g. a public name pointing at 169.254.169.254).
+// Prod-only, matching assertSafeUrl's guard, so localhost cards still work in dev.
+async function assertPublicHost(hostname: string): Promise<void> {
+  if (process.env.NODE_ENV !== "production") return;
+  let addrs: { address: string; family: number }[];
+  try {
+    addrs = await lookup(hostname, { all: true });
+  } catch {
+    throw new AgentCardError(`Could not resolve ${hostname}`);
+  }
+  if (!addrs.length) throw new AgentCardError(`Host ${hostname} did not resolve`);
+  for (const a of addrs) {
+    if (ipIsPrivate(a.address, a.family)) {
+      throw new AgentCardError("Refusing to fetch a private/loopback address");
+    }
+  }
 }
 
 function originOf(u: string): string {
@@ -123,33 +178,55 @@ function normalize(card: z.infer<typeof AgentCardSchema>, cardUrl: string): Pars
 }
 
 async function fetchOne(cardUrl: string): Promise<ParsedAgentCard> {
-  assertSafeUrl(cardUrl);
+  // Store the URL we were asked to fetch as the card's canonical URL, even if a
+  // redirect serves the bytes from elsewhere (keeps stored cardUrl stable).
+  const requested = assertSafeUrl(cardUrl).toString();
+  let current = requested;
+  // One timer bounds the whole redirect chain, not each hop.
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-  let res: Response;
   try {
-    res = await fetch(cardUrl, {
-      signal: ctrl.signal,
-      headers: { Accept: "application/json" },
-      redirect: "follow",
-    });
-  } catch {
-    throw new AgentCardError(`Could not reach ${cardUrl}`);
+    for (let hop = 0; ; hop++) {
+      // Revalidate every hop: string checks + DNS/IP resolution. A "follow"
+      // fetch would let a public URL redirect into a private address unchecked.
+      const u = assertSafeUrl(current);
+      await assertPublicHost(u.hostname);
+
+      let res: Response;
+      try {
+        res = await fetch(current, {
+          signal: ctrl.signal,
+          headers: { Accept: "application/json" },
+          redirect: "manual",
+        });
+      } catch {
+        throw new AgentCardError(`Could not reach ${current}`);
+      }
+
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get("location");
+        if (!loc) throw new AgentCardError("Redirect without a Location header");
+        if (hop >= MAX_REDIRECTS) throw new AgentCardError("Too many redirects");
+        current = new URL(loc, current).toString(); // resolve relative redirects
+        continue;
+      }
+
+      if (!res.ok) throw new AgentCardError(`AgentCard fetch returned HTTP ${res.status}`);
+      const text = await res.text();
+      if (text.length > MAX_BYTES) throw new AgentCardError("AgentCard response too large");
+      let json: unknown;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new AgentCardError("AgentCard is not valid JSON");
+      }
+      const parsed = AgentCardSchema.safeParse(json);
+      if (!parsed.success) throw new AgentCardError("Not a valid A2A AgentCard");
+      return normalize(parsed.data, requested);
+    }
   } finally {
     clearTimeout(timer);
   }
-  if (!res.ok) throw new AgentCardError(`AgentCard fetch returned HTTP ${res.status}`);
-  const text = await res.text();
-  if (text.length > MAX_BYTES) throw new AgentCardError("AgentCard response too large");
-  let json: unknown;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    throw new AgentCardError("AgentCard is not valid JSON");
-  }
-  const parsed = AgentCardSchema.safeParse(json);
-  if (!parsed.success) throw new AgentCardError("Not a valid A2A AgentCard");
-  return normalize(parsed.data, cardUrl);
 }
 
 /**
