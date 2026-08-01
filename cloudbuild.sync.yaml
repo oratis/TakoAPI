@@ -1,0 +1,20 @@
+# Builds the daily-sync job image from Dockerfile.sync (not the web Dockerfile).
+# The Prisma client is generated from this branch's enum schema, fixing the
+# String-vs-enum P2032 drift that broke takoapi-daily-sync.
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.sync'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi-sync:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi-sync:latest'
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi-sync:latest'
+options:
+  logging: CLOUD_LOGGING_ONLY
