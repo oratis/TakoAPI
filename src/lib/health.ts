@@ -30,7 +30,15 @@ export async function probeAgentHealth(agent: { cardUrl: string | null; endpoint
   }
 }
 
-export type HealthSummary = { checked: number; ok: number; degraded: number; down: number; checkedAt: string };
+export type HealthSummary = {
+  checked: number;
+  ok: number;
+  degraded: number;
+  down: number;
+  /** Persist failures — surfaced instead of being silently swallowed. */
+  writeErrors: number;
+  checkedAt: string;
+};
 
 /** Probe all APPROVED HOSTED agents (bounded concurrency) and persist their health. */
 export async function runHealthChecks(): Promise<HealthSummary> {
@@ -40,7 +48,7 @@ export async function runHealthChecks(): Promise<HealthSummary> {
   });
 
   const now = new Date();
-  const summary: HealthSummary = { checked: agents.length, ok: 0, degraded: 0, down: 0, checkedAt: now.toISOString() };
+  const summary: HealthSummary = { checked: agents.length, ok: 0, degraded: 0, down: 0, writeErrors: 0, checkedAt: now.toISOString() };
 
   for (let i = 0; i < agents.length; i += PROBE_CONCURRENCY) {
     const batch = agents.slice(i, i + PROBE_CONCURRENCY);
@@ -48,9 +56,13 @@ export async function runHealthChecks(): Promise<HealthSummary> {
     await Promise.all(
       results.map((r) => {
         summary[r.health]++;
+        // Don't let one failed write abort the batch, but do count it so a
+        // systemic DB problem shows up in the summary rather than vanishing.
         return prisma.agent
           .update({ where: { id: r.id }, data: { healthStatus: r.health, healthCheckedAt: now } })
-          .catch(() => {});
+          .catch(() => {
+            summary.writeErrors++;
+          });
       })
     );
   }

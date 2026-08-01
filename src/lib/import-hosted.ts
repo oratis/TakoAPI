@@ -20,6 +20,18 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80);
 }
 
+// Origin (scheme://host) of a URL, for comparing an existing card's host with an
+// incoming one. Returns null when the input can't be parsed.
+function originOf(u: string | null | undefined): string | null {
+  if (!u) return null;
+  try {
+    const x = new URL(u);
+    return `${x.protocol}//${x.host}`;
+  } catch {
+    return null;
+  }
+}
+
 const dedupe = (a: string[]) => Array.from(new Set(a));
 
 // Resolve the list of AgentCard URLs from a local file, a registry index URL,
@@ -94,6 +106,35 @@ export async function importHostedAgents(
         failed++;
         continue;
       }
+
+      // Ownership + same-origin guards. The registry importer upserts by
+      // slugify(card.name); without these, a card whose name collides with an
+      // existing entry would silently overwrite that entry's endpoint (and keep
+      // its APPROVED status). Since the default registry is a community-editable
+      // list, that's a takeover vector. Rules:
+      //   1. Only refresh rows this importer owns (publisherId === pub.id) — never
+      //      touch a user's submitted agent.
+      //   2. A hosted card must not overwrite a non-HOSTED (PROJECT) entry.
+      //   3. If the card's host differs from the stored one, treat it as a
+      //      possible takeover / migration: refresh fields but drop to PENDING so
+      //      an admin re-approves the new endpoint before it serves traffic.
+      const existing = await db.agent.findUnique({
+        where: { slug },
+        select: { kind: true, publisherId: true, cardUrl: true },
+      });
+      if (existing && existing.publisherId !== pub.id) {
+        log(`↷ ${slug} — owned by another publisher; skipping`);
+        failed++;
+        continue;
+      }
+      if (existing && existing.kind !== "HOSTED") {
+        log(`↷ ${slug} — existing ${existing.kind} entry; a hosted card must not overwrite it; skipping`);
+        failed++;
+        continue;
+      }
+      const existingOrigin = originOf(existing?.cardUrl);
+      const crossOrigin = !!existingOrigin && existingOrigin !== originOf(card.cardUrl);
+
       const scenarios = classifyScenarios(
         [card.name, card.description, card.skills.map((s) => s.name).join(" ")].join(" ")
       );
@@ -112,6 +153,8 @@ export async function importHostedAgents(
           securitySchemes: security,
           cardFetchedAt: new Date(),
           scenarios,
+          // Endpoint moved to a new host → force re-review before it's public.
+          ...(crossOrigin ? { status: "PENDING" as AgentStatus } : {}),
         },
         create: {
           slug,
@@ -151,7 +194,10 @@ export async function importHostedAgents(
         }
       }
 
-      log(`✓ ${slug} — ${card.skills.length} skill(s), scenarios: ${scenarios.join("/") || "none"}`);
+      log(
+        `✓ ${slug} — ${card.skills.length} skill(s), scenarios: ${scenarios.join("/") || "none"}` +
+          (crossOrigin ? " [host changed → status reset to PENDING for re-review]" : "")
+      );
       ok++;
     } catch (e) {
       const msg = e instanceof AgentCardError ? e.message : (e as Error).message;
