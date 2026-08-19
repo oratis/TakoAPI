@@ -53,7 +53,8 @@ export async function GET(req: NextRequest) {
   md += `|-------|-------------|---------|-------|\n`;
 
   for (const s of skills) {
-    md += `| [${s.name}](https://takoapi.com/skills/${s.slug}) | ${s.description.slice(0, 80)} | \`clawhub install ${s.slug}\` | ${s.likesCount} |\n`;
+    const install = s.installCmd || `clawhub install ${s.slug}`;
+    md += `| [${s.name}](https://takoapi.com/skills/${s.slug}) | ${s.description.slice(0, 80)} | \`${install}\` | ${s.likesCount} |\n`;
   }
 
   md += `\n---\n`;
