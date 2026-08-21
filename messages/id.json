@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Skill Tren",
-    "metaDescription": "Skill OpenClaw yang paling banyak diunduh dan paling banyak disukai saat ini — papan peringkat langsung tentang apa yang sedang dipasang coding agent.",
+    "metaDescription": "Skill OpenClaw yang paling banyak diunduh dan paling disukai — papan peringkat berdasarkan jumlah unduhan yang dilaporkan clawskills.sh, diperbarui setiap hari.",
     "ogTitle": "Skill Tren — {siteName}",
-    "ogDescription": "Papan peringkat langsung untuk skill OpenClaw paling populer.",
+    "ogDescription": "Papan peringkat harian skill OpenClaw terpopuler.",
     "title": "Skill Tren",
     "subtitle": "Temukan skill OpenClaw paling populer yang diperingkat oleh komunitas",
     "searchPlaceholder": "Cari skill tren…",

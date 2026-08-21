@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Trending Skills",
-    "metaDescription": "The most-downloaded and most-liked OpenClaw skills right now — a live leaderboard of what coding agents are installing.",
+    "metaDescription": "The most-downloaded and most-liked OpenClaw skills — a leaderboard built from download counts reported by clawskills.sh, refreshed daily.",
     "ogTitle": "Trending Skills — {siteName}",
-    "ogDescription": "A live leaderboard of the most popular OpenClaw skills.",
+    "ogDescription": "A daily leaderboard of the most popular OpenClaw skills.",
     "title": "Trending Skills",
     "subtitle": "Discover the most popular OpenClaw skills ranked by the community",
     "searchPlaceholder": "Search trending skills…",

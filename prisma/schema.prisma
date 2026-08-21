@@ -125,6 +125,13 @@ model Skill {
   updatedAt     DateTime    @updatedAt
   brief         String?
   clawSkillsUrl String?
+  /// THIRD-PARTY COUNT, NOT OURS. Scraped from the skill's clawskills.sh page
+  /// (scripts/scrape-clawskills.ts, and overwritten nightly by scripts/daily-sync.ts
+  /// via the takoapi-daily-sync Scheduler job). Nothing in this codebase ever
+  /// increments it: neither public/install.sh, packages/takoapi-install nor
+  /// takoapi_skill/ report an install back, so this says nothing about downloads
+  /// through TakoAPI. Values are also rounded at the source ("1.2k" -> 1200).
+  /// Do not sum it and present the total as a site metric.
   downloads     Int         @default(0)
   readme        String?
   stars         Int         @default(0)

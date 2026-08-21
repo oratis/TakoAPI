@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Skills im Trend",
-    "metaDescription": "Die meistheruntergeladenen und beliebtesten OpenClaw-Skills gerade jetzt — ein Live-Leaderboard dessen, was Coding-Agenten installieren.",
+    "metaDescription": "Die meistheruntergeladenen und beliebtesten OpenClaw-Skills — ein Leaderboard auf Basis der von clawskills.sh gemeldeten Downloadzahlen, täglich aktualisiert.",
     "ogTitle": "Skills im Trend — {siteName}",
-    "ogDescription": "Ein Live-Leaderboard der beliebtesten OpenClaw-Skills.",
+    "ogDescription": "Ein täglich aktualisiertes Leaderboard der beliebtesten OpenClaw-Skills.",
     "title": "Skills im Trend",
     "subtitle": "Entdecke die beliebtesten OpenClaw-Skills, gereiht von der Community",
     "searchPlaceholder": "Trend-Skills suchen…",

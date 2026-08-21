@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Skills en tendencia",
-    "metaDescription": "Las skills de OpenClaw más descargadas y con más me gusta en este momento — una tabla en vivo de lo que están instalando los agentes de programación.",
+    "metaDescription": "Las skills de OpenClaw más descargadas y con más me gusta: una tabla basada en las cifras de descargas publicadas por clawskills.sh, actualizada a diario.",
     "ogTitle": "Skills en tendencia — {siteName}",
-    "ogDescription": "Una tabla en vivo de las skills de OpenClaw más populares.",
+    "ogDescription": "Una tabla actualizada a diario de las skills de OpenClaw más populares.",
     "title": "Skills en tendencia",
     "subtitle": "Descubre las skills de OpenClaw más populares clasificadas por la comunidad",
     "searchPlaceholder": "Buscar skills en tendencia…",

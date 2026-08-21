@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Skills tendance",
-    "metaDescription": "Les skills OpenClaw les plus téléchargés et les plus appréciés en ce moment — un classement en direct de ce que les agents de code installent.",
+    "metaDescription": "Les skills OpenClaw les plus téléchargés et les plus appréciés — un classement établi à partir des chiffres de téléchargement publiés par clawskills.sh, mis à jour chaque jour.",
     "ogTitle": "Skills tendance — {siteName}",
-    "ogDescription": "Un classement en direct des skills OpenClaw les plus populaires.",
+    "ogDescription": "Un classement quotidien des skills OpenClaw les plus populaires.",
     "title": "Skills tendance",
     "subtitle": "Découvrez les skills OpenClaw les plus populaires, classés par la communauté",
     "searchPlaceholder": "Rechercher des skills tendance…",
