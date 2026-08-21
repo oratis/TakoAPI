@@ -430,6 +430,7 @@ model Agent {
   cardSignatureVerified Boolean         @default(false)
   namespaceVerified     Boolean         @default(false)
   cardFetchedAt         DateTime?
+  /// Latest probe result only. History of changes lives in AgentHealthCheck.
   healthStatus          String?
   healthCheckedAt       DateTime?
 
@@ -455,13 +456,14 @@ model Agent {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  publisher   User            @relation(fields: [publisherId], references: [id])
-  category    Category?       @relation(fields: [categoryId], references: [id])
-  skills      AgentSkillDef[]
-  tags        AgentTag[]
-  invocations Invocation[]
-  ratings     AgentRating[]
-  bookmarks   AgentBookmark[]
+  publisher    User               @relation(fields: [publisherId], references: [id])
+  category     Category?          @relation(fields: [categoryId], references: [id])
+  skills       AgentSkillDef[]
+  tags         AgentTag[]
+  invocations  Invocation[]
+  ratings      AgentRating[]
+  bookmarks    AgentBookmark[]
+  healthChecks AgentHealthCheck[]
 
   @@index([status, categoryId])
   @@index([featured, callsCount(sort: Desc)])
@@ -470,6 +472,30 @@ model Agent {
   @@index([createdAt(sort: Desc)])
   @@index([status, kind])
   @@index([kind, stars(sort: Desc)])
+}
+
+/// Health *transitions* for an agent — one row each time a probe returns a
+/// different status than the one on record, not one row per probe. `Agent.healthStatus`
+/// is overwritten in place every hour, so on its own it can say "this agent is down
+/// right now" but never "since when", "for how long", or "what was last week's uptime".
+///
+/// Recording only changes keeps this table proportional to how often agents flip
+/// rather than to (agents x hours) — the hourly cron would otherwise add a row per
+/// agent per hour forever, on a 10 GB shared-core instance. It also makes the
+/// question that prompted this table a single lookup: when an agent went down is the
+/// `checkedAt` of its most recent row with status='down'.
+model AgentHealthCheck {
+  id             String   @id @default(cuid())
+  agentId        String
+  /// ok | degraded | down
+  status         String
+  /// Status this replaced; null for the first observation of an agent.
+  previousStatus String?
+  checkedAt      DateTime @default(now())
+  agent          Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, checkedAt])
+  @@index([checkedAt])
 }
 
 model AgentSkillDef {
