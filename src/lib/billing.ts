@@ -4,7 +4,7 @@ import type { AgentProtocol, LedgerType, PricingModel } from "@prisma/client";
 // Phase 3 billing — metering + prepaid-credit ledger. The gateway records every
 // call and, when it has a cost, debits the caller's balance against an immutable
 // ledger. PayPal top-up (src/lib/paypal.ts + /api/billing/topup) credits balances
-// via `grantCredit`; internal grants/admin adjustments use it too.
+// via `applyTopUp`; internal grants/admin adjustments use `grantCredit`.
 // See docs/agent-marketplace/03-technical-architecture.md §5–6 and 04-data-model.md §2.
 
 /**
@@ -251,6 +251,56 @@ export async function grantCredit(
       where: { userId },
       create: { userId, balanceUsd: amountUsd },
       update: { balanceUsd: { increment: amountUsd } },
+    });
+    return cb.balanceUsd;
+  });
+  return Number(balance);
+}
+
+/**
+ * Credit a captured PayPal top-up: the gross TOPUP entry and the platform TOPUP_FEE
+ * entry together, in one transaction, with a single net balance change.
+ *
+ * Why not two `grantCredit` calls: they were two independent transactions, while the
+ * idempotency probe in `captureAndCredit` only looks for a TOPUP row. A crash between
+ * them (instance reclaimed, DB blip) left the gross credited and the fee unwritten —
+ * and the retry then found the TOPUP row, declared "already", and never charged the
+ * fee. Every such gap was TAKO_TOPUP_FEE_PCT of a real payment, lost permanently.
+ * Writing both in one transaction makes "TOPUP row exists" a truthful proxy for
+ * "this top-up is fully settled". Returns the new balance in USD.
+ */
+export async function applyTopUp(
+  userId: string,
+  grossUsd: number,
+  feeUsd: number,
+  opts: { providerRef: string; note?: string }
+): Promise<number> {
+  const netUsd = Number((grossUsd - feeUsd).toFixed(6));
+  const balance = await prisma.$transaction(async (tx) => {
+    await tx.ledgerEntry.create({
+      data: {
+        userId,
+        type: "TOPUP",
+        amountUsd: grossUsd,
+        note: opts.note ?? null,
+        providerRef: opts.providerRef,
+      },
+    });
+    if (feeUsd > 0) {
+      await tx.ledgerEntry.create({
+        data: {
+          userId,
+          type: "TOPUP_FEE",
+          amountUsd: -feeUsd,
+          note: "Top-up fee",
+          providerRef: opts.providerRef,
+        },
+      });
+    }
+    const cb = await tx.creditBalance.upsert({
+      where: { userId },
+      create: { userId, balanceUsd: netUsd },
+      update: { balanceUsd: { increment: netUsd } },
     });
     return cb.balanceUsd;
   });
