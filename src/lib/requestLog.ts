@@ -1,6 +1,44 @@
+import { createHash } from "crypto";
 import type { NextRequest, NextResponse } from "next/server";
 import { prisma } from "./prisma";
 import { extractClientIp } from "./ratelimit";
+
+let warnedNoSalt = false;
+
+/**
+ * Day-rotating, salted digest of the client IP — what goes into `RequestLog.ipHash`
+ * in place of the address itself.
+ *
+ * The old column stored the raw IP: personal data, kept forever (nothing purged
+ * this table), on a db-f1-micro with a 10 GB disk. It also served no purpose it
+ * could be trusted for, because the value comes from the first element of a
+ * caller-supplied X-Forwarded-For — a privacy liability that was not usable as
+ * evidence either.
+ *
+ * A digest keeps what the column was actually good for ("were these two requests
+ * from the same source?") and drops what it was not. The UTC date is mixed into the
+ * hash so the same address yields a different digest each day, which bounds
+ * correlation to a single day without any extra deletion machinery.
+ *
+ * Returns null when TAKO_IP_SALT is unset: an unsalted digest of a 32-bit address
+ * space is trivially reversible by brute force, so no value is better than a
+ * reversible one. That case is warned about once per process, not silently.
+ */
+export function hashClientIp(req: NextRequest): string | null {
+  const salt = process.env.TAKO_IP_SALT;
+  if (!salt) {
+    if (!warnedNoSalt) {
+      warnedNoSalt = true;
+      console.warn("[requestLog] TAKO_IP_SALT is unset — RequestLog.ipHash will be null");
+    }
+    return null;
+  }
+  const ip = extractClientIp(req);
+  if (!ip || ip === "anon") return null;
+  const day = new Date().toISOString().slice(0, 10); // UTC date, YYYY-MM-DD
+  // 128 bits is far past collision concerns here and halves the stored width.
+  return createHash("sha256").update(`${ip}|${day}|${salt}`).digest("hex").slice(0, 32);
+}
 
 type LogInput = {
   req: NextRequest;
@@ -56,7 +94,7 @@ export function logRequest(input: LogInput): void {
         status,
         durationMs,
         userId: userId ?? null,
-        ip: extractClientIp(req) ?? null,
+        ipHash: hashClientIp(req),
         userAgent: req.headers.get("user-agent")?.slice(0, 500) ?? null,
         errorCode: errorCode ?? null,
       },

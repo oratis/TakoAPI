@@ -190,7 +190,9 @@ model RequestLog {
   status     Int
   durationMs Int
   userId     String?
-  ip         String?
+  /// Salted, day-rotating SHA-256 of the client IP — never the address itself.
+  /// See hashClientIp() in src/lib/requestLog.ts. Null when TAKO_IP_SALT is unset.
+  ipHash     String?
   userAgent  String?
   errorCode  String?
   createdAt  DateTime @default(now())
