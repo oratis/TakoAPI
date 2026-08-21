@@ -131,6 +131,108 @@ export async function meterInvocation(input: MeterInput): Promise<void> {
 }
 
 /**
+ * Open an Invocation row for a *streaming* call, before any bytes are relayed.
+ *
+ * A stream cannot be priced when its headers arrive — the upstream can still fail,
+ * time out, or return nothing — but if we waited until it ended to record anything
+ * at all, a stream cut short would leave no trace and the success rate computed
+ * from `Invocation` would silently exclude its own failures. So the row is created
+ * up front, unpriced (`billedUsd = null`), and `settleInvocation` finishes it.
+ *
+ * Returns the row id, or null when the write failed — `settleInvocation` falls back
+ * to creating the row at the end in that case. Never throws.
+ */
+export async function startInvocation(input: MeterInput): Promise<string | null> {
+  try {
+    const inv = await prisma.$transaction(async (tx) => {
+      const created = await tx.invocation.create({
+        data: {
+          apiKeyId: input.apiKeyId ?? null,
+          userId: input.userId ?? null,
+          agentId: input.agentId,
+          protocol: input.protocol,
+          status: input.status,
+          latencyMs: input.latencyMs ?? null,
+          taskState: input.taskState ?? null,
+          unitsBilled: input.units ?? 1,
+          billedUsd: null,
+          errorCode: input.errorCode ?? null,
+        },
+        select: { id: true },
+      });
+      await tx.agent.update({ where: { id: input.agentId }, data: { callsCount: { increment: 1 } } });
+      return created;
+    });
+    return inv.id;
+  } catch (err) {
+    console.error("[billing] failed to open streaming invocation", {
+      agentId: input.agentId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+/**
+ * Close out a streaming invocation once the stream actually terminates: final
+ * status, latency and errorCode, plus — when the stream completed successfully —
+ * the DEBIT ledger entry and balance decrement, in one transaction.
+ *
+ * Updates the row opened by `startInvocation` rather than writing a second one, so
+ * a stream is still exactly one Invocation and one `callsCount` increment. When the
+ * opening write failed (`invocationId === null`) it falls back to `debitInvocation`,
+ * which creates the row from scratch.
+ *
+ * Never throws. Note this runs *after* the response headers were flushed, so on
+ * Cloud Run it needs CPU that is only guaranteed with `--no-cpu-throttling`.
+ */
+export async function settleInvocation(
+  invocationId: string | null,
+  input: MeterInput
+): Promise<void> {
+  if (!invocationId) return debitInvocation(input);
+  const billedUsd = input.billedUsd ?? 0;
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.invocation.update({
+        where: { id: invocationId },
+        data: {
+          status: input.status,
+          latencyMs: input.latencyMs ?? null,
+          taskState: input.taskState ?? null,
+          unitsBilled: input.units ?? 1,
+          billedUsd: billedUsd > 0 ? billedUsd : null,
+          errorCode: input.errorCode ?? null,
+        },
+      });
+      if (billedUsd > 0 && input.userId) {
+        await tx.ledgerEntry.create({
+          data: {
+            userId: input.userId,
+            type: "DEBIT",
+            amountUsd: -billedUsd,
+            invocationId,
+          },
+        });
+        await tx.creditBalance.upsert({
+          where: { userId: input.userId },
+          create: { userId: input.userId, balanceUsd: -billedUsd },
+          update: { balanceUsd: { decrement: billedUsd } },
+        });
+      }
+    });
+  } catch (err) {
+    console.error("[billing] failed to settle streaming invocation", {
+      invocationId,
+      agentId: input.agentId,
+      userId: input.userId ?? null,
+      billedUsd,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
  * Add credits to a user's balance and record the matching ledger entry, atomically.
  * Used by the PayPal top-up capture (type=TOPUP) and for internal grants / admin
  * adjustments. Returns the new balance in USD.
