@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Skills em alta",
-    "metaDescription": "As skills do OpenClaw mais baixadas e mais curtidas agora — um ranking ao vivo do que os agentes de código estão instalando.",
+    "metaDescription": "As skills OpenClaw mais baixadas e mais curtidas — um ranking baseado nos downloads informados pelo clawskills.sh, atualizado diariamente.",
     "ogTitle": "Skills em alta — {siteName}",
-    "ogDescription": "Um ranking ao vivo das skills do OpenClaw mais populares.",
+    "ogDescription": "Um ranking atualizado diariamente das skills OpenClaw mais populares.",
     "title": "Skills em alta",
     "subtitle": "Descubra as skills do OpenClaw mais populares, ranqueadas pela comunidade",
     "searchPlaceholder": "Buscar skills em alta…",

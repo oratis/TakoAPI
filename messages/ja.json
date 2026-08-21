@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "トレンドのスキル",
-    "metaDescription": "いま最もダウンロードされ、最もいいねを集めているOpenClawスキル — コーディングエージェントが何をインストールしているかをリアルタイムで示すリーダーボード。",
+    "metaDescription": "ダウンロード数と「いいね」が最も多い OpenClaw スキル — clawskills.sh が公開するダウンロード数をもとにした、毎日更新のランキング。",
     "ogTitle": "トレンドのスキル — {siteName}",
-    "ogDescription": "人気のOpenClawスキルをリアルタイムで示すリーダーボード。",
+    "ogDescription": "OpenClaw の人気スキルを毎日更新するランキング。",
     "title": "トレンドのスキル",
     "subtitle": "コミュニティのランキングで人気のOpenClawスキルを発見しましょう",
     "searchPlaceholder": "トレンドのスキルを検索…",

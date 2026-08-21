@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "트렌딩 스킬",
-    "metaDescription": "지금 가장 많이 다운로드되고 좋아요를 받은 OpenClaw 스킬 — 코딩 에이전트가 설치 중인 스킬의 실시간 리더보드입니다.",
+    "metaDescription": "다운로드 수와 좋아요가 가장 많은 OpenClaw 스킬 — clawskills.sh가 공개한 다운로드 수를 기반으로 매일 갱신되는 순위표.",
     "ogTitle": "트렌딩 스킬 — {siteName}",
-    "ogDescription": "가장 인기 있는 OpenClaw 스킬의 실시간 리더보드.",
+    "ogDescription": "매일 갱신되는 인기 OpenClaw 스킬 순위표.",
     "title": "트렌딩 스킬",
     "subtitle": "커뮤니티가 선정한 가장 인기 있는 OpenClaw 스킬을 만나보세요",
     "searchPlaceholder": "트렌딩 스킬 검색…",

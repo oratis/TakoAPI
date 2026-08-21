@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authenticateApiKey, newRpcId } from "@/lib/apikey";
+import { authenticateApiKey, gatewayRateLimit, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { logGatewayRejection } from "@/lib/gatewayLog";
+import { checkCreditPreflight, computeBilledUsd, debitInvocation, meterInvocation } from "@/lib/billing";
 
 // Unified gateway — A2A passthrough. Authenticate with an API key, route to the
 // agent's endpoint, meter the call. See docs/agent-marketplace/03-technical-architecture.md §2.
 const TIMEOUT_MS = 30_000;
+const ROUTE = "/v1/agents/[slug]/message";
 
 export async function POST(
   req: NextRequest,
@@ -18,11 +20,27 @@ export async function POST(
     req.headers.get("authorization") || req.headers.get("x-api-key")
   );
   if (!keyRecord) {
+    logGatewayRejection({ route: ROUTE, reason: "unauthenticated", status: 401, agentSlug: slug });
     return NextResponse.json({ error: "Invalid or missing API key" }, { status: 401 });
   }
 
-  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
-  if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
+  const rl = await checkRateLimit(req, {
+    key: `gw:${keyRecord.id}`,
+    windowMs: 60_000,
+    max: gatewayRateLimit(keyRecord),
+    perIp: false,
+  });
+  if (!rl.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "rate_limited",
+      status: 429,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+    });
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
@@ -40,6 +58,16 @@ export async function POST(
   // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
   const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
   if (!credit.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "insufficient_credit",
+      status: 402,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+      requiredUsd: credit.requiredUsd,
+      balanceUsd: credit.balanceUsd,
+    });
     return NextResponse.json(
       {
         error: "Insufficient credit",
@@ -91,19 +119,27 @@ export async function POST(
 
   const latencyMs = Date.now() - started;
 
-  // Meter + bill (log → aggregate). Never block the response on metering.
+  // Meter + bill. A *billed* call is awaited before we respond: Cloud Run may stop
+  // giving this instance CPU once the response is flushed, so a pending debit is not
+  // guaranteed to run. Free/failed calls stay fire-and-forget — losing one costs a
+  // data point, not revenue.
   const billedUsd =
     !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
-  void meterInvocation({
+  const meter = {
     apiKeyId: keyRecord.id,
     userId: keyRecord.userId,
     agentId: agent.id,
-    protocol: "A2A",
+    protocol: "A2A" as const,
     status,
     latencyMs,
     errorCode,
     billedUsd,
-  });
+  };
+  if (billedUsd > 0) {
+    await debitInvocation(meter);
+  } else {
+    void meterInvocation(meter);
+  }
 
   if (errorCode) {
     return NextResponse.json({ error: "Agent unreachable" }, { status: 502 });

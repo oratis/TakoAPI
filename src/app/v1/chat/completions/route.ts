@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authenticateApiKey, newRpcId } from "@/lib/apikey";
+import { authenticateApiKey, gatewayRateLimit, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { logGatewayRejection } from "@/lib/gatewayLog";
+import { checkCreditPreflight, computeBilledUsd, debitInvocation, meterInvocation } from "@/lib/billing";
 
 // OpenAI-compatible shim: point any OpenAI SDK at this base URL and set
 // `model` to an agent slug. Low-friction on-ramp to the gateway.
 // See docs/agent-marketplace/01-landscape-and-standards.md (lingua franca).
 const TIMEOUT_MS = 30_000;
+const ROUTE = "/v1/chat/completions";
 
 type A2APart = { text?: string };
 type A2AResponse = {
@@ -29,14 +31,29 @@ export async function POST(req: NextRequest) {
     req.headers.get("authorization") || req.headers.get("x-api-key")
   );
   if (!keyRecord) {
+    logGatewayRejection({ route: ROUTE, reason: "unauthenticated", status: 401 });
     return NextResponse.json(
       { error: { message: "Invalid or missing API key", type: "authentication_error" } },
       { status: 401 }
     );
   }
 
-  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
-  if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
+  const rl = await checkRateLimit(req, {
+    key: `gw:${keyRecord.id}`,
+    windowMs: 60_000,
+    max: gatewayRateLimit(keyRecord),
+    perIp: false,
+  });
+  if (!rl.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "rate_limited",
+      status: 429,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+    });
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   const body = await req.json().catch(() => ({}));
   const slug = typeof body?.model === "string" ? body.model : "";
@@ -67,6 +84,16 @@ export async function POST(req: NextRequest) {
   // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
   const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
   if (!credit.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "insufficient_credit",
+      status: 402,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+      requiredUsd: credit.requiredUsd,
+      balanceUsd: credit.balanceUsd,
+    });
     return NextResponse.json(
       {
         error: {
@@ -109,18 +136,25 @@ export async function POST(req: NextRequest) {
   }
   const latencyMs = Date.now() - started;
 
+  // Billed calls are awaited before responding — see debitInvocation() for why a
+  // fire-and-forget debit is not guaranteed to run on Cloud Run.
   const billedUsd =
     !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
-  void meterInvocation({
+  const meter = {
     apiKeyId: keyRecord.id,
     userId: keyRecord.userId,
     agentId: agent.id,
-    protocol: "OPENAI_COMPAT",
+    protocol: "OPENAI_COMPAT" as const,
     status,
     latencyMs,
     errorCode,
     billedUsd,
-  });
+  };
+  if (billedUsd > 0) {
+    await debitInvocation(meter);
+  } else {
+    void meterInvocation(meter);
+  }
 
   if (errorCode) {
     return NextResponse.json(

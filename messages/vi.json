@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Kỹ năng thịnh hành",
-    "metaDescription": "Những kỹ năng OpenClaw được tải và thích nhiều nhất ngay lúc này — bảng xếp hạng trực tiếp về những gì coding agent đang cài đặt.",
+    "metaDescription": "Các kỹ năng OpenClaw được tải nhiều nhất và được thích nhiều nhất — bảng xếp hạng dựa trên số lượt tải do clawskills.sh công bố, cập nhật hằng ngày.",
     "ogTitle": "Kỹ năng thịnh hành — {siteName}",
-    "ogDescription": "Bảng xếp hạng trực tiếp các kỹ năng OpenClaw phổ biến nhất.",
+    "ogDescription": "Bảng xếp hạng các kỹ năng OpenClaw phổ biến nhất, cập nhật hằng ngày.",
     "title": "Kỹ năng thịnh hành",
     "subtitle": "Khám phá các kỹ năng OpenClaw phổ biến nhất được cộng đồng xếp hạng",
     "searchPlaceholder": "Tìm kỹ năng thịnh hành…",

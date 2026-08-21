@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "热门技能",
-    "metaDescription": "当下下载量和点赞量最高的 OpenClaw 技能——实时呈现编程智能体正在安装哪些技能的排行榜。",
+    "metaDescription": "下载量和点赞量最高的 OpenClaw 技能——榜单基于 clawskills.sh 公布的下载数据，每日更新。",
     "ogTitle": "热门技能 — {siteName}",
-    "ogDescription": "最受欢迎 OpenClaw 技能的实时排行榜。",
+    "ogDescription": "每日更新的 OpenClaw 热门技能榜单。",
     "title": "热门技能",
     "subtitle": "发现社区评选出的最受欢迎 OpenClaw 技能",
     "searchPlaceholder": "搜索热门技能……",

@@ -261,9 +261,9 @@
   },
   "Trending": {
     "metaTitle": "Öne Çıkan Beceriler",
-    "metaDescription": "Şu anda en çok indirilen ve en çok beğenilen OpenClaw becerileri — kodlama ajanlarının neler kurduğunu gösteren canlı bir liderlik tablosu.",
+    "metaDescription": "En çok indirilen ve en çok beğenilen OpenClaw becerileri — clawskills.sh tarafından bildirilen indirme sayılarına dayanan, her gün güncellenen bir sıralama.",
     "ogTitle": "Öne Çıkan Beceriler — {siteName}",
-    "ogDescription": "En popüler OpenClaw becerilerinin canlı bir liderlik tablosu.",
+    "ogDescription": "En popüler OpenClaw becerilerinin her gün güncellenen sıralaması.",
     "title": "Öne Çıkan Beceriler",
     "subtitle": "Topluluk tarafından sıralanan en popüler OpenClaw becerilerini keşfedin",
     "searchPlaceholder": "Öne çıkan becerilerde ara…",
