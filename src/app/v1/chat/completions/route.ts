@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { checkCreditPreflight, computeBilledUsd, debitInvocation, meterInvocation } from "@/lib/billing";
 
 // OpenAI-compatible shim: point any OpenAI SDK at this base URL and set
 // `model` to an agent slug. Low-friction on-ramp to the gateway.
@@ -109,18 +109,25 @@ export async function POST(req: NextRequest) {
   }
   const latencyMs = Date.now() - started;
 
+  // Billed calls are awaited before responding — see debitInvocation() for why a
+  // fire-and-forget debit is not guaranteed to run on Cloud Run.
   const billedUsd =
     !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
-  void meterInvocation({
+  const meter = {
     apiKeyId: keyRecord.id,
     userId: keyRecord.userId,
     agentId: agent.id,
-    protocol: "OPENAI_COMPAT",
+    protocol: "OPENAI_COMPAT" as const,
     status,
     latencyMs,
     errorCode,
     billedUsd,
-  });
+  };
+  if (billedUsd > 0) {
+    await debitInvocation(meter);
+  } else {
+    void meterInvocation(meter);
+  }
 
   if (errorCode) {
     return NextResponse.json(

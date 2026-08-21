@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { checkCreditPreflight, computeBilledUsd, debitInvocation, meterInvocation } from "@/lib/billing";
 
 // Unified gateway — A2A passthrough. Authenticate with an API key, route to the
 // agent's endpoint, meter the call. See docs/agent-marketplace/03-technical-architecture.md §2.
@@ -91,19 +91,27 @@ export async function POST(
 
   const latencyMs = Date.now() - started;
 
-  // Meter + bill (log → aggregate). Never block the response on metering.
+  // Meter + bill. A *billed* call is awaited before we respond: Cloud Run may stop
+  // giving this instance CPU once the response is flushed, so a pending debit is not
+  // guaranteed to run. Free/failed calls stay fire-and-forget — losing one costs a
+  // data point, not revenue.
   const billedUsd =
     !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
-  void meterInvocation({
+  const meter = {
     apiKeyId: keyRecord.id,
     userId: keyRecord.userId,
     agentId: agent.id,
-    protocol: "A2A",
+    protocol: "A2A" as const,
     status,
     latencyMs,
     errorCode,
     billedUsd,
-  });
+  };
+  if (billedUsd > 0) {
+    await debitInvocation(meter);
+  } else {
+    void meterInvocation(meter);
+  }
 
   if (errorCode) {
     return NextResponse.json({ error: "Agent unreachable" }, { status: 502 });

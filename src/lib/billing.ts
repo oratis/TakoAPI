@@ -32,49 +32,101 @@ export type MeterInput = {
   billedUsd?: number;
 };
 
+/** True when this input actually moves money (and so must not be fire-and-forget). */
+function isBilled(input: MeterInput): boolean {
+  return (input.billedUsd ?? 0) > 0 && !!input.userId;
+}
+
 /**
- * Record one invocation, bump the agent's call count, and — when the call has a
+ * Write the Invocation row, bump the agent's call count, and — when the call has a
  * cost — write the matching DEBIT ledger entry and decrement the caller's credit
  * balance, all in a single transaction so the ledger and balance stay consistent.
  *
- * Fire-and-forget safe: never throws, so the gateway response is never blocked or
- * failed by metering/billing. Durable async aggregation (a queue) is the
- * production hardening — see docs/agent-marketplace/03-technical-architecture.md §5.
+ * Rejects on failure. Callers decide whether that's fatal; see `debitInvocation`
+ * (money path, awaited) and `meterInvocation` (telemetry, fire-and-forget).
  */
-export async function meterInvocation(input: MeterInput): Promise<void> {
+async function writeInvocation(input: MeterInput): Promise<void> {
   const units = input.units ?? 1;
   const billedUsd = input.billedUsd ?? 0;
-  try {
-    await prisma.$transaction(async (tx) => {
-      const inv = await tx.invocation.create({
-        data: {
-          apiKeyId: input.apiKeyId ?? null,
-          userId: input.userId ?? null,
-          agentId: input.agentId,
-          protocol: input.protocol,
-          status: input.status,
-          latencyMs: input.latencyMs ?? null,
-          taskState: input.taskState ?? null,
-          unitsBilled: units,
-          billedUsd: billedUsd > 0 ? billedUsd : null,
-          errorCode: input.errorCode ?? null,
-        },
-        select: { id: true },
-      });
-      await tx.agent.update({ where: { id: input.agentId }, data: { callsCount: { increment: 1 } } });
-      if (billedUsd > 0 && input.userId) {
-        await tx.ledgerEntry.create({
-          data: { userId: input.userId, type: "DEBIT", amountUsd: -billedUsd, invocationId: inv.id },
-        });
-        await tx.creditBalance.upsert({
-          where: { userId: input.userId },
-          create: { userId: input.userId, balanceUsd: -billedUsd },
-          update: { balanceUsd: { decrement: billedUsd } },
-        });
-      }
+  await prisma.$transaction(async (tx) => {
+    const inv = await tx.invocation.create({
+      data: {
+        apiKeyId: input.apiKeyId ?? null,
+        userId: input.userId ?? null,
+        agentId: input.agentId,
+        protocol: input.protocol,
+        status: input.status,
+        latencyMs: input.latencyMs ?? null,
+        taskState: input.taskState ?? null,
+        unitsBilled: units,
+        billedUsd: billedUsd > 0 ? billedUsd : null,
+        errorCode: input.errorCode ?? null,
+      },
+      select: { id: true },
     });
-  } catch {
-    // metering/billing must never break the gateway path
+    await tx.agent.update({ where: { id: input.agentId }, data: { callsCount: { increment: 1 } } });
+    if (billedUsd > 0 && input.userId) {
+      await tx.ledgerEntry.create({
+        data: { userId: input.userId, type: "DEBIT", amountUsd: -billedUsd, invocationId: inv.id },
+      });
+      await tx.creditBalance.upsert({
+        where: { userId: input.userId },
+        create: { userId: input.userId, balanceUsd: -billedUsd },
+        update: { balanceUsd: { decrement: billedUsd } },
+      });
+    }
+  });
+}
+
+/**
+ * The money path: record + charge one billed invocation. **Callers must `await`
+ * this before returning the gateway response.**
+ *
+ * Why awaiting matters: Cloud Run allocates CPU per request by default, so a
+ * promise still pending when the response is flushed is not guaranteed to run —
+ * the instance can be throttled or reclaimed and the debit disappears together
+ * with its Invocation row (both live in one transaction). Every such loss is
+ * revenue served for free with no record of it. Awaiting costs one Cloud SQL
+ * round-trip (unix socket, single-digit ms) and makes the charge deterministic.
+ *
+ * Never throws — a failed debit must not turn a served call into a 500 — but,
+ * unlike the old silent `catch {}`, it logs so the loss is visible in Cloud
+ * Logging instead of vanishing.
+ */
+export async function debitInvocation(input: MeterInput): Promise<void> {
+  try {
+    await writeInvocation(input);
+  } catch (err) {
+    console.error("[billing] debit failed — call served but not charged", {
+      agentId: input.agentId,
+      userId: input.userId ?? null,
+      apiKeyId: input.apiKeyId ?? null,
+      billedUsd: input.billedUsd ?? 0,
+      status: input.status,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Telemetry path: record an invocation that costs nothing (rejected, failed, or a
+ * FREE/unpriced agent). Safe to fire-and-forget — losing one of these loses a data
+ * point, not money.
+ *
+ * If handed a billed input anyway it delegates to `debitInvocation`, so a caller
+ * that forgets the distinction still charges correctly; the caller is just not
+ * awaiting, which is the hazard this split exists to remove.
+ */
+export async function meterInvocation(input: MeterInput): Promise<void> {
+  if (isBilled(input)) return debitInvocation(input);
+  try {
+    await writeInvocation(input);
+  } catch (err) {
+    console.error("[billing] metering failed", {
+      agentId: input.agentId,
+      status: input.status,
+      err: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -130,10 +182,10 @@ export type CreditCheck =
  * caller's balance and rejects when charging it would drop the balance below the
  * configured floor.
  *
- * This is the guard `meterInvocation` can't be: metering debits *after* the upstream
- * call, fire-and-forget, and lets the balance go negative — so without this check a
- * looping client (or an LLM via the MCP `invoke_agent` tool) could run a balance
- * arbitrarily negative. Callers should return 402 when `ok` is false.
+ * This is the guard `debitInvocation` can't be: the debit lands *after* the upstream
+ * call and lets the balance go negative — so without this check a looping client (or
+ * an LLM via the MCP `invoke_agent` tool) could run a balance arbitrarily negative.
+ * Callers should return 402 when `ok` is false.
  *
  * Fails open: a balance-read error allows the call. A DB outage also blocks the debit,
  * so no runaway balance accrues, and the gateway is never hard-failed by this check.
