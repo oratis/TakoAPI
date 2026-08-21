@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateApiKey, gatewayRateLimit, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { logGatewayRejection } from "@/lib/gatewayLog";
 import {
   checkCreditPreflight,
   computeBilledUsd,
@@ -14,6 +15,7 @@ import {
 // Note: behind a Global HTTPS LB + serverless NEG, SSE can be throttled; prefer
 // the direct Cloud Run URL for streaming. See docs/.../03-technical-architecture.md §8.
 const TIMEOUT_MS = 120_000;
+const ROUTE = "/v1/agents/[slug]/stream";
 
 export async function POST(
   req: NextRequest,
@@ -25,6 +27,7 @@ export async function POST(
     req.headers.get("authorization") || req.headers.get("x-api-key")
   );
   if (!keyRecord) {
+    logGatewayRejection({ route: ROUTE, reason: "unauthenticated", status: 401, agentSlug: slug });
     return Response.json({ error: "Invalid or missing API key" }, { status: 401 });
   }
 
@@ -34,7 +37,17 @@ export async function POST(
     max: gatewayRateLimit(keyRecord),
     perIp: false,
   });
-  if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
+  if (!rl.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "rate_limited",
+      status: 429,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+    });
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
@@ -52,6 +65,16 @@ export async function POST(
   // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
   const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
   if (!credit.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "insufficient_credit",
+      status: 402,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+      requiredUsd: credit.requiredUsd,
+      balanceUsd: credit.balanceUsd,
+    });
     return Response.json(
       {
         error: "Insufficient credit",
