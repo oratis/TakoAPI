@@ -22,6 +22,20 @@ export function newRpcId(): string {
   return randomUUID();
 }
 
+/** Gateway allowance (requests per 60s) for a key that sets no override. */
+export const DEFAULT_GATEWAY_RATE_LIMIT = 120;
+
+/**
+ * Requests-per-window allowance for one API key: `ApiKey.rateLimit` when it holds a
+ * positive value, otherwise the shared default. The column had existed since the
+ * gateway shipped but nothing read it, so every key was pinned to the hard-coded
+ * default and an abusive key could only be slowed down by changing that constant
+ * for everyone.
+ */
+export function gatewayRateLimit(key: { rateLimit: number | null }): number {
+  return key.rateLimit && key.rateLimit > 0 ? key.rateLimit : DEFAULT_GATEWAY_RATE_LIMIT;
+}
+
 /** Resolve an API key from an Authorization/x-api-key header value. Returns the
  *  active ApiKey record (with user) or null. Best-effort updates lastUsedAt. */
 export async function authenticateApiKey(raw: string | null) {

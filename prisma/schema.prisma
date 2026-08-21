@@ -537,8 +537,12 @@ model ApiKey {
   name         String?
   hashedKey    String       @unique
   prefix       String
+  /// NOT ENFORCED YET — no code reads this; every key can reach every route.
   scopes       String[]     @default([])
+  /// Per-key gateway allowance, requests per 60s window. Null → the shared
+  /// default (see gatewayRateLimit in src/lib/apikey.ts).
   rateLimit    Int?
+  /// NOT ENFORCED YET — no code reads this; there is no monthly cap.
   monthlyQuota Int?
   lastUsedAt   DateTime?
   revokedAt    DateTime?
