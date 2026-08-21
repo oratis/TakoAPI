@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
+  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120, perIp: false });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   const body = await req.json().catch(() => ({}));

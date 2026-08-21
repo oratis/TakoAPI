@@ -12,8 +12,25 @@ export type RateLimitConfig = {
   key: string; // namespace, e.g. "submit" or "gw:<keyId>"
   windowMs: number; // window length
   max: number; // max requests per window
+  /**
+   * Whether to give each client IP its own bucket under `key`. Default true, which
+   * is right for anonymous endpoints where the IP is the only identifier we have.
+   *
+   * Set false when `key` already names an authenticated principal (e.g. `gw:<keyId>`).
+   * The IP is caller-controlled — see `extractClientIp` — so appending it there lets
+   * one API key mint unlimited buckets and makes the limit unenforceable.
+   */
+  perIp?: boolean;
 };
 
+/**
+ * Best-effort client IP, for coarse anonymous bucketing only.
+ *
+ * NOT TRUSTWORTHY. Cloud Run / the GCLB *append* the real client address to any
+ * inbound X-Forwarded-For, so the first element — the one taken here — is whatever
+ * the caller chose to send. Never use this value as an identity, an authorisation
+ * input, or evidence; never combine it with a key that already identifies someone.
+ */
 export function extractClientIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0]!.trim();
@@ -40,7 +57,8 @@ export async function checkRateLimit(
   req: NextRequest,
   config: RateLimitConfig
 ): Promise<{ ok: true } | { ok: false; retryAfterMs: number }> {
-  const key = `${config.key}:${extractClientIp(req)}`;
+  const key =
+    config.perIp === false ? config.key : `${config.key}:${extractClientIp(req)}`;
   maybeClean();
   try {
     // Atomic upsert: start a fresh window when the bucket is missing or expired,

@@ -21,7 +21,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid or missing API key" }, { status: 401 });
   }
 
-  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
+  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120, perIp: false });
   if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
 
   const agent = await prisma.agent.findFirst({
