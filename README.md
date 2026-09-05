@@ -1,18 +1,92 @@
-# TakoAPI
+<div align="center">
 
-**All in One OpenClaw Skills Marketplace** - for you and for your agent.
+# 🐙 TakoAPI
 
-TakoAPI is a full-stack skills marketplace for the [OpenClaw](https://openclaw.org) ecosystem. Browse, search, and install 5,000+ community skills from the web or programmatically through agent-friendly API endpoints.
+### One API to access all agents
+
+An open **directory + unified gateway** for AI agents — think OpenRouter, but for agents — plus thousands of OpenClaw skills for your coding agent.
+
+[![Live](https://img.shields.io/badge/live-takoapi.com-7c3aed)](https://takoapi.com)
+[![GitHub stars](https://img.shields.io/github/stars/oratis/TakoAPI?style=flat&color=7c3aed)](https://github.com/oratis/TakoAPI/stargazers)
+[![MCP ready](https://img.shields.io/badge/MCP-ready-7c3aed)](https://takoapi.com/mcp)
+[![A2A](https://img.shields.io/badge/protocol-A2A-7c3aed)](https://a2aproject.github.io/A2A/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7c3aed)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/oratis/TakoAPI?color=7c3aed)](https://github.com/oratis/TakoAPI/commits)
+
+**[Live site](https://takoapi.com)** · **[Install](https://takoapi.com/install)** · **[Browse agents](https://takoapi.com/agents)** · **[Skills](https://takoapi.com/skills)** · **[Blog](https://takoapi.com/blog)**
+
+[![TakoAPI — One API to access all agents](https://takoapi.com/opengraph-image)](https://takoapi.com)
+
+</div>
+
+> **30 seconds to your first agent call:** install into your coding agent with one command, grab an API key from [the dashboard](https://takoapi.com/dashboard), and invoke any hosted agent through a single endpoint.
+>
+> ```bash
+> curl -fsSL https://takoapi.com/install.sh | sh        # 1. teach your agent to use TakoAPI
+> curl -H "Authorization: Bearer $TAKO_KEY" \
+>   https://takoapi.com/api/registry                    # 2. discover agents (Markdown for LLMs)
+> ```
+
+<!-- TODO(demo): record a short product GIF (search → invoke → stream) and drop it here:
+     ![TakoAPI demo](docs/assets/demo.gif) -->
 
 Live at [takoapi.com](https://takoapi.com)
 
+## What is TakoAPI?
+
+TakoAPI is two things in one:
+
+1. **Agent directory + gateway** — discover hosted AI agents and open-source agent projects, then invoke the hosted ones through a single unified API: A2A passthrough, SSE streaming, and an OpenAI-compatible shim. Agents are described by open [A2A](https://a2aproject.github.io/A2A/) AgentCards, and every call is metered per API key.
+2. **OpenClaw skills marketplace** — browse, search, and install thousands of community skills for coding agents (Claude Code, Cursor, Windsurf, Codex, and more) from the web or programmatically.
+
+## Install into your coding agent (one command)
+
+Add TakoAPI to **Claude Code**, **Codex**, or **OpenCode** with a single command:
+
+```bash
+curl -fsSL https://takoapi.com/install.sh | sh
+```
+
+It auto-detects which agents you have and drops a small, namespaced TakoAPI skill into each — teaching your agent to discover and invoke agents through the gateway and search the skills catalog. It never edits your shared config, is safe to re-run, and undoes cleanly with `--uninstall`.
+
+| Agent | Installs to | Invoke with |
+|-------|-------------|-------------|
+| Claude Code | `~/.claude/skills/takoapi/SKILL.md` | loads automatically |
+| Codex | `~/.agents/skills/takoapi/SKILL.md` | `$takoapi` or `/skills` |
+| OpenCode | `~/.config/opencode/{agent,command}/takoapi.md` | `/takoapi` or `@takoapi` |
+
+Target a single agent with `… | sh -s -- --claude` (or `--codex` / `--opencode`). On Windows or in Node, use the npx installer instead:
+
+```bash
+npx takoapi-install
+```
+
+Claude Code users can also install the native plugin:
+
+```bash
+claude plugin marketplace add oratis/TakoAPI
+claude plugin install takoapi@takoapi
+```
+
+### As an MCP server
+
+TakoAPI is also a hosted **MCP server** — register it with one command and get `search_agents`, `get_agent`, `search_skills`, and `invoke_agent` as native tools, no local install:
+
+```bash
+claude mcp add --transport http takoapi https://takoapi.com/mcp
+```
+
+For Codex, add a `[mcp_servers.takoapi]` block (`url = "https://takoapi.com/mcp"`) to `~/.codex/config.toml`; for OpenCode, add a `remote` entry under `mcp` in `opencode.json`. Read tools are anonymous; `invoke_agent` needs your API key as a Bearer token. Run `npx takoapi-install --mcp` to print all three.
+
+Full walkthrough and copy-paste commands: <https://takoapi.com/install>.
+
 ## Features
 
-- **Skills Discovery** - Browse 5,000+ skills across 30 categories, with search, filtering, and trending leaderboard
-- **Agent API** - Dedicated `/api/agent` endpoint returns Markdown or JSON, designed for AI agents to discover and install skills
-- **User Accounts** - Sign in with Google, Apple, or email/password. Agents can register via API and receive an API key
-- **Community Features** - Like skills, track views, submit new skills with GitHub or ClawSkills.sh URLs
-- **Skill Detail Pages** - Structured README with "What It Does", "When to Use It", "Example Workflow", and install commands
+- **Agent registry** — `GET /api/registry` returns the whole catalog as Markdown (for agents/LLMs) or JSON.
+- **Unified gateway** — call a hosted agent at `/v1/agents/{slug}/message` (A2A), stream it at `/v1/agents/{slug}/stream` (SSE), or use the OpenAI-compatible `/v1/chat/completions`. Issue API keys in `/dashboard`; usage is metered per call.
+- **Open-source project directory** — hundreds of self-hostable agent projects, ranked by stars and discoverable alongside hosted agents.
+- **Skills discovery** — thousands of skills across dozens of categories, with search, filtering, a trending leaderboard, and a dedicated `GET /api/agent` endpoint designed for AI agents.
+- **Accounts** — sign in with Google, Apple, or email/password. Agents can register via API and receive a key.
 
 ## Tech Stack
 
@@ -22,7 +96,7 @@ Live at [takoapi.com](https://takoapi.com)
 | Styling | [Tailwind CSS 4](https://tailwindcss.com) |
 | Database | PostgreSQL + [Prisma 6](https://prisma.io) |
 | Auth | [NextAuth v5](https://authjs.dev) (Google, Apple, Credentials) |
-| Deployment | Docker, Google Cloud Run, Cloud Build |
+| Deployment | Docker + Google Cloud Run |
 
 ## Getting Started
 
@@ -35,7 +109,7 @@ Live at [takoapi.com](https://takoapi.com)
 
 ```bash
 # Clone the repo
-git clone https://github.com/anthropics/TakoAPI.git
+git clone https://github.com/oratis/TakoAPI.git
 cd TakoAPI
 
 # Install dependencies
@@ -44,19 +118,22 @@ npm install
 # Start PostgreSQL
 docker compose up -d db
 
-# Copy env file and configure
-cp .env.example .env
-# Edit .env with your database credentials and OAuth keys
+# Create .env (see Environment Variables below)
+cat > .env <<'EOF'
+DATABASE_URL=postgresql://takoapi:takoapi_dev@localhost:5432/takoapi
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=dev-secret-change-me
+EOF
 
-# Push schema and seed data
+# Push the schema and seed data
 npx prisma db push
 npx tsx prisma/seed.ts
 
-# Start dev server
+# Start the dev server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). The dev server uses SWC and skips type-checking, so run `npx tsc --noEmit` before shipping.
 
 ### Environment Variables
 
@@ -65,124 +142,83 @@ Open [http://localhost:3000](http://localhost:3000).
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXTAUTH_URL` | App URL (e.g. `http://localhost:3000`) |
 | `NEXTAUTH_SECRET` | Random secret for NextAuth sessions |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID (optional) |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret (optional) |
-| `APPLE_CLIENT_ID` | Apple OAuth client ID (optional) |
-| `APPLE_CLIENT_SECRET` | Apple OAuth client secret (optional) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth (optional) |
+| `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` | Apple OAuth (optional) |
+| `GITHUB_TOKEN` | Raises the GitHub API rate limit for the scraper scripts (optional) |
+| `GOOGLE_SITE_VERIFICATION` | Google Search Console verification token(s) for the `google-site-verification` meta tag; comma-separated for multiple (optional) |
 
 ## API Reference
 
-### Agent Endpoint
+### Agent registry
 
 ```
-GET /api/agent
+GET /api/registry              # Markdown directory of all agents (default)
+GET /api/registry?format=json  # Structured JSON
 ```
 
-Returns a curated list of skills in Markdown (default) or JSON format. Designed for AI agents.
+Filters: `q` (search), `category`, `protocol` (`A2A` | `OPENAI_COMPAT` | `MCP`), `limit`.
 
-| Param | Description |
-|-------|-------------|
-| `format` | `md` (default) or `json` |
-| `category` | Filter by category slug |
-| `q` | Search query |
+### Gateway (hosted agents)
+
+```
+POST /v1/agents/{slug}/message     # A2A passthrough
+GET  /v1/agents/{slug}/stream      # Server-sent events
+POST /v1/chat/completions          # OpenAI-compatible shim
+```
+
+All gateway routes require an API key: `Authorization: Bearer $TAKO_KEY`.
 
 ### Skills
 
 ```
-GET    /api/skills              # List skills (paginated, sortable)
-GET    /api/skills/search?q=    # Full-text search
-GET    /api/skills/:id          # Skill detail (by ID or slug)
-POST   /api/skills/submit       # Submit a new skill (auth required)
-POST   /api/skills/:id/like     # Toggle like (auth required)
+GET  /api/agent                # Curated skills as Markdown (md) or JSON, for AI agents
+GET  /api/skills               # List skills (paginated, sortable)
+GET  /api/skills/search?q=     # Full-text search
+GET  /api/skills/:id           # Skill detail (by ID or slug)
+POST /api/skills/submit        # Submit a new skill (auth required)
 ```
 
-### Auth
+### MCP server
 
 ```
-POST   /api/auth/register       # Register (supports isAgent flag for API key)
-GET    /api/categories           # List all categories
-GET    /api/user/skills          # Current user's skills (auth required)
+POST /mcp                      # Streamable-HTTP MCP endpoint (JSON-RPC 2.0)
 ```
+
+Tools: `search_agents`, `get_agent`, `search_skills` (anonymous), and `invoke_agent` (send your key as `Authorization: Bearer $TAKO_KEY`). Register in any MCP client, e.g. `claude mcp add --transport http takoapi https://takoapi.com/mcp`.
 
 ## Project Structure
 
 ```
 src/
   app/
-    page.tsx                 # Home page
-    skills/                  # Browse & detail pages
+    page.tsx                 # Home
+    agents/                  # Agent marketplace + detail pages
+    skills/                  # Skills browse + detail pages
     trending/                # Trending leaderboard
-    submit/                  # Submit skill form
-    profile/                 # User dashboard
-    auth/                    # Sign in / sign up
-    api/                     # API routes
-  components/
-    layout/                  # Header, Footer
-    ui/                      # SkillCard, HomeSearch, CategoryBadge
-  lib/
-    auth.ts                  # NextAuth config
-    prisma.ts                # Prisma client singleton
-    utils.ts                 # Helpers (slugify, formatNumber, cn)
+    dashboard/               # Developer console (API keys, usage)
+    admin/                   # Moderation
+    api/                     # REST API routes
+    v1/                      # Gateway routes (A2A / OpenAI-compatible)
+    sitemap.ts, robots.ts    # SEO
+  components/                # UI + layout
+  lib/                       # auth, prisma, seo, helpers
 prisma/
   schema.prisma              # Database schema
   seed.ts                    # Database seeder
-  seed-data.json             # Initial skill data (5,147 skills)
-scripts/
-  parse-skills.ts            # Parse awesome-openclaw-skills README
-  scrape-skill-details.ts    # Scrape detail pages from ClawSkills.sh
+scripts/                     # Scrapers + maintenance scripts
 ```
-
-## Database Schema
-
-Core models:
-
-- **User** - Accounts with optional API key for agent access
-- **Skill** - Name, description, readme, install command, stats (views, likes, downloads, stars)
-- **Category** - 30 skill categories with counts
-- **Like** - User-skill relationship (unique per pair)
-
-See [`prisma/schema.prisma`](prisma/schema.prisma) for the full schema.
 
 ## Deployment
 
-### Docker
+The app is containerized (see `Dockerfile`) and runs on Google Cloud Run. The image is a standalone Next.js server (`node server.js`); database migrations are applied separately, not at container start.
 
 ```bash
-docker compose up
-```
-
-This starts PostgreSQL and the Next.js app (port 3000).
-
-### Google Cloud
-
-The project includes `cloudbuild.yaml` for Cloud Build -> Cloud Run deployment:
-
-```bash
-gcloud builds submit
-```
-
-## Scripts
-
-```bash
-# Parse skills from awesome-openclaw-skills README into seed-data.json
-npx tsx scripts/parse-skills.ts
-
-# Seed the database from seed-data.json
-npx tsx prisma/seed.ts
-
-# Scrape detailed skill info from ClawSkills.sh (requires running DB)
-npx tsx scripts/scrape-skill-details.ts
+docker compose up   # PostgreSQL + the Next.js app on :3000
 ```
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
-
-1. Fork the repo
-2. Create your branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+Contributions are welcome — open an issue or a pull request.
 
 ## License
 

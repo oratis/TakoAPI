@@ -10,7 +10,6 @@ interface SkillDetail {
   whenToUseIt: string[] | null;
   exampleWorkflow: string | null;
   requirements: string[] | null;
-  githubUrl: string | null;
   installCmd: string | null;
   version: string | null;
 }
@@ -89,12 +88,16 @@ async function scrapeSkillPage(page: puppeteer.Page, slug: string): Promise<Skil
           );
       }
 
-      // Extract GitHub URL
-      let githubUrl: string | null = null;
-      const ghLink = Array.from(document.querySelectorAll("a")).find(
-        (a) => a.href && a.href.includes("github.com/openclaw/skills")
-      );
-      if (ghLink) githubUrl = ghLink.href;
+      // NOTE: intentionally NOT scraping a githubUrl here.
+      // clawskills.sh skill pages do not expose a per-skill source repo — the
+      // only GitHub link on the page is the site-wide "Star" button pointing at
+      // the aggregate list github.com/VoltAgent/awesome-openclaw-skills, and the
+      // per-skill "original" link the page used to render was
+      // github.com/openclaw/skills/tree/main/skills/<author>/<name>, a repo that
+      // does not exist (HTTP 404). A previous version of this scraper captured
+      // that dead link and polluted 5028 Skill.githubUrl rows. The canonical
+      // per-skill link is the ClawHub page, already stored as clawHubUrl /
+      // clawSkillsUrl, so githubUrl is left untouched (NULL for these skills).
 
       // Extract install command
       let installCmd: string | null = null;
@@ -106,7 +109,7 @@ async function scrapeSkillPage(page: puppeteer.Page, slug: string): Promise<Skil
       const versionMatch = text.match(/v(\d+\.\d+\.\d+)/);
       if (versionMatch) version = versionMatch[0];
 
-      return { whatItDoes, whenToUseIt, exampleWorkflow, requirements, githubUrl, installCmd, version };
+      return { whatItDoes, whenToUseIt, exampleWorkflow, requirements, installCmd, version };
     });
 
     return detail;
@@ -162,7 +165,6 @@ async function processSkillBatch(
     const updateData: Record<string, unknown> = {};
     if (descParts.length > 0) updateData.description = descParts.join("");
     if (readmeParts.length > 0) updateData.readme = readmeParts.join("\n\n");
-    if (detail.githubUrl) updateData.githubUrl = detail.githubUrl;
     if (detail.installCmd) updateData.installCmd = detail.installCmd;
 
     if (Object.keys(updateData).length > 0) {

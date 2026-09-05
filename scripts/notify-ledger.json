@@ -1,0 +1,483 @@
+{
+  "repos": {
+    "datahaven-xyz/datahaven": {
+      "slug": "datahaven-xyz-datahaven",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/datahaven-xyz/datahaven/pull/483",
+      "date": "2026-06-14T01:10:34.607Z"
+    },
+    "GetStream/Vision-Agents": {
+      "slug": "getstream-vision-agents",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/GetStream/Vision-Agents/pull/600",
+      "date": "2026-06-14T01:13:55.543Z"
+    },
+    "Upsonic/Upsonic": {
+      "slug": "upsonic-upsonic",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Upsonic/Upsonic/pull/614",
+      "date": "2026-06-14T01:14:20.525Z"
+    },
+    "EKKOLearnAI/hermes-web-ui": {
+      "slug": "ekkolearnai-hermes-web-ui",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/EKKOLearnAI/hermes-web-ui/pull/1538",
+      "date": "2026-06-14T01:14:45.992Z"
+    },
+    "firerpa/lamda": {
+      "slug": "firerpa-lamda",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/firerpa/lamda/pull/141",
+      "date": "2026-06-14T01:15:11.034Z"
+    },
+    "liyupi/codefather": {
+      "slug": "liyupi-codefather",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/liyupi/codefather/pull/52",
+      "date": "2026-06-14T01:15:36.221Z"
+    },
+    "2FastLabs/agent-squad": {
+      "slug": "2fastlabs-agent-squad",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/2FastLabs/agent-squad/pull/522",
+      "date": "2026-06-14T01:16:01.501Z"
+    },
+    "YaoApp/yao": {
+      "slug": "yaoapp-yao",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/YaoApp/yao/pull/1552",
+      "date": "2026-06-14T01:16:26.420Z"
+    },
+    "AgentWrapper/agent-orchestrator": {
+      "slug": "agentwrapper-agent-orchestrator",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/AgentWrapper/agent-orchestrator/pull/2125",
+      "date": "2026-06-14T01:16:51.452Z"
+    },
+    "ValueCell-ai/ClawX": {
+      "slug": "valuecell-ai-clawx",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ValueCell-ai/ClawX/pull/1122",
+      "date": "2026-06-14T01:17:16.626Z"
+    },
+    "RayVentura/ShortGPT": {
+      "slug": "rayventura-shortgpt",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/RayVentura/ShortGPT/pull/172",
+      "date": "2026-06-14T01:17:41.502Z"
+    },
+    "EverMind-AI/EverOS": {
+      "slug": "evermind-ai-everos",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/EverMind-AI/EverOS/pull/287",
+      "date": "2026-06-14T01:18:06.975Z"
+    },
+    "ringhyacinth/Star-Office-UI": {
+      "slug": "ringhyacinth-star-office-ui",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ringhyacinth/Star-Office-UI/pull/119",
+      "date": "2026-06-14T01:18:31.797Z"
+    },
+    "freestylefly/awesome-gpt-image-2": {
+      "slug": "freestylefly-awesome-gpt-image-2",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/freestylefly/awesome-gpt-image-2/pull/12",
+      "date": "2026-06-14T01:18:56.853Z"
+    },
+    "Narcooo/inkos": {
+      "slug": "narcooo-inkos",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Narcooo/inkos/pull/310",
+      "date": "2026-06-14T01:19:22.859Z"
+    },
+    "steel-dev/steel-browser": {
+      "slug": "steel-dev-steel-browser",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/steel-dev/steel-browser/pull/314",
+      "date": "2026-06-14T01:19:48.254Z"
+    },
+    "flyteorg/flyte": {
+      "slug": "flyteorg-flyte",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/flyteorg/flyte/pull/7519",
+      "date": "2026-06-14T01:20:13.256Z"
+    },
+    "crynta/terax-ai": {
+      "slug": "crynta-terax-ai",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/crynta/terax-ai/pull/804",
+      "date": "2026-06-14T01:20:38.146Z"
+    },
+    "enricoros/big-AGI": {
+      "slug": "enricoros-big-agi",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/enricoros/big-AGI/pull/1132",
+      "date": "2026-06-14T01:21:03.339Z"
+    },
+    "thesysdev/openui": {
+      "slug": "thesysdev-openui",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/thesysdev/openui/pull/652",
+      "date": "2026-06-14T01:21:28.481Z"
+    },
+    "GetBindu/Bindu": {
+      "slug": "getbindu-bindu",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/GetBindu/Bindu/pull/578",
+      "date": "2026-06-14T01:21:53.481Z"
+    },
+    "InternLM/MindSearch": {
+      "slug": "internlm-mindsearch",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/InternLM/MindSearch/pull/319",
+      "date": "2026-06-14T01:22:18.573Z"
+    },
+    "kyegomez/swarms": {
+      "slug": "kyegomez-swarms",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/kyegomez/swarms/pull/1686",
+      "date": "2026-06-14T01:22:43.867Z"
+    },
+    "grab/cursor-talk-to-figma-mcp": {
+      "slug": "grab-cursor-talk-to-figma-mcp",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/grab/cursor-talk-to-figma-mcp/pull/180",
+      "date": "2026-06-14T01:23:08.998Z"
+    },
+    "jo-inc/camofox-browser": {
+      "slug": "jo-inc-camofox-browser",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/jo-inc/camofox-browser/pull/5760",
+      "date": "2026-06-14T01:23:34.122Z"
+    },
+    "nexu-io/html-anything": {
+      "slug": "nexu-io-html-anything",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/nexu-io/html-anything/pull/108",
+      "date": "2026-06-14T01:23:59.301Z"
+    },
+    "ChatLab/ChatLab": {
+      "slug": "chatlab-chatlab",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ChatLab/ChatLab/pull/220",
+      "date": "2026-06-14T01:24:24.290Z"
+    },
+    "Zipstack/unstract": {
+      "slug": "zipstack-unstract",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Zipstack/unstract/pull/2055",
+      "date": "2026-06-14T01:24:49.608Z"
+    },
+    "julep-ai/julep": {
+      "slug": "julep-ai-julep",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/julep-ai/julep/pull/1608",
+      "date": "2026-06-14T01:25:14.847Z"
+    },
+    "BlockRunAI/ClawRouter": {
+      "slug": "blockrunai-clawrouter",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/BlockRunAI/ClawRouter/pull/185",
+      "date": "2026-06-14T01:25:40.182Z"
+    },
+    "earthtojake/text-to-cad": {
+      "slug": "earthtojake-text-to-cad",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/earthtojake/text-to-cad/pull/121",
+      "date": "2026-06-27T07:53:36.969Z"
+    },
+    "superradcompany/microsandbox": {
+      "slug": "superradcompany-microsandbox",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/superradcompany/microsandbox/pull/1045",
+      "date": "2026-06-27T07:57:16.613Z"
+    },
+    "fr0gger/Awesome-GPT-Agents": {
+      "slug": "fr0gger-awesome-gpt-agents",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/fr0gger/Awesome-GPT-Agents/pull/89",
+      "date": "2026-06-27T08:00:43.647Z"
+    },
+    "crestalnetwork/intentkit": {
+      "slug": "crestalnetwork-intentkit",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/crestalnetwork/intentkit/pull/989",
+      "date": "2026-06-27T08:01:11.464Z"
+    },
+    "GoogleCloudPlatform/agent-starter-pack": {
+      "slug": "googlecloudplatform-agent-starter-pack",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/GoogleCloudPlatform/agent-starter-pack/pull/990",
+      "date": "2026-06-27T08:01:39.744Z"
+    },
+    "open-multi-agent/open-multi-agent": {
+      "slug": "open-multi-agent-open-multi-agent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/open-multi-agent/open-multi-agent/pull/334",
+      "date": "2026-06-27T08:02:07.951Z"
+    },
+    "j3ssie/osmedeus": {
+      "slug": "j3ssie-osmedeus",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/j3ssie/osmedeus/pull/313",
+      "date": "2026-06-27T08:02:35.565Z"
+    },
+    "airweave-ai/airweave": {
+      "slug": "airweave-ai-airweave",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/airweave-ai/airweave/pull/1811",
+      "date": "2026-06-27T08:03:03.274Z"
+    },
+    "NVIDIA-NeMo/Guardrails": {
+      "slug": "nvidia-nemo-guardrails",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/NVIDIA-NeMo/Guardrails/pull/2089",
+      "date": "2026-06-27T08:03:31.420Z"
+    },
+    "TencentCloud/CubeSandbox": {
+      "slug": "tencentcloud-cubesandbox",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/TencentCloud/CubeSandbox/pull/661",
+      "date": "2026-06-27T08:03:59.598Z"
+    },
+    "strands-agents/harness-sdk": {
+      "slug": "strands-agents-harness-sdk",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/strands-agents/harness-sdk/pull/2988",
+      "date": "2026-06-27T08:04:27.360Z"
+    },
+    "adongwanai/AgentGuide": {
+      "slug": "adongwanai-agentguide",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/adongwanai/AgentGuide/pull/118",
+      "date": "2026-06-27T08:04:55.814Z"
+    },
+    "TencentCloud/TencentDB-Agent-Memory": {
+      "slug": "tencentcloud-tencentdb-agent-memory",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/TencentCloud/TencentDB-Agent-Memory/pull/268",
+      "date": "2026-06-27T08:05:23.514Z"
+    },
+    "jeinlee1991/chinese-llm-benchmark": {
+      "slug": "jeinlee1991-chinese-llm-benchmark",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/jeinlee1991/chinese-llm-benchmark/pull/80",
+      "date": "2026-06-27T08:05:52.387Z"
+    },
+    "PrefectHQ/marvin": {
+      "slug": "prefecthq-marvin",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/PrefectHQ/marvin/pull/1357",
+      "date": "2026-06-27T08:06:20.268Z"
+    },
+    "alvinunreal/oh-my-opencode-slim": {
+      "slug": "alvinunreal-oh-my-opencode-slim",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/alvinunreal/oh-my-opencode-slim/pull/644",
+      "date": "2026-07-01T16:53:34.785Z"
+    },
+    "backnotprop/plannotator": {
+      "slug": "backnotprop-plannotator",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/backnotprop/plannotator/pull/987",
+      "date": "2026-07-01T16:54:03.020Z"
+    },
+    "genkit-ai/genkit": {
+      "slug": "genkit-ai-genkit",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/genkit-ai/genkit/pull/5669",
+      "date": "2026-07-01T16:54:30.972Z"
+    },
+    "UfoMiao/zcf": {
+      "slug": "ufomiao-zcf",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/UfoMiao/zcf/pull/379",
+      "date": "2026-07-01T16:54:59.018Z"
+    },
+    "Sylinko/Everywhere": {
+      "slug": "sylinko-everywhere",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Sylinko/Everywhere/pull/451",
+      "date": "2026-07-01T16:55:29.228Z"
+    },
+    "zai-org/GLM-5": {
+      "slug": "zai-org-glm-5",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/zai-org/GLM-5/pull/101",
+      "date": "2026-07-01T16:55:56.902Z"
+    },
+    "ParthJadhav/app-store-screenshots": {
+      "slug": "parthjadhav-app-store-screenshots",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ParthJadhav/app-store-screenshots/pull/27",
+      "date": "2026-07-01T16:56:25.043Z"
+    },
+    "aiwaves-cn/agents": {
+      "slug": "aiwaves-cn-agents",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/aiwaves-cn/agents/pull/226",
+      "date": "2026-07-01T16:56:52.630Z"
+    },
+    "MrLesk/Backlog.md": {
+      "slug": "mrlesk-backlog-md",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/MrLesk/Backlog.md/pull/702",
+      "date": "2026-07-01T16:57:20.245Z"
+    },
+    "samchon/typia": {
+      "slug": "samchon-typia",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/samchon/typia/pull/1987",
+      "date": "2026-07-01T16:57:47.814Z"
+    },
+    "omnigent-ai/omnigent": {
+      "slug": "omnigent-ai-omnigent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/omnigent-ai/omnigent/pull/1800",
+      "date": "2026-07-01T16:58:15.750Z"
+    },
+    "ashishps1/learn-ai-engineering": {
+      "slug": "ashishps1-learn-ai-engineering",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ashishps1/learn-ai-engineering/pull/17",
+      "date": "2026-07-01T16:58:43.457Z"
+    },
+    "Klavis-AI/klavis": {
+      "slug": "klavis-ai-klavis",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Klavis-AI/klavis/pull/1670",
+      "date": "2026-07-01T16:59:11.239Z"
+    },
+    "PySpur-Dev/pyspur": {
+      "slug": "pyspur-dev-pyspur",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/PySpur-Dev/pyspur/pull/312",
+      "date": "2026-07-01T16:59:38.840Z"
+    },
+    "cobusgreyling/loop-engineering": {
+      "slug": "cobusgreyling-loop-engineering",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/cobusgreyling/loop-engineering/pull/213",
+      "date": "2026-07-08T03:55:24.947Z"
+    },
+    "jacklandrin/OnlySwitch": {
+      "slug": "jacklandrin-onlyswitch",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/jacklandrin/OnlySwitch/pull/209",
+      "date": "2026-07-08T04:04:02.589Z"
+    },
+    "datawhalechina/vibe-vibe": {
+      "slug": "datawhalechina-vibe-vibe",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/datawhalechina/vibe-vibe/pull/191",
+      "date": "2026-07-08T04:04:29.495Z"
+    },
+    "rllm-org/rllm": {
+      "slug": "rllm-org-rllm",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/rllm-org/rllm/pull/735",
+      "date": "2026-07-08T04:04:54.911Z"
+    },
+    "vercel-labs/open-agents": {
+      "slug": "vercel-labs-open-agents",
+      "status": "skip:pr-unavailable(flagged?)",
+      "date": "2026-07-08T04:05:37.022Z"
+    },
+    "zhouxiaoka/autoclip": {
+      "slug": "zhouxiaoka-autoclip",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/zhouxiaoka/autoclip/pull/76",
+      "date": "2026-07-08T04:06:02.914Z"
+    },
+    "SWE-agent/mini-swe-agent": {
+      "slug": "swe-agent-mini-swe-agent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/SWE-agent/mini-swe-agent/pull/901",
+      "date": "2026-07-08T04:06:28.623Z"
+    },
+    "mahseema/awesome-ai-tools": {
+      "slug": "mahseema-awesome-ai-tools",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/mahseema/awesome-ai-tools/pull/1746",
+      "date": "2026-07-08T04:06:54.263Z"
+    },
+    "liyupi/mianshiya": {
+      "slug": "liyupi-mianshiya",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/liyupi/mianshiya/pull/58",
+      "date": "2026-07-08T04:07:19.741Z"
+    },
+    "heilcheng/awesome-agent-skills": {
+      "slug": "heilcheng-awesome-agent-skills",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/heilcheng/awesome-agent-skills/pull/332",
+      "date": "2026-07-08T04:07:45.473Z"
+    },
+    "ModelEngine-Group/nexent": {
+      "slug": "modelengine-group-nexent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/ModelEngine-Group/nexent/pull/3386",
+      "date": "2026-07-08T04:08:10.777Z"
+    },
+    "areal-project/AReaL": {
+      "slug": "areal-project-areal",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/areal-project/AReaL/pull/1495",
+      "date": "2026-07-08T04:08:36.470Z"
+    },
+    "holaboss-ai/holaOS": {
+      "slug": "holaboss-ai-holaos",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/holaboss-ai/holaOS/pull/430",
+      "date": "2026-07-08T04:09:02.135Z"
+    },
+    "potpie-ai/potpie": {
+      "slug": "potpie-ai-potpie",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/potpie-ai/potpie/pull/1001",
+      "date": "2026-07-08T04:09:27.976Z"
+    },
+    "netease-youdao/LobsterAI": {
+      "slug": "netease-youdao-lobsterai",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/netease-youdao/LobsterAI/pull/2294",
+      "date": "2026-07-08T04:09:53.764Z"
+    },
+    "unicity-sphere/sphere-sdk": {
+      "slug": "unicity-sphere-sphere-sdk",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/unicity-sphere/sphere-sdk/pull/647",
+      "date": "2026-07-08T04:10:19.419Z"
+    },
+    "zenml-io/zenml": {
+      "slug": "zenml-io-zenml",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/zenml-io/zenml/pull/5044",
+      "date": "2026-07-08T04:10:45.457Z"
+    },
+    "Mai-with-u/MaiBot": {
+      "slug": "mai-with-u-maibot",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/Mai-with-u/MaiBot/pull/1890",
+      "date": "2026-07-08T04:11:10.918Z"
+    },
+    "qodo-ai/qodo-cover": {
+      "slug": "qodo-ai-qodo-cover",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/qodo-ai/qodo-cover/pull/353",
+      "date": "2026-07-08T04:11:36.431Z"
+    },
+    "czlonkowski/n8n-skills": {
+      "slug": "czlonkowski-n8n-skills",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/czlonkowski/n8n-skills/pull/39",
+      "date": "2026-07-08T04:12:02.406Z"
+    },
+    "the-open-agent/openagent": {
+      "slug": "the-open-agent-openagent",
+      "status": "pr-opened",
+      "prUrl": "https://github.com/the-open-agent/openagent/pull/2456",
+      "date": "2026-07-08T04:12:28.051Z"
+    }
+  }
+}

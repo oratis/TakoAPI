@@ -23,6 +23,8 @@ model User {
   username      String?        @unique
   website       String?
   accounts      Account[]
+  agents        Agent[]
+  apiKeys       ApiKey[]
   adminLogs     AdminLog[]
   AuthorFollow  AuthorFollow[]
   BlogPost      BlogPost[]
@@ -30,6 +32,10 @@ model User {
   likes         Like[]
   sessions      Session[]
   skills        Skill[]
+  creditBalance CreditBalance?
+  ledgerEntries LedgerEntry[]
+  agentRatings   AgentRating[]
+  agentBookmarks AgentBookmark[]
 }
 
 model Account {
@@ -74,6 +80,7 @@ model Category {
   icon        String?
   skillCount  Int     @default(0)
   skills      Skill[]
+  agents      Agent[]
 }
 
 enum SkillStatus {
@@ -162,6 +169,7 @@ model Tag {
   name      String     @unique
   slug      String     @unique
   skills    SkillTag[]
+  agentTags AgentTag[]
   createdAt DateTime   @default(now())
 }
 
@@ -358,4 +366,262 @@ model Subscriber {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Agent registry — Phase 1 of "One API to access all agents".
+// Invokable third-party agents, described by A2A AgentCards.
+// NOTE: distinct from Skill.agentType, which classifies the coding
+// agents that *consume* skills. Keys/usage/credits models arrive in
+// Phase 2–3. See docs/agent-marketplace/04-data-model.md
+// ─────────────────────────────────────────────────────────────
+
+enum AgentProtocol {
+  A2A
+  OPENAI_COMPAT
+  MCP
+}
+
+enum AgentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+enum PricingModel {
+  FREE
+  PER_CALL
+  PER_TASK
+  PER_TOKEN
+}
+
+enum AgentKind {
+  HOSTED // invokable agent with a live A2A endpoint
+  PROJECT // open-source project (self-host); discovery-only
+}
+
+model Agent {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String
+  publisherId String
+  categoryId  String?
+  status      AgentStatus @default(PENDING)
+  reviewNote  String?
+  kind        AgentKind   @default(HOSTED)
+
+  // Scenario / use-case classification (job-to-be-done), e.g. "frontend",
+  // "investing", "presentations". Multi-valued; filtered with `has`. The
+  // taxonomy + classifier live in src/lib/scenarios.ts. Distinct from
+  // categoryId (the skill technical taxonomy).
+  scenarios String[] @default([])
+
+  // AgentCard (A2A) — discovery + invocation metadata (HOSTED only)
+  cardUrl               String?
+  endpointUrl           String?
+  protocols             AgentProtocol[] @default([])
+  streaming             Boolean         @default(false)
+  pushNotify            Boolean         @default(false)
+  securitySchemes       Json?
+  cardSignatureVerified Boolean         @default(false)
+  namespaceVerified     Boolean         @default(false)
+  cardFetchedAt         DateTime?
+  healthStatus          String?
+  healthCheckedAt       DateTime?
+
+  // Pricing — display metadata only; real billing lands in Phase 3
+  pricingModel  PricingModel @default(FREE)
+  unitPriceUsd  Decimal?     @db.Decimal(12, 6)
+  byokSupported Boolean      @default(false)
+
+  // Open-source project (kind = PROJECT)
+  githubUrl String?
+  stars     Int?
+  repoOwner String?
+  repoName  String?
+
+  // Presentation + stats
+  homepage   String?
+  logo       String?
+  featured   Boolean  @default(false)
+  likesCount  Int     @default(0)
+  callsCount  Int     @default(0)
+  avgRating   Float   @default(0)
+  ratingCount Int     @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  publisher   User            @relation(fields: [publisherId], references: [id])
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  skills      AgentSkillDef[]
+  tags        AgentTag[]
+  invocations Invocation[]
+  ratings     AgentRating[]
+  bookmarks   AgentBookmark[]
+
+  @@index([status, categoryId])
+  @@index([featured, callsCount(sort: Desc)])
+  @@index([publisherId])
+  @@index([slug])
+  @@index([createdAt(sort: Desc)])
+  @@index([status, kind])
+  @@index([kind, stars(sort: Desc)])
+}
+
+model AgentSkillDef {
+  id          String   @id @default(cuid())
+  agentId     String
+  skillKey    String
+  name        String
+  description String?
+  inputModes  String[] @default([])
+  outputModes String[] @default([])
+  examples    String[] @default([])
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+}
+
+model AgentTag {
+  agentId String
+  tagId   String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([agentId, tagId])
+  @@index([tagId])
+}
+
+// Per-user agent rating (1–5) + optional review. Additive and decoupled from
+// the Skill-scoped Rating model. avgRating/ratingCount on Agent are kept in
+// sync on each write. See src/app/api/agents/[slug]/rating/route.ts.
+model AgentRating {
+  id        String   @id @default(cuid())
+  userId    String
+  agentId   String
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agentId])
+  @@index([agentId])
+}
+
+// Per-user agent bookmark (toggle). Additive; decoupled from Skill Bookmark.
+model AgentBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  agentId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agentId])
+  @@index([userId])
+  @@index([agentId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Gateway (Phase 2) — API keys + per-call usage metering.
+// Billing/credits arrive in Phase 3. See docs/agent-marketplace/04-data-model.md
+// ─────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id           String       @id @default(cuid())
+  userId       String
+  name         String?
+  hashedKey    String       @unique
+  prefix       String
+  scopes       String[]     @default([])
+  rateLimit    Int?
+  monthlyQuota Int?
+  lastUsedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime     @default(now())
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invocations  Invocation[]
+
+  @@index([userId])
+  @@index([prefix])
+}
+
+model Invocation {
+  id          String        @id @default(cuid())
+  apiKeyId    String?
+  userId      String?
+  agentId     String
+  protocol    AgentProtocol
+  status      Int
+  taskState   String?
+  latencyMs   Int?
+  unitsBilled Decimal?      @db.Decimal(14, 6)
+  costUsd     Decimal?      @db.Decimal(14, 6)
+  billedUsd   Decimal?      @db.Decimal(14, 6)
+  errorCode   String?
+  createdAt   DateTime      @default(now())
+  agent       Agent         @relation(fields: [agentId], references: [id])
+  apiKey      ApiKey?       @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([agentId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Commercial / ledger (Phase 3) — prepaid credits + immutable ledger.
+// PayPal top-up lands later; the gateway debits on each billed invocation.
+// See docs/agent-marketplace/04-data-model.md §2.
+// ─────────────────────────────────────────────────────────────
+
+enum LedgerType {
+  TOPUP // credit purchase (PayPal)
+  TOPUP_FEE // platform fee on a top-up
+  DEBIT // agent call charge
+  PAYOUT // settlement to a publisher
+  REFUND // credit returned
+  ADJUST // manual / admin correction
+}
+
+model CreditBalance {
+  userId     String   @id
+  balanceUsd Decimal  @default(0) @db.Decimal(14, 6)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LedgerEntry {
+  id           String     @id @default(cuid())
+  userId       String
+  type         LedgerType
+  amountUsd    Decimal    @db.Decimal(14, 6) // +credit / -debit
+  invocationId String? // set for DEBIT entries
+  providerRef  String? // PayPal order/capture id, set for TOPUP / REFUND
+  note         String?
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([invocationId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Shared rate-limit store. Backs src/lib/ratelimit.ts so a fixed
+// window holds across all Cloud Run instances (an in-memory Map
+// gave each replica its own counter → effective limit × replicas).
+// One row per "namespace:clientIp" bucket; advanced + incremented
+// atomically via INSERT … ON CONFLICT. resetAt is an absolute
+// instant (timestamptz) so the window is timezone-independent.
+// ─────────────────────────────────────────────────────────────
+
+model RateLimitBucket {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime @db.Timestamptz(3)
+
+  @@index([resetAt])
 }

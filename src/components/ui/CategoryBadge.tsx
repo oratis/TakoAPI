@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { Category } from "@/lib/types";
 
 const CATEGORY_ICONS: Record<string, string> = {

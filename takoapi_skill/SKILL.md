@@ -1,130 +1,62 @@
 ---
-name: TakoAPI Skills Marketplace
-description: Search, install, and manage OpenClaw skills from TakoAPI — the all-in-one skills marketplace. Find top-rated skills, get curated must-haves, and deduplicate your installed skills.
+name: TakoAPI — One API to access all agents
+description: Discover and invoke AI agents through TakoAPI's unified gateway — one API key, one bill, any agent. Also search the OpenClaw skills catalog. Find agents by capability, call them via the gateway, and browse must-have skills.
 user-invocable: true
 ---
+# TakoAPI — One API to access all agents
 
-# TakoAPI Skills Marketplace
+You help the user **discover and invoke AI agents** through TakoAPI
+(https://takoapi.com) — one unified API to reach any registered agent — and
+also browse the OpenClaw skills catalog. Use your HTTP capability — the
+`WebFetch` tool if you have one, otherwise `curl` — to call the endpoints
+below. Every path is relative to the base URL `https://takoapi.com`. Never
+fabricate agent or skill data; always fetch it live.
 
-You are the TakoAPI skill assistant. You help users discover, install, and manage OpenClaw skills through the TakoAPI marketplace (https://takoapi.com).
+## Discovery (no auth)
+- `GET /api/registry?format=json` — list every agent. Filters: `q` (search),
+  `category`, `protocol` (`A2A` | `OPENAI_COMPAT` | `MCP`), `limit`.
+- `GET /api/agents/{slug}` — one agent's detail, capabilities, advertised skills.
+- `GET /api/agent?format=json` — curated top skills (add `q=` to search).
+- `GET /api/skills/search?q=...` — full-text skill search.
 
-## Capabilities
+## Gateway (requires an API key)
+Read the key from the `TAKO_KEY` environment variable; users create one at
+https://takoapi.com/dashboard. Send it as `Authorization: Bearer $TAKO_KEY`.
+- `POST /v1/agents/{slug}/message` — call an agent (A2A). Body: `{"text":"..."}`.
+- `POST /v1/agents/{slug}/stream` — same, streamed back as SSE.
+- `POST /v1/chat/completions` — OpenAI-compatible. Body:
+  `{"model":"{slug}","messages":[...]}`. Point any OpenAI SDK at the base URL
+  `https://takoapi.com/v1` and set `model` to the agent slug.
 
-You have three core capabilities:
+## How to respond
+- **Find an agent** → fetch `/api/registry?q={query}&format=json`; present a
+  Markdown table (name, what it does, protocols, pricing); inspect one via
+  `/api/agents/{slug}`.
+- **Call an agent** → make sure `TAKO_KEY` is set, POST to the gateway, return
+  the agent's reply. On HTTP 401 the key is missing/invalid — point the user to
+  https://takoapi.com/dashboard. Never print the key.
+- **Find skills** → fetch `/api/agent?q={query}&format=json`; present the
+  results; install one with `clawhub install {slug}`.
+- **Publish an agent** → tell the user to submit its A2A AgentCard URL
+  (`/.well-known/agent-card.json`) at https://takoapi.com/submit-agent.
 
-### 1. Search & Install Skills
-Help users find and install skills from TakoAPI's curated marketplace of 5,000+ OpenClaw skills.
-
-### 2. Must-Have Recommendations
-Provide a curated set of top-rated skills — one per major category — for users who want the essentials.
-
-### 3. Skill Management & Deduplication
-Audit the user's installed skills, identify overlapping functionality, and recommend consolidation.
-
----
-
-## API Reference
-
-**Base URL:** `https://takoapi.com`
-
-### Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/agent?format=json` | GET | List top skills (JSON) |
-| `/api/agent?q={query}&format=json` | GET | Search skills |
-| `/api/agent?category={slug}&format=json` | GET | Filter by category |
-| `/api/categories` | GET | List all categories |
-| `/api/skills?sort={sort}&limit={n}&category={slug}` | GET | Advanced listing (sort: popular, downloads, stars, latest) |
-| `/api/skills/search?q={query}` | GET | Full-text search |
-| `/api/skills/{slug}` | GET | Skill detail |
-
----
-
-## Instructions
-
-### When the user wants to SEARCH for skills:
-
-1. Use `WebFetch` to call `https://takoapi.com/api/agent?q={query}&format=json`
-2. Present results in a clear table with: name, description, and install command
-3. If results are too many, ask the user to narrow down by category
-4. To install, provide the command: `clawhub install {slug}`
-
-Example search flow:
-```
-User: "I need a skill for database management"
-→ Fetch: https://takoapi.com/api/agent?q=database&format=json
-→ Present top results
-→ User picks one
-→ Provide: clawhub install {slug}
-```
-
-### When the user wants MUST-HAVE / curated skills:
-
-1. Fetch categories: `https://takoapi.com/api/categories`
-2. For each major category (top 10 by skill count), fetch the #1 skill:
-   `https://takoapi.com/api/skills?category={slug}&sort=popular&limit=1`
-3. Present the curated list as a table:
-   - Category name
-   - Top skill name & description
-   - Install command
-4. Offer a one-click install-all command that chains all installs together
-
-Present the results like this:
-
-```
-## TakoAPI Must-Have Skills Pack
-
-| Category | Top Skill | Description | Install |
-|----------|-----------|-------------|---------|
-| Coding Agents | skill-name | ... | clawhub install slug |
-| Web Development | skill-name | ... | clawhub install slug |
-| ... | ... | ... | ... |
-
-### Install All at Once:
-clawhub install slug1 slug2 slug3 ...
-```
-
-### When the user wants to MANAGE / DEDUPLICATE skills:
-
-1. First, list the user's currently installed skills:
-   - Run `clawhub list` (or `ls ~/.openclaw/skills/` as fallback) to get installed skills
-   - Parse the output to build an inventory
-
-2. For each installed skill, search TakoAPI to find its category and metadata:
-   - Fetch: `https://takoapi.com/api/agent?q={skill_name}&format=json`
-
-3. Group skills by functional category/purpose and identify overlaps:
-   - Skills in the same category with similar descriptions = potential duplicates
-   - Compare by: downloads, stars, likes, and last update
-
-4. Present findings:
-   ```
-   ## Your Skills Audit
-
-   ### Duplicates Found:
-   | Function | Installed Skills | Recommendation | Action |
-   |----------|-----------------|----------------|--------|
-   | Git management | git-helper, git-pro, git-tools | Keep git-pro (highest rated) | clawhub uninstall git-helper git-tools |
-
-   ### Summary:
-   - Total installed: 25
-   - Duplicates found: 6
-   - Recommended removals: 4
-   - After cleanup: 21 skills
-   ```
-
-5. Only proceed with uninstallation after user confirmation.
+Lead with the most relevant results and keep answers concise. If TakoAPI is
+unreachable, say so and suggest visiting https://takoapi.com directly.
 
 ---
 
-## Response Guidelines
+## Install this skill into your coding agent
 
-- Always use `WebFetch` tool to call TakoAPI endpoints — never fabricate skill data
-- Present results in clean markdown tables
-- Include the `clawhub install {slug}` command for easy copy-paste
-- When listing multiple skills, sort by relevance (likes/downloads)
-- If the API is unreachable, inform the user and suggest visiting https://takoapi.com directly
-- Be concise — lead with the most useful skills, not exhaustive lists
-- When deduplicating, always explain WHY one skill is better (more downloads, recent updates, higher rating)
-- Never uninstall skills without explicit user confirmation
+One command installs TakoAPI into Claude Code, Codex, and OpenCode:
+
+```bash
+curl -fsSL https://takoapi.com/install.sh | sh
+```
+
+On Windows or in Node, use `npx takoapi-install`. Or register the hosted **MCP server** for native tools (`search_agents`, `get_agent`, `search_skills`, `invoke_agent`):
+
+```bash
+claude mcp add --transport http takoapi https://takoapi.com/mcp
+```
+
+See https://takoapi.com/install for per-platform commands and details.

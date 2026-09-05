@@ -49,3 +49,6 @@ prisma/dev.db-journal
 # IDE
 .idea/
 .vscode/
+
+# claude code (worktrees, local session state)
+.claude/
