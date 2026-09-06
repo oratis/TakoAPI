@@ -149,7 +149,7 @@ export default async function InstallPage({ params }: { params: Promise<{ locale
               })}
             </li>
           </ul>
-          <p className="mt-4 text-xs text-gray-400">
+          <p className="mt-4 text-xs text-gray-500">
             {t.rich("footnote", {
               cmd: (chunks) => (
                 <code className="font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5">{chunks}</code>

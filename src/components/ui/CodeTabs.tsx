@@ -49,7 +49,7 @@ export default function CodeTabs({
             aria-controls={`${id}-panel`}
             onClick={() => setActive(s.key)}
             className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-              s.key === current.key ? "bg-gray-800 text-white" : "text-gray-400 hover:text-gray-200"
+              s.key === current.key ? "bg-gray-800 text-white" : "text-gray-300 hover:text-white"
             }`}
           >
             {s.label}
@@ -58,7 +58,7 @@ export default function CodeTabs({
         <button
           type="button"
           onClick={copy}
-          className="ms-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-400 hover:text-white"
+          className="ms-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-300 hover:text-white"
           aria-label={copied ? t("copied") : t("copy")}
         >
           {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}

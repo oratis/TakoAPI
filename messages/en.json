@@ -703,5 +703,11 @@
     "reference": "Reference: {id}",
     "retry": "Try again",
     "home": "Go home"
+  },
+  "Consent": {
+    "title": "Analytics",
+    "description": "We use Google Analytics to see which pages people find useful. Nothing is loaded and no cookies are set unless you accept.",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

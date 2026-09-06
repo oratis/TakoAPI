@@ -36,6 +36,34 @@ export function gatewayRateLimit(key: { rateLimit: number | null }): number {
   return key.rateLimit && key.rateLimit > 0 ? key.rateLimit : DEFAULT_GATEWAY_RATE_LIMIT;
 }
 
+// `lastUsedAt` is a "when did this key last do anything" field on the dashboard —
+// minute resolution is finer than the UI shows. Writing it on every gateway call
+// meant one extra UPDATE per request against a shared-core Cloud SQL instance, and
+// it was fire-and-forget, so on a CPU-throttled Cloud Run instance it frequently
+// did not land anyway. Throttling per process keeps the field useful and takes the
+// write off the hot path.
+const LAST_USED_WRITE_INTERVAL_MS = 60_000;
+const lastUsedWrites = new Map<string, number>();
+
+function touchLastUsed(id: string): void {
+  const now = Date.now();
+  const previous = lastUsedWrites.get(id);
+  if (previous && now - previous < LAST_USED_WRITE_INTERVAL_MS) return;
+  lastUsedWrites.set(id, now);
+  // One instance will not hold more than a few thousand live keys, but drop the
+  // oldest half if it somehow does — this map must not grow without bound.
+  if (lastUsedWrites.size > 5000) {
+    const entries = [...lastUsedWrites.entries()].sort((a, b) => a[1] - b[1]);
+    for (const [k] of entries.slice(0, 2500)) lastUsedWrites.delete(k);
+  }
+  prisma.apiKey.update({ where: { id }, data: { lastUsedAt: new Date(now) } }).catch((err) => {
+    console.error("[apikey] lastUsedAt update failed", {
+      id,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  });
+}
+
 /** Resolve an API key from an Authorization/x-api-key header value. Returns the
  *  active ApiKey record (with user) or null. Best-effort updates lastUsedAt. */
 export async function authenticateApiKey(raw: string | null) {
@@ -49,8 +77,6 @@ export async function authenticateApiKey(raw: string | null) {
   });
   if (!record || record.revokedAt) return null;
 
-  prisma.apiKey
-    .update({ where: { id: record.id }, data: { lastUsedAt: new Date() } })
-    .catch(() => {});
+  touchLastUsed(record.id);
   return record;
 }
