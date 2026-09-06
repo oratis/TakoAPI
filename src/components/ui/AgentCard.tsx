@@ -106,7 +106,7 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
 
       {isProject ? (
         <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
-          <span className="text-xs text-gray-400 truncate">
+          <span className="text-xs text-gray-600 truncate">
             {agent.repoOwner ? `${agent.repoOwner}/${agent.name}` : t("agentOpenSource")}
           </span>
           <span className="inline-flex items-center gap-2 shrink-0">

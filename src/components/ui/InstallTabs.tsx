@@ -66,7 +66,7 @@ function CopyButton({ text }: { text: string }) {
           /* clipboard unavailable — no-op */
         }
       }}
-      className="shrink-0 px-3 py-2.5 text-gray-400 hover:text-white transition-colors"
+      className="shrink-0 px-3 py-2.5 text-gray-300 hover:text-white transition-colors"
       aria-label={copied ? t("copied") : t("copy")}
     >
       {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
@@ -145,12 +145,12 @@ export default function InstallTabs() {
         <div className="mt-5 rounded-2xl border border-gray-200 p-5 sm:p-6 space-y-6">
           <div className="flex items-baseline gap-2">
             <h3 className="text-lg font-semibold">{p.name}</h3>
-            <span className="text-sm text-gray-400">{t(i18n.tagline)}</span>
+            <span className="text-sm text-gray-600">{t(i18n.tagline)}</span>
           </div>
 
           {/* Method 1 — Skill */}
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
               <Boxes className="h-3.5 w-3.5" /> {t("skillHeading")}
             </p>
             <div className="space-y-2">
@@ -158,11 +158,11 @@ export default function InstallTabs() {
                 <CommandLine key={cmd} cmd={cmd} />
               ))}
             </div>
-            <p className="mt-2 text-xs text-gray-400">{t("skillUniversalHint", { name: p.name })}</p>
+            <p className="mt-2 text-xs text-gray-600">{t("skillUniversalHint", { name: p.name })}</p>
 
             <div className="mt-4 grid gap-5 sm:grid-cols-2">
               <div>
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
                   <FileText className="h-3.5 w-3.5" /> {t("writesHeading")}
                 </p>
                 <ul className="space-y-1">
@@ -176,7 +176,7 @@ export default function InstallTabs() {
                 </ul>
               </div>
               <div>
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
                   <Play className="h-3.5 w-3.5" /> {t("howToUseHeading")}
                 </p>
                 <p className="text-sm text-gray-600">{t(i18n.use)}</p>
@@ -186,11 +186,11 @@ export default function InstallTabs() {
 
           {/* Method 2 — MCP server */}
           <div className="border-t border-gray-100 pt-5">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
               <Server className="h-3.5 w-3.5" /> {t("mcpHeading")}
             </p>
             {p.mcp.includes("\n") ? <CodeBlock code={p.mcp} /> : <CommandLine cmd={p.mcp} />}
-            <p className="mt-2 text-xs text-gray-400">{t(i18n.mcpHint)}</p>
+            <p className="mt-2 text-xs text-gray-600">{t(i18n.mcpHint)}</p>
             <p className="mt-2 text-sm text-gray-600">
               {t.rich("mcpToolsNote", {
                 tool: (chunks) => (

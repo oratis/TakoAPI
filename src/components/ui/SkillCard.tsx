@@ -30,7 +30,7 @@ export default function SkillCard({
             {skill.name}
           </h3>
           {skill.author && (
-            <p className="text-xs text-gray-400 mt-0.5">{t("skillBy", { author: skill.author })}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{t("skillBy", { author: skill.author })}</p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0 ms-2">
