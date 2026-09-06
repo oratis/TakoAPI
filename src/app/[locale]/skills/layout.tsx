@@ -3,8 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { SITE_NAME, localizedAlternates, localizedUrl, absoluteUrl } from "@/lib/seo";
 import { localeOg } from "@/lib/locales";
 
-// The skills pages are client components and can't export metadata themselves,
-// so this server layout supplies it. Detail pages override via [slug]/layout.tsx.
+// Base metadata for the whole /skills subtree: the unfiltered listing's title,
+// description, canonical and OG card. The listing page overrides the title and
+// adds robots/canonical for searched, filtered and paginated views (only a page
+// receives `searchParams`, never a layout); the detail page overrides it per skill.
 export async function generateMetadata({
   params,
 }: {

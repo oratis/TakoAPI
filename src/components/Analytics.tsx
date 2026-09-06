@@ -43,9 +43,15 @@ function readConsent(): Consent | null {
   }
 }
 
-/** During SSR and the first paint there is no stored answer to act on. */
+/**
+ * Server snapshot. Deliberately "denied" rather than null: pages are prerendered
+ * once and served to everyone, so baking the banner into the static HTML would
+ * show it to visitors who already answered, until hydration removed it again.
+ * Rendering nothing on the server and letting the client's real snapshot decide
+ * is what useSyncExternalStore exists for.
+ */
 function serverConsent(): Consent | null {
-  return null;
+  return "denied";
 }
 
 function writeConsent(value: Consent): void {

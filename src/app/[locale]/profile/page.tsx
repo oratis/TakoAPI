@@ -110,7 +110,7 @@ export default async function ProfilePage({
       </div>
 
       {/* Primary tab: agents | skills */}
-      <div className="flex gap-2 mb-3" role="tablist" aria-label={t("mySubmissions")}>
+      <div className="flex gap-2 mb-3" role="tablist" aria-label={t("myListings")}>
         {(["agents", "skills"] as Tab[]).map((k) => (
           <Link
             key={k}

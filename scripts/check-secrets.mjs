@@ -25,7 +25,9 @@ const PATTERNS = [
 ];
 
 // Files that legitimately contain matching-looking strings (placeholders, examples).
-const IGNORE = [/^package-lock\.json$/, /^scripts\/notify-ledger\.json$/, /^prisma\/seed-data\.json$/, /\.(png|jpg|jpeg|gif|svg|ico|woff2?)$/];
+const SELF = "scripts/check-secrets.mjs";
+// The scanner's own patterns look exactly like the values it hunts for.
+const IGNORE = [new RegExp(`^${SELF}$`), /^package-lock\.json$/, /^scripts\/notify-ledger\.json$/, /^prisma\/seed-data\.json$/, /\.(png|jpg|jpeg|gif|svg|ico|woff2?)$/];
 
 const files = execSync("git ls-files -z", { encoding: "utf8" }).split("\0").filter(Boolean);
 const hits = [];
@@ -43,8 +45,11 @@ for (const file of files) {
       if (re.test(line)) {
         // Allow obvious placeholders so docs can show the *shape* of a value, and
         // the local docker-compose defaults (a throwaway password on localhost).
-        if (/<[^>]*(redacted|password|secret|token|your-[a-z-]+)[^>]*>|\*\*\*|USER:PASSWORD|example\.com/i.test(line)) continue;
-        if (/@(localhost|127\.0\.0\.1|db)(:\d+)?\//.test(line)) continue;
+        if (/<[^>]*(redacted|password|secret|token|your-[a-z-]+)[^>]*>|\*{3,}|example\.com/i.test(line)) continue;
+        // Documentation placeholders: postgres://user:pass@host, USER:PASSWORD@…
+        if (/:\/\/(user|username|usuario|<[^>]+>|\$\{?\w+\}?)[^\s@]*:(pass(word)?|secret|<[^>]+>|\$\{?\w+\}?)[^\s@]*@/i.test(line)) continue;
+        // Local development targets — a throwaway password on a loopback host.
+        if (/@(localhost|127\.0\.0\.1|db)(:\d+)?[\/?]/.test(line)) continue;
         hits.push(`${file}:${i + 1}: ${name}`);
       }
     }

@@ -24,6 +24,13 @@ export type McpTool = {
 /** Runtime/upstream failure — surfaced to the model as an `isError` tool result. */
 export class ToolError extends Error {}
 
+// The registry lists two kinds of entry and only one of them can be called. A model
+// that cannot tell them apart will happily pick a GitHub repo and get a gateway
+// error, so every tool that can surface a PROJECT row says so in its own output —
+// tool descriptions alone are read once, tool results are read every time.
+const PROJECT_CAVEAT =
+  'Entries with kind="PROJECT" are open-source repositories listed for discovery only: they have no TakoAPI endpoint, and invoke_agent will fail on them. Only kind="HOSTED" agents can be invoked. Point the user at the repo instead, or search again with kind="HOSTED".';
+
 // ---- helpers ---------------------------------------------------------------
 function str(v: unknown): string | undefined {
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
@@ -61,7 +68,7 @@ export const TOOLS: McpTool[] = [
   {
     name: "search_agents",
     description:
-      "Search the TakoAPI registry of invokable AI agents by keyword, category, or protocol. Returns matching agents with their slug, description, protocols, and pricing.",
+      'Search the TakoAPI registry by keyword, category, protocol, or kind. Returns two kinds of entry: kind="HOSTED" agents, which can be run with invoke_agent through the TakoAPI gateway, and kind="PROJECT" open-source repositories, which are listed for discovery only and CANNOT be invoked. Pass kind="HOSTED" when the user wants something that actually runs; hosted agents are returned first either way.',
     annotations: { readOnlyHint: true, openWorldHint: true },
     inputSchema: {
       type: "object",
@@ -70,28 +77,52 @@ export const TOOLS: McpTool[] = [
         query: { type: "string", description: "Free-text search term (matches name & description)." },
         category: { type: "string", description: "Filter by category slug." },
         protocol: { type: "string", enum: ["A2A", "OPENAI_COMPAT", "MCP"], description: "Filter by protocol." },
+        kind: {
+          type: "string",
+          enum: ["HOSTED", "PROJECT"],
+          description:
+            'HOSTED = invokable through the TakoAPI gateway. PROJECT = open-source repo, discovery only, not invokable. Omit to get both (hosted first).',
+        },
         limit: { type: "integer", minimum: 1, maximum: 50, description: "Max results (default 10)." },
       },
     },
     async invoke(args) {
       const limit = clampInt(args.limit, 10, 1, 50);
+      const kind = str(args.kind)?.toUpperCase();
       const path = `/api/registry${qs({
         format: "json",
         q: str(args.query),
         category: str(args.category),
         protocol: str(args.protocol),
+        kind: kind === "HOSTED" || kind === "PROJECT" ? kind : undefined,
         limit,
       })}`;
-      const data = (await getJson(path)) as { agents?: unknown[] };
+      const data = (await getJson(path)) as {
+        agents?: unknown[];
+        totalHosted?: number;
+        totalProject?: number;
+      };
       const agents = Array.isArray(data.agents) ? data.agents.slice(0, limit) : [];
       if (!agents.length) return "No agents found.";
-      return JSON.stringify(agents, null, 2);
+      // The registry answers with the hosted rows first and reports the true totals,
+      // so a truncated result is visible rather than looking like the whole catalog.
+      const hasProject = agents.some((a) => (a as { kind?: string }).kind === "PROJECT");
+      return JSON.stringify(
+        {
+          ...(hasProject ? { note: PROJECT_CAVEAT } : {}),
+          count: agents.length,
+          matching: { hosted: data.totalHosted, project: data.totalProject },
+          agents,
+        },
+        null,
+        2,
+      );
     },
   },
   {
     name: "get_agent",
     description:
-      "Get full details for one TakoAPI agent by slug — capabilities, protocols, endpoint, pricing, and advertised skills.",
+      'Get full details for one TakoAPI registry entry by slug — capabilities, protocols, endpoint, pricing, and advertised skills. Check `kind` in the result: a "PROJECT" entry is an open-source repo to self-host and cannot be invoked.',
     annotations: { readOnlyHint: true, openWorldHint: true },
     inputSchema: {
       type: "object",
@@ -104,6 +135,10 @@ export const TOOLS: McpTool[] = [
       if (!slug) throw new ToolError("`slug` is required.");
       try {
         const data = await getJson(`/api/agents/${encodeURIComponent(slug)}`);
+        const kind = (data as { kind?: string } | null)?.kind;
+        if (kind === "PROJECT") {
+          return JSON.stringify({ ...(data as object), invokable: false, note: PROJECT_CAVEAT }, null, 2);
+        }
         return JSON.stringify(data, null, 2);
       } catch (e) {
         if (e instanceof ToolError && /HTTP 404/.test(e.message)) {
@@ -144,7 +179,7 @@ export const TOOLS: McpTool[] = [
   {
     name: "invoke_agent",
     description:
-      "Invoke a TakoAPI agent through the unified gateway and return its reply. Requires the user's TakoAPI API key (sent as a Bearer token when registering this MCP server). Spends metered credits.",
+      'Invoke a TakoAPI agent through the unified gateway and return its reply. Works only on kind="HOSTED" registry entries — a kind="PROJECT" slug is an open-source repo with no endpoint and will fail. Requires the user\'s TakoAPI API key (sent as a Bearer token when registering this MCP server). Spends metered credits.',
     // Not read-only: it calls an external agent and may incur cost — clients should confirm.
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     inputSchema: {

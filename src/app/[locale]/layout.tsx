@@ -114,8 +114,11 @@ export default async function LocaleLayout({
             </main>
             <Footer />
           </Providers>
+          {/* Inside the provider: the consent banner is translated, and a
+              client component that calls useTranslations outside this boundary
+              throws — which broke prerendering of every static page. */}
+          <Analytics />
         </NextIntlClientProvider>
-        <Analytics />
       </body>
     </html>
   );
