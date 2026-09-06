@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Script from "next/script";
 import { useTranslations } from "next-intl";
 
@@ -13,62 +13,83 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-PPXV98MJ4Y";
 const STORAGE_KEY = "tako.analytics-consent";
 type Consent = "granted" | "denied";
 
+// Consent lives in localStorage, which is an external store, so it is read through
+// useSyncExternalStore rather than copied into component state by an effect. That
+// keeps the server render and the first client render agreed on "no consent yet"
+// and avoids the setState-in-effect pattern.
+//
+// It is localStorage and not a cookie precisely because the pre-consent state must
+// set no cookies at all.
+const listeners = new Set<() => void>();
+
+function subscribe(onChange: () => void): () => void {
+  listeners.add(onChange);
+  // Another tab answering the banner should settle this one too.
+  window.addEventListener("storage", onChange);
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function readConsent(): Consent | null {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored === "granted" || stored === "denied" ? stored : null;
+  } catch {
+    // Private mode or storage blocked: we cannot remember an answer, so never ask
+    // and never load anything.
+    return "denied";
+  }
+}
+
+/** During SSR and the first paint there is no stored answer to act on. */
+function serverConsent(): Consent | null {
+  return null;
+}
+
+function writeConsent(value: Consent): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    /* nothing to persist to; the in-memory notification below still applies */
+  }
+  for (const listener of listeners) listener();
+}
+
 /**
  * Analytics, gated behind an explicit choice.
  *
  * The site serves fifteen locales including German, French, Spanish and Italian,
  * so a meaningful share of visitors are covered by the ePrivacy directive — and
  * GA4 was loading and setting its cookies on first paint with no notice and no way
- * to decline. Nothing loads here until the visitor answers; declining is a single
- * click and is remembered, so the banner is not a dark pattern that only has an
- * "accept" path.
- *
- * The choice lives in localStorage rather than a cookie precisely because the
- * pre-consent state must set no cookies at all.
+ * to decline. Nothing loads until the visitor answers, and declining is a single
+ * click, so this is not an accept-only dark pattern.
  */
 export function Analytics() {
-  const [consent, setConsent] = useState<Consent | null | undefined>(undefined);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      setConsent(stored === "granted" || stored === "denied" ? stored : null);
-    } catch {
-      // Private mode / storage disabled: treat as undecided but never prompt in a
-      // loop — without storage we cannot remember the answer, so stay off.
-      setConsent("denied");
-    }
-  }, []);
-
-  const decide = (value: Consent) => {
-    setConsent(value);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, value);
-    } catch {
-      /* nothing to persist to */
-    }
-  };
+  const consent = useSyncExternalStore(subscribe, readConsent, serverConsent);
 
   // Production only, so dev and preview traffic never pollutes the property.
   const enabled = process.env.NODE_ENV === "production" && !!GA_ID;
+  if (!enabled) return null;
 
-  return (
-    <>
-      {enabled && consent === "granted" && (
-        <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-          <Script id="ga4-init" strategy="afterInteractive">
-            {`window.dataLayer = window.dataLayer || [];
+  if (consent === "granted") {
+    return (
+      <>
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'granted'});
 gtag('config', '${GA_ID}', {anonymize_ip: true});`}
-          </Script>
-        </>
-      )}
-      {enabled && consent === null && <ConsentBanner onDecide={decide} />}
-    </>
-  );
+        </Script>
+      </>
+    );
+  }
+
+  if (consent === null) return <ConsentBanner onDecide={writeConsent} />;
+  return null;
 }
 
 function ConsentBanner({ onDecide }: { onDecide: (v: Consent) => void }) {

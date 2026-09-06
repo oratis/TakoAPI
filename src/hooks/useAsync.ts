@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-// Minimal async-data hook for the few remaining client pages that fetch from our
-// own API (admin screens, engagement bars). It never calls setState synchronously
-// inside the effect body — React's `set-state-in-effect` rule flags that pattern —
-// so "loading" is *derived* from whether the stored result matches the current
-// request key, and state only changes from inside the promise callbacks.
+// Minimal async-data hook for the client pages that fetch from our own API (admin
+// screens, engagement bars). It never calls setState synchronously inside the
+// effect body — React's `set-state-in-effect` rule flags that pattern, and it was
+// the single largest source of lint errors in this repo — so "loading" is
+// *derived* from whether the stored result matches the current request key, and
+// state only changes from inside the promise callbacks.
 //
 //   const { data, loading, error, reload } = useAsync(() => fetchJson(url), [url]);
 //
@@ -18,13 +19,11 @@ export function useAsync<T>(fn: () => Promise<T>, deps: readonly unknown[], enab
   const key = JSON.stringify(deps);
   const [result, setResult] = useState<Result<T>>({ key: "" });
   const [tick, setTick] = useState(0);
-  const fnRef = useRef(fn);
-  fnRef.current = fn;
 
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    fnRef.current().then(
+    fn().then(
       (data) => {
         if (alive) setResult({ key, data });
       },
@@ -35,6 +34,12 @@ export function useAsync<T>(fn: () => Promise<T>, deps: readonly unknown[], enab
     return () => {
       alive = false;
     };
+    // `fn` is deliberately not a dependency. Callers pass an inline arrow, so it is
+    // a new function on every render and including it would refetch in a loop; the
+    // caller declares what the request actually depends on through `deps`, which
+    // `key` serializes. Keeping the ref-free form also avoids writing a ref during
+    // render, which React 19 forbids.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, tick, enabled]);
 
   const reload = useCallback(() => setTick((t) => t + 1), []);
