@@ -18,14 +18,17 @@ async function handle(req: NextRequest) {
   try {
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+    // Only APPROVED skills are public; pending/rejected rows must never reach
+    // subscribers' inboxes.
     const [newSkillsCount, topSkills, totalSkills, subscribers] = await Promise.all([
-      prisma.skill.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+      prisma.skill.count({ where: { status: "APPROVED", createdAt: { gte: oneWeekAgo } } }),
       prisma.skill.findMany({
+        where: { status: "APPROVED" },
         orderBy: { downloads: "desc" },
         take: 10,
         select: { name: true, slug: true, downloads: true },
       }),
-      prisma.skill.count(),
+      prisma.skill.count({ where: { status: "APPROVED" } }),
       prisma.subscriber.findMany({
         where: { verified: true },
         select: { email: true },

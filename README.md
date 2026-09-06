@@ -191,21 +191,36 @@ Tools: `search_agents`, `get_agent`, `search_skills` (anonymous), and `invoke_ag
 ```
 src/
   app/
-    page.tsx                 # Home
-    agents/                  # Agent marketplace + detail pages
-    skills/                  # Skills browse + detail pages
-    trending/                # Trending leaderboard
-    dashboard/               # Developer console (API keys, usage)
-    admin/                   # Moderation
-    api/                     # REST API routes
-    v1/                      # Gateway routes (A2A / OpenAI-compatible)
-    sitemap.ts, robots.ts    # SEO
+    [locale]/                # Every page, under a locale segment (en unprefixed, 14 more)
+      page.tsx               #   Home
+      agents/                #   Agent marketplace + detail pages
+      scenarios/             #   Use-case landing pages
+      skills/, trending/     #   Coding-agent skills catalog + leaderboard
+      blog/, install/, badge/
+      dashboard/             #   Developer console (API keys, usage, credits)
+      profile/, bookmarks/   #   My listings, saved agents
+      submit-agent/, submit/ #   Publish an agent / a skill
+      admin/                 #   Moderation
+      auth/                  #   Sign in / up / password reset
+    api/                     # REST API routes (public catalog, user, admin, cron, billing)
+    v1/                      # Gateway routes (A2A passthrough, SSE, OpenAI-compatible)
+    mcp/                     # Hosted MCP server (Streamable HTTP)
+    sitemap.xml/, sitemap/   # Sitemap index + chunked children
+    robots.ts, opengraph-image.tsx
+  proxy.ts                   # Locale routing (Next 16 request interceptor)
   components/                # UI + layout
-  lib/                       # auth, prisma, seo, helpers
+  i18n/                      # next-intl routing + request config
+  lib/                       # auth, prisma, billing, gateway, seo, helpers
+  hooks/                     # client hooks
+messages/                    # 15 locale catalogs (checked by `npm run check:i18n`)
 prisma/
   schema.prisma              # Database schema
+  migrations/                # Applied manually in production (see docs/agent-marketplace/HANDOFF.md §5)
   seed.ts                    # Database seeder
-scripts/                     # Scrapers + maintenance scripts
+scripts/                     # Scrapers, sync jobs, CI checks (secrets, skill assets)
+packages/takoapi-install/    # `npx takoapi-install`
+plugins/takoapi/             # Claude Code plugin
+takoapi_skill/SKILL.md       # Source of truth for the skill body (run `npm run build:skill-assets`)
 ```
 
 ## Deployment

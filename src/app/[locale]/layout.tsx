@@ -109,7 +109,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <Providers>
             <Header />
-            <main className="flex-1">{children}</main>
+            <main id="main" className="flex-1">
+              {children}
+            </main>
             <Footer />
           </Providers>
         </NextIntlClientProvider>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clampPagination } from "@/lib/pagination";
 import { withRequestLog } from "@/lib/requestLog";
+import { PUBLIC_CACHE_HEADERS } from "@/lib/http";
 import type { Prisma } from "@prisma/client";
 
 const AGENT_TYPES = new Set([
@@ -51,6 +52,8 @@ export async function GET(req: NextRequest) {
     const [skills, total] = await Promise.all([
       prisma.skill.findMany({
         where,
+        // A listing never needs the README (up to 500 KB per row) or reviewer notes.
+        omit: { readme: true, reviewNote: true },
         include: { category: { select: { name: true, slug: true } } },
         orderBy,
         skip,
@@ -59,14 +62,17 @@ export async function GET(req: NextRequest) {
       prisma.skill.count({ where }),
     ]);
 
-    return NextResponse.json({
-      skills,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        skills,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    });
+      { headers: PUBLIC_CACHE_HEADERS }
+    );
   });
 }

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
 import { KeyRound, Copy, Check, Trash2, Activity, Zap, Wallet } from "lucide-react";
+import { SignInPrompt } from "@/components/SignInPrompt";
 
 type ApiKeyRow = {
   id: string;
@@ -89,17 +89,18 @@ export default function DashboardPage() {
     window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
   }, []);
 
-  if (status === "loading") return null;
-  if (!session) {
+  if (status === "loading") {
     return (
-      <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
-        <p className="text-gray-500 mb-6">{t("signInPrompt")}</p>
-        <Link href="/auth/signin" className="inline-flex bg-purple-600 text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-purple-700">
-          {t("signIn")}
-        </Link>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10" aria-busy="true">
+        <div className="h-8 w-56 rounded-lg bg-gray-100 animate-pulse" />
+        <div className="mt-3 h-4 w-80 max-w-full rounded bg-gray-100 animate-pulse" />
+        <div className="mt-10 h-40 rounded-xl border border-gray-100 bg-gray-50 animate-pulse" />
+        <div className="mt-6 h-40 rounded-xl border border-gray-100 bg-gray-50 animate-pulse" />
       </div>
     );
+  }
+  if (!session) {
+    return <SignInPrompt title={t("title")} description={t("signInPrompt")} />;
   }
 
   const createKey = async () => {
@@ -277,7 +278,7 @@ curl https://takoapi.com/v1/chat/completions \\
             <label htmlFor="topup" className="block text-xs text-gray-500 mb-2">{t("topUpLabel")}</label>
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                <span className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
                 <input
                   id="topup"
                   type="number"
@@ -286,7 +287,7 @@ curl https://takoapi.com/v1/chat/completions \\
                   step={1}
                   value={topupAmount}
                   onChange={(e) => setTopupAmount(e.target.value)}
-                  className="w-28 pl-6 pr-3 py-2 rounded-lg border border-gray-200 text-sm"
+                  className="w-28 ps-6 pe-3 py-2 rounded-lg border border-gray-200 text-sm"
                 />
               </div>
               <button

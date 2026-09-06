@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_CACHE_HEADERS, NO_STORE_HEADERS } from "@/lib/http";
 
+// Skill detail by id or slug. Read-only: a GET no longer bumps viewsCount — every
+// crawler, prefetch and API consumer was counted as a "view", which made the
+// number meaningless. Views are recorded by the detail page itself (deduplicated
+// per visitor per day) via POST /api/skills/[id]/view.
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -12,7 +17,8 @@ export async function GET(
     where: { OR: [{ id }, { slug: id }] },
     include: {
       category: true,
-      submitter: { select: { id: true, name: true, image: true } },
+      // Public shape: the submitter's display name only, never their avatar URL.
+      submitter: { select: { name: true } },
       _count: { select: { likes: true } },
     },
   });
@@ -30,13 +36,8 @@ export async function GET(
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "Skill not found" }, { status: 404 });
     }
+    return NextResponse.json(skill, { headers: NO_STORE_HEADERS });
   }
 
-  // Atomic single-statement increment; no multi-op transaction needed.
-  await prisma.skill.update({
-    where: { id: skill.id },
-    data: { viewsCount: { increment: 1 } },
-  });
-
-  return NextResponse.json(skill);
+  return NextResponse.json(skill, { headers: PUBLIC_CACHE_HEADERS });
 }

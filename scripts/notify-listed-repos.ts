@@ -55,7 +55,7 @@ const TOKEN = (() => {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-type GhRes = { status: number; data: any; headers: Headers };
+type GhRes = { status: number; data: unknown; headers: Headers };
 
 async function gh(method: string, path: string, body?: unknown): Promise<GhRes> {
   const url = path.startsWith("http") ? path : `https://api.github.com${path}`;
@@ -82,7 +82,7 @@ async function gh(method: string, path: string, body?: unknown): Promise<GhRes> 
         continue;
       }
     }
-    let data: any = null;
+    let data: unknown = null;
     const text = await res.text();
     try {
       data = text ? JSON.parse(text) : null;
@@ -255,7 +255,7 @@ async function openPr(t: Cand, defaultBranch: string): Promise<{ outcome: string
       body: prBody(t.repo, t.slug),
       maintainer_can_modify: true,
     });
-    if (pr.status === 201) return { outcome: "pr-opened", prUrl: pr.data.html_url };
+    if (pr.status === 201) return { outcome: "pr-opened", prUrl: (pr.data as { html_url?: string }).html_url };
     if (pr.status === 422 && JSON.stringify(pr.data).includes("already exists"))
       return { outcome: "skip:pr-exists" };
     if (pr.status === 404 && attempt < 3) {
@@ -312,12 +312,11 @@ async function main() {
   }
 
   const results: { repo: string; outcome: string; prUrl?: string }[] = [];
-  let opened = 0;
   for (let i = 0; i < selected.length; i++) {
     const { t, vet: v } = selected[i];
     const key = `${t.owner}/${t.repo}`;
     console.log(`[${i + 1}/${selected.length}] ${key}  (${v.reason})  → /agents/${t.slug}`);
-    let r;
+    let r: { outcome: string; prUrl?: string };
     try {
       r = await openPr(t, v.defaultBranch!);
     } catch (e) {
@@ -325,7 +324,6 @@ async function main() {
     }
     console.log(`    → ${r.outcome}${r.prUrl ? "  " + r.prUrl : ""}`);
     results.push({ repo: key, outcome: r.outcome, prUrl: r.prUrl });
-    if (r.outcome === "pr-opened") opened++;
     if (r.outcome === "pr-opened" || r.outcome.startsWith("skip:"))
       record(ledger, key, { slug: t.slug, status: r.outcome, prUrl: r.prUrl, date: new Date().toISOString() });
     if (i < selected.length - 1) await sleep(PACE_MS);

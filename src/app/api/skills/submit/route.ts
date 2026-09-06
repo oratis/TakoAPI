@@ -50,6 +50,13 @@ export async function POST(req: NextRequest) {
 
       const status = autoApprove ? "APPROVED" : "PENDING";
 
+      // Only skills that actually live on ClawSkills/ClawHub have an install
+      // command, and it must use *their* slug (from the URL), not ours — a
+      // `clawhub install <our-slug>` for a GitHub-only skill is a command that
+      // fails for everyone who copies it.
+      const clawSlug = clawSkillsUrl ? clawSkillsUrl.match(/\/skills\/([^/?#]+)/)?.[1] ?? null : null;
+      const installCmd = clawSlug ? `clawhub install ${clawSlug}` : null;
+
       const skill = await prisma.$transaction(async (tx) => {
         const created = await tx.skill.create({
           data: {
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
             githubUrl: githubUrl || null,
             clawSkillsUrl: clawSkillsUrl || null,
             clawHubUrl: clawSkillsUrl || null,
-            installCmd: `clawhub install ${slug}`,
+            installCmd,
             author: user.name || "unknown",
             categoryId,
             submitterId: user.id,

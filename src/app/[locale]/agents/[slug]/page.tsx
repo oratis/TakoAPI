@@ -125,6 +125,21 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ lo
               <ShieldCheck className="h-3 w-3" /> {t("verifiedPublisher")}
             </span>
           )}
+          {!isProject && agent.healthStatus && (
+            <span
+              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                agent.healthStatus === "ok"
+                  ? "text-green-700 bg-green-50"
+                  : agent.healthStatus === "degraded"
+                    ? "text-amber-700 bg-amber-50"
+                    : "text-red-700 bg-red-50"
+              }`}
+              title={agent.healthCheckedAt ? t("healthCheckedAt", { time: agent.healthCheckedAt.toISOString().slice(0, 16).replace("T", " ") + " UTC" }) : undefined}
+            >
+              <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${agent.healthStatus === "ok" ? "bg-green-500" : agent.healthStatus === "degraded" ? "bg-amber-400" : "bg-red-500"}`} />
+              {agent.healthStatus === "ok" ? t("healthOk") : agent.healthStatus === "degraded" ? t("healthDegraded") : t("healthDown")}
+            </span>
+          )}
         </div>
         <h1 className="text-3xl font-bold text-gray-900">{agent.name}</h1>
         <p className="text-sm text-gray-400 mt-1">{t("by", { name: publisherName })}</p>
@@ -294,7 +309,15 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ lo
 
               <div className="rounded-xl border border-dashed border-gray-200 p-4">
                 <h3 className="text-sm font-semibold mb-2">{t("callThroughTakoApi")}</h3>
-                <p className="text-xs text-gray-400 mb-2">{t("gatewayPhase2")}</p>
+                <p className="text-xs text-gray-500 mb-2">
+                  {t.rich("gatewayHint", {
+                    link: (chunks) => (
+                      <Link href="/dashboard" className="text-purple-600 hover:underline">
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
+                </p>
                 <pre className="text-[11px] bg-gray-900 text-gray-100 rounded-lg p-3 overflow-x-auto">
 {`curl https://takoapi.com/v1/agents/${agent.slug}/message \\
   -H "Authorization: Bearer $TAKO_KEY" \\

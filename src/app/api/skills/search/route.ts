@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clampPagination } from "@/lib/pagination";
 import { withRequestLog } from "@/lib/requestLog";
+import { PUBLIC_CACHE_HEADERS } from "@/lib/http";
 
 export async function GET(req: NextRequest) {
   return withRequestLog(req, "/api/skills/search", async () => {
@@ -34,17 +35,21 @@ export async function GET(req: NextRequest) {
     const [skills, total] = await Promise.all([
       prisma.skill.findMany({
         where,
+        omit: { readme: true, reviewNote: true },
         include: { category: { select: { name: true, slug: true } } },
-        orderBy: { likesCount: "desc" },
+        orderBy: [{ downloads: "desc" }, { likesCount: "desc" }],
         skip,
         take: limit,
       }),
       prisma.skill.count({ where }),
     ]);
 
-    return NextResponse.json({
-      skills,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
+    return NextResponse.json(
+      {
+        skills,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
+      { headers: PUBLIC_CACHE_HEADERS }
+    );
   });
 }
