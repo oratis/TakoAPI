@@ -1,118 +1,161 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
-import { Search, Menu, X, User, LogOut, Plus, TrendingUp, Shield, KeyRound } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Menu, X, User, LogOut, Shield, KeyRound, Bookmark, LayoutList, Upload, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
+import SiteSearch from "@/components/ui/SiteSearch";
+
+// Primary navigation. One product story: agents first, projects and skills as
+// sub-catalogs, and "Get API key" as the standing call to action. The account
+// menu opens on click (not hover) so it works with touch and keyboard, and both
+// menus carry the ARIA state assistive tech expects.
+const NAV: { href: string; key: "agents" | "projects" | "skills" | "docs" | "install" }[] = [
+  { href: "/agents", key: "agents" },
+  { href: "/agents?kind=PROJECT", key: "projects" },
+  { href: "/skills", key: "skills" },
+  { href: "/docs", key: "docs" },
+  { href: "/install", key: "install" },
+];
 
 export default function Header() {
   const { data: session } = useSession();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
   const t = useTranslations("Header");
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+  const mobileId = useId();
+  const accountId = useId();
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
+  const signInHref = { pathname: "/auth/signin", query: { callbackUrl: pathname } } as const;
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/agents?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
+  // Close the account menu on outside click / Escape.
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) setAccountOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAccountOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [accountOpen]);
+
+  const menuItem = "flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50";
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-200">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-[60] focus:rounded-md focus:bg-purple-600 focus:px-3 focus:py-2 focus:text-sm focus:text-white"
+      >
+        {t("skipToContent")}
+      </a>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between gap-4 h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🐙</span>
+          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="TakoAPI">
+            <span className="text-2xl" aria-hidden>🐙</span>
             <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
               TakoAPI
             </span>
           </Link>
 
-          {/* Search bar - desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder={t("searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full ps-10 pe-4 py-2 rounded-full border border-gray-300 bg-gray-50 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all text-sm"
-              />
-            </div>
-          </form>
+          {/* Search - desktop */}
+          <div className="hidden lg:block flex-1 max-w-md">
+            <SiteSearch />
+          </div>
 
           {/* Nav links - desktop */}
-          <nav className="hidden md:flex items-center gap-4">
-            <Link href="/agents" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              {t("agents")}
-            </Link>
-            <Link href="/skills" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              {t("skills")}
-            </Link>
-            <Link href="/trending" className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              <TrendingUp className="h-3.5 w-3.5" />
-              {t("trending")}
-            </Link>
+          <nav className="hidden md:flex items-center gap-1" aria-label={t("mainNav")}>
+            {NAV.map((item) => {
+              const active =
+                item.key === "projects"
+                  ? false
+                  : item.href === "/agents"
+                    ? pathname === "/agents" || pathname.startsWith("/agents/")
+                    : pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`px-2.5 py-1.5 rounded-md text-sm transition-colors ${
+                    active ? "text-purple-700 bg-purple-50 font-medium" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
+                >
+                  {t(item.key)}
+                </Link>
+              );
+            })}
             <Link
-              href="/submit-agent"
-              className="inline-flex items-center gap-1.5 text-sm bg-purple-600 text-white px-4 py-2 rounded-full hover:bg-purple-700 transition-colors"
+              href="/dashboard"
+              className="ms-2 inline-flex items-center gap-1.5 text-sm bg-purple-600 text-white px-4 py-2 rounded-full hover:bg-purple-700 transition-colors"
             >
-              <Plus className="h-4 w-4" />
-              {t("publish")}
+              <KeyRound className="h-4 w-4" />
+              {t("getApiKey")}
             </Link>
-            <LocaleSwitcher />
+            <div className="ms-1">
+              <LocaleSwitcher />
+            </div>
             {session ? (
-              <div className="relative group">
-                <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+              <div className="relative ms-1" ref={accountRef}>
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen((o) => !o)}
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  aria-controls={accountId}
+                  className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                >
                   <User className="h-4 w-4" />
-                  {session.user?.name || t("account")}
+                  <span className="max-w-[10rem] truncate">{session.user?.name || t("account")}</span>
+                  <ChevronDown className="h-3.5 w-3.5" aria-hidden />
                 </button>
-                <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+                {accountOpen && (
+                  <div
+                    id={accountId}
+                    role="menu"
+                    className="absolute end-0 top-full mt-1 w-52 overflow-hidden rounded-lg bg-white shadow-lg border border-gray-200"
                   >
-                    {t("mySkills")}
-                  </Link>
-                  <Link
-                    href="/bookmarks"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    {t("myBookmarks")}
-                  </Link>
-                  <Link
-                    href="/dashboard"
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <KeyRound className="h-3.5 w-3.5" />
-                    {t("apiUsage")}
-                  </Link>
-                  {(session.user as { role?: string })?.role === "admin" && (
-                    <Link
-                      href="/admin"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Shield className="h-3.5 w-3.5" />
-                      {t("adminPanel")}
+                    <Link href="/profile" role="menuitem" className={menuItem} onClick={() => setAccountOpen(false)}>
+                      <LayoutList className="h-3.5 w-3.5" /> {t("myListings")}
                     </Link>
-                  )}
-                  <button
-                    onClick={() => signOut()}
-                    className="w-full text-start px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg flex items-center gap-2"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    {t("signOut")}
-                  </button>
-                </div>
+                    <Link href="/bookmarks" role="menuitem" className={menuItem} onClick={() => setAccountOpen(false)}>
+                      <Bookmark className="h-3.5 w-3.5" /> {t("myBookmarks")}
+                    </Link>
+                    <Link href="/dashboard" role="menuitem" className={menuItem} onClick={() => setAccountOpen(false)}>
+                      <KeyRound className="h-3.5 w-3.5" /> {t("apiUsage")}
+                    </Link>
+                    <Link href="/submit-agent" role="menuitem" className={menuItem} onClick={() => setAccountOpen(false)}>
+                      <Upload className="h-3.5 w-3.5" /> {t("publishAgent")}
+                    </Link>
+                    {isAdmin && (
+                      <Link href="/admin" role="menuitem" className={menuItem} onClick={() => setAccountOpen(false)}>
+                        <Shield className="h-3.5 w-3.5" /> {t("adminPanel")}
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => signOut()}
+                      className={`w-full text-start border-t border-gray-100 ${menuItem}`}
+                    >
+                      <LogOut className="h-3.5 w-3.5" /> {t("signOut")}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900">
+              <Link href={signInHref} className="ms-1 text-sm text-gray-600 hover:text-gray-900 px-2 py-1.5">
                 {t("signIn")}
               </Link>
             )}
@@ -120,8 +163,12 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2"
-            onClick={() => setMenuOpen(!menuOpen)}
+            type="button"
+            className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-50"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
+            aria-expanded={menuOpen}
+            aria-controls={mobileId}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -129,57 +176,55 @@ export default function Header() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden pb-4 space-y-3">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder={t("searchPlaceholder")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full ps-10 pe-4 py-2 rounded-full border border-gray-300 bg-gray-50 text-sm"
-                />
-              </div>
-            </form>
-            <div className="flex flex-col gap-2">
-              <Link href="/agents" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                {t("agents")}
-              </Link>
-              <Link href="/skills" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                {t("skills")}
-              </Link>
-              <Link href="/trending" className="text-sm text-gray-600 py-1 flex items-center gap-1" onClick={() => setMenuOpen(false)}>
-                <TrendingUp className="h-3.5 w-3.5" />
-                {t("trending")}
-              </Link>
-              <Link href="/submit-agent" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                {t("publishAgent")}
+          <div id={mobileId} className="md:hidden pb-4 space-y-3">
+            <SiteSearch />
+            <nav className="flex flex-col gap-1" aria-label={t("mainNav")}>
+              {NAV.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className="text-sm text-gray-700 py-2 px-1"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t(item.key)}
+                </Link>
+              ))}
+              <Link
+                href="/dashboard"
+                className="mt-1 inline-flex w-fit items-center gap-1.5 text-sm bg-purple-600 text-white px-4 py-2 rounded-full"
+                onClick={() => setMenuOpen(false)}
+              >
+                <KeyRound className="h-4 w-4" /> {t("getApiKey")}
               </Link>
               {session ? (
                 <>
-                  <Link href="/profile" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                    {t("mySkills")}
+                  <Link href="/profile" className="text-sm text-gray-700 py-2 px-1" onClick={() => setMenuOpen(false)}>
+                    {t("myListings")}
                   </Link>
-                  <Link href="/bookmarks" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                  <Link href="/bookmarks" className="text-sm text-gray-700 py-2 px-1" onClick={() => setMenuOpen(false)}>
                     {t("myBookmarks")}
                   </Link>
-                  <Link href="/dashboard" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
-                    {t("apiUsage")}
+                  <Link href="/submit-agent" className="text-sm text-gray-700 py-2 px-1" onClick={() => setMenuOpen(false)}>
+                    {t("publishAgent")}
                   </Link>
-                  <button onClick={() => signOut()} className="text-start text-sm text-gray-600 py-1">
+                  {isAdmin && (
+                    <Link href="/admin" className="text-sm text-gray-700 py-2 px-1" onClick={() => setMenuOpen(false)}>
+                      {t("adminPanel")}
+                    </Link>
+                  )}
+                  <button type="button" onClick={() => signOut()} className="text-start text-sm text-gray-700 py-2 px-1">
                     {t("signOut")}
                   </button>
                 </>
               ) : (
-                <Link href="/auth/signin" className="text-sm text-gray-600 py-1" onClick={() => setMenuOpen(false)}>
+                <Link href={signInHref} className="text-sm text-gray-700 py-2 px-1" onClick={() => setMenuOpen(false)}>
                   {t("signIn")}
                 </Link>
               )}
               <div className="pt-1">
                 <LocaleSwitcher className="w-full" />
               </div>
-            </div>
+            </nav>
           </div>
         )}
       </div>

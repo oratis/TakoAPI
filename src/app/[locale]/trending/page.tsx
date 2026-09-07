@@ -1,333 +1,493 @@
-"use client";
-
-import { Suspense, useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
 import {
-  Download,
-  Star,
-  Heart,
-  Eye,
-  Search,
+  Award,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Eye,
+  Heart,
+  Medal,
+  Search,
+  Star,
   TrendingUp,
   Trophy,
-  Medal,
-  Award,
 } from "lucide-react";
-import type { Skill, Category } from "@/lib/types";
+import type { LucideIcon } from "lucide-react";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import type { Prisma } from "@prisma/client";
+import { Link, getPathname } from "@/i18n/navigation";
+import { getSkillCategories } from "@/lib/catalog";
+import { prisma } from "@/lib/prisma";
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
-  return String(n);
-}
+// Every rendering of this page is a function of the query string, so there is
+// nothing to prerender. The one read that is shared across visitors — the
+// category sidebar — is cached in lib/catalog instead.
+export const dynamic = "force-dynamic";
 
-type SortKey = "downloads" | "stars" | "popular" | "views";
+const PAGE_SIZE = 50;
 
-const SORT_OPTIONS: { key: SortKey; labelKey: "downloads" | "stars" | "likes" | "views"; icon: typeof Download }[] = [
-  { key: "downloads", labelKey: "downloads", icon: Download },
-  { key: "stars", labelKey: "stars", icon: Star },
-  { key: "popular", labelKey: "likes", icon: Heart },
-  { key: "views", labelKey: "views", icon: Eye },
+// Anchors the "where do these numbers come from" note that the two upstream
+// columns point at with aria-describedby.
+const PROVENANCE_NOTE_ID = "trending-provenance";
+
+const SORTS = ["downloads", "stars", "likes", "views"] as const;
+type SortKey = (typeof SORTS)[number];
+
+const DEFAULT_SORT: SortKey = "downloads";
+
+// The previous client version put the likes column behind `sort=popular` (the
+// value the /api/skills endpoint uses). Keep honouring it so leaderboard links
+// people already shared don't silently fall back to the default sort.
+const SORT_ALIASES: Record<string, SortKey> = { popular: "likes" };
+
+type Column = {
+  key: SortKey;
+  /** Message key in the `Trending` namespace. */
+  labelKey: "downloads" | "stars" | "likes" | "views";
+  icon: LucideIcon;
+  /** Scraped from a third party rather than measured here — see the note. */
+  upstream: boolean;
+  orderBy: Prisma.SkillOrderByWithRelationInput;
+  value: (skill: LeaderboardSkill) => number;
+};
+
+// `downloads` and `stars` are mirrored from clawskills.sh / GitHub by the nightly
+// sync; nothing in this codebase increments them (see the comment on
+// Skill.downloads in prisma/schema.prisma). `likes` and `views` are ours. The
+// distinction is surfaced to the reader rather than left implicit.
+const COLUMNS: Column[] = [
+  {
+    key: "downloads",
+    labelKey: "downloads",
+    icon: Download,
+    upstream: true,
+    orderBy: { downloads: "desc" },
+    value: (s) => s.downloads,
+  },
+  {
+    key: "stars",
+    labelKey: "stars",
+    icon: Star,
+    upstream: true,
+    orderBy: { stars: "desc" },
+    value: (s) => s.stars,
+  },
+  {
+    key: "likes",
+    labelKey: "likes",
+    icon: Heart,
+    upstream: false,
+    orderBy: { likesCount: "desc" },
+    value: (s) => s.likesCount,
+  },
+  {
+    key: "views",
+    labelKey: "views",
+    icon: Eye,
+    upstream: false,
+    orderBy: { viewsCount: "desc" },
+    value: (s) => s.viewsCount,
+  },
 ];
 
-const LIMIT = 50;
+const COLUMN_BY_KEY = new Map(COLUMNS.map((c) => [c.key, c]));
+
+// Exactly the fields the leaderboard renders. Skill rows also carry `reviewNote`
+// and `submitterId`, neither of which belongs on a public page.
+const LEADERBOARD_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  brief: true,
+  author: true,
+  downloads: true,
+  stars: true,
+  likesCount: true,
+  viewsCount: true,
+  category: { select: { name: true, slug: true } },
+} as const;
+
+type LeaderboardSkill = {
+  id: string;
+  name: string;
+  slug: string;
+  brief: string | null;
+  author: string | null;
+  downloads: number;
+  stars: number;
+  likesCount: number;
+  viewsCount: number;
+  category: { name: string; slug: string };
+};
+
+type SearchParams = Record<string, string | string[] | undefined>;
+type Query = Record<string, string | undefined>;
+
+/** A repeated key (`?q=a&q=b`) arrives as an array; the first value wins. */
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function hrefWith(base: Query, patch: Query): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries({ ...base, ...patch })) {
+    if (value) params.set(key, value);
+  }
+  const qs = params.toString();
+  return qs ? `/trending?${qs}` : "/trending";
+}
 
 function RankBadge({ rank }: { rank: number }) {
+  // The medal for the top three replaces the number, so the rank is repeated for
+  // screen readers.
+  const label = <span className="sr-only">{rank}</span>;
   if (rank === 1) {
     return (
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 text-white font-bold text-sm shadow-md shadow-amber-200">
-        <Trophy className="h-4 w-4" />
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 text-white shadow-md shadow-amber-200">
+        <Trophy className="h-4 w-4" aria-hidden="true" />
+        {label}
       </span>
     );
   }
   if (rank === 2) {
     return (
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 text-white font-bold text-sm shadow-md shadow-gray-200">
-        <Medal className="h-4 w-4" />
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 text-white shadow-md shadow-gray-200">
+        <Medal className="h-4 w-4" aria-hidden="true" />
+        {label}
       </span>
     );
   }
   if (rank === 3) {
     return (
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 text-white font-bold text-sm shadow-md shadow-orange-200">
-        <Award className="h-4 w-4" />
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-md shadow-orange-200">
+        <Award className="h-4 w-4" aria-hidden="true" />
+        {label}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-semibold text-sm">
+    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm">
       {rank}
     </span>
   );
 }
 
-function TrendingContent() {
-  const t = useTranslations("Trending");
-  const searchParams = useSearchParams();
-  const router = useRouter();
+/**
+ * One end of the pager. A null `href` means we are already on the first/last
+ * page: the step stays on screen as an inert placeholder so the control row does
+ * not reflow as you page through, but it is hidden from assistive tech.
+ */
+function PageStep({
+  href,
+  label,
+  direction,
+}: {
+  href: string | null;
+  label: string;
+  direction: "prev" | "next";
+}) {
+  const Chevron = direction === "prev" ? ChevronLeft : ChevronRight;
+  // The glyph points back/forward, which is mirrored under `dir="rtl"`.
+  const chevron = <Chevron className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />;
+  const body =
+    direction === "prev" ? (
+      <>
+        {chevron}
+        {label}
+      </>
+    ) : (
+      <>
+        {label}
+        {chevron}
+      </>
+    );
 
-  const initialSort = (searchParams.get("sort") as SortKey) || "downloads";
-  const initialCategory = searchParams.get("category") || "";
-  const initialPage = parseInt(searchParams.get("page") || "1");
-  const initialQ = searchParams.get("q") || "";
+  if (!href) {
+    return (
+      <span
+        aria-hidden="true"
+        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-500 opacity-50"
+      >
+        {body}
+      </span>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      rel={direction}
+      className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+    >
+      {body}
+    </Link>
+  );
+}
 
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [sort, setSort] = useState<SortKey>(initialSort);
-  const [activeCategory, setActiveCategory] = useState(initialCategory);
-  const [page, setPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(initialQ);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQ);
+export default async function TrendingPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("Trending");
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const sp = await searchParams;
+  const rawSort = firstValue(sp.sort) ?? "";
+  const sort: SortKey =
+    // Object.hasOwn guards the alias lookup: `?sort=__proto__` would otherwise
+    // resolve through the prototype chain to a truthy non-SortKey value.
+    SORTS.find((s) => s === rawSort) ??
+    (Object.hasOwn(SORT_ALIASES, rawSort) ? SORT_ALIASES[rawSort] : undefined) ??
+    DEFAULT_SORT;
+  const activeColumn = COLUMN_BY_KEY.get(sort) ?? COLUMNS[0];
+  const ActiveIcon = activeColumn.icon;
+  const category = firstValue(sp.category)?.trim() || undefined;
+  const q = firstValue(sp.q)?.trim() || undefined;
+  const requestedPage = Math.max(1, Math.trunc(Number(firstValue(sp.page))) || 1);
 
-  // Fetch categories
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then(setCategories);
-  }, []);
+  const where: Prisma.SkillWhereInput = { status: "APPROVED" };
+  if (category) where.category = { slug: category };
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { brief: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+    ];
+  }
 
-  // Update URL params
-  const updateUrl = useCallback(
-    (s: SortKey, cat: string, p: number, q: string) => {
-      const query: Record<string, string> = {};
-      if (s !== "downloads") query.sort = s;
-      if (cat) query.category = cat;
-      if (p > 1) query.page = String(p);
-      if (q) query.q = q;
-      router.replace({ pathname: "/trending", query }, { scroll: false });
-    },
-    [router]
+  const [total, categories] = await Promise.all([
+    prisma.skill.count({ where }),
+    getSkillCategories(),
+  ]);
+
+  // Clamp before querying so `?page=9999` shows the last page rather than an
+  // empty table.
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+
+  const skills: LeaderboardSkill[] =
+    total === 0
+      ? []
+      : await prisma.skill.findMany({
+          where,
+          select: LEADERBOARD_SELECT,
+          // Ties are common (most skills sit at zero likes or views), and without a
+          // deterministic second key Postgres may order them differently per query
+          // — which makes rows repeat or vanish as you page through.
+          orderBy: [activeColumn.orderBy, { id: "asc" }],
+          skip: (page - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
+        });
+
+  const base: Query = {
+    sort: sort === DEFAULT_SORT ? undefined : sort,
+    category,
+    q,
+  };
+
+  const compact = new Intl.NumberFormat(locale, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+  const exact = new Intl.NumberFormat(locale);
+
+  const activeCategoryName = category
+    ? categories.find((c) => c.slug === category)?.name
+    : undefined;
+
+  // A search narrows the table but not the per-category totals, so showing both
+  // at once would just look like a contradiction.
+  const showCategoryCounts = !q;
+  const visibleCategories = categories.filter(
+    (c) => c.skillCount > 0 || c.slug === category
   );
 
-  // Fetch skills
-  useEffect(() => {
-    setLoading(true);
-    const isSearch = debouncedQuery.trim().length > 0;
-    const endpoint = isSearch ? "/api/skills/search" : "/api/skills";
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(LIMIT),
-      sort,
-      ...(activeCategory ? { category: activeCategory } : {}),
-      ...(isSearch ? { q: debouncedQuery.trim() } : {}),
-    });
-
-    fetch(`${endpoint}?${params}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setSkills(data.skills || []);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setTotal(data.pagination?.total || 0);
-      })
-      .finally(() => setLoading(false));
-
-    updateUrl(sort, activeCategory, page, debouncedQuery);
-  }, [sort, activeCategory, page, debouncedQuery, updateUrl]);
-
-  const handleSortChange = (key: SortKey) => {
-    setSort(key);
-    setPage(1);
-  };
-
-  const handleCategoryChange = (slug: string) => {
-    setActiveCategory(slug);
-    setPage(1);
-  };
-
-  const getSortValue = (skill: Skill) => {
-    switch (sort) {
-      case "downloads":
-        return skill.downloads;
-      case "stars":
-        return skill.stars;
-      case "popular":
-        return skill.likesCount;
-      case "views":
-        return skill.viewsCount;
-      default:
-        return skill.downloads;
-    }
-  };
-
-  const getSortIcon = () => {
-    const opt = SORT_OPTIONS.find((o) => o.key === sort);
-    return opt ? opt.icon : Download;
-  };
-
-  const SortIcon = getSortIcon();
-
-  const activeCategoryName =
-    activeCategory && categories.length > 0
-      ? categories.find((c) => c.slug === activeCategory)?.name
-      : undefined;
+  const pageWindow = Math.min(5, totalPages);
+  const windowStart = Math.max(1, Math.min(page - 2, totalPages - pageWindow + 1));
+  const pageNumbers = Array.from({ length: pageWindow }, (_, i) => windowStart + i);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50/50 via-white to-white">
-      {/* Header */}
+      {/* Hero */}
       <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="h-7 w-7 text-purple-200" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              {t("title")}
-            </h1>
+            <TrendingUp className="h-7 w-7 text-purple-200" aria-hidden="true" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">{t("title")}</h1>
           </div>
-          <p className="text-purple-200 text-sm sm:text-base">
-            {t("subtitle")}
-          </p>
+          <p className="text-purple-100 text-sm sm:text-base">{t("subtitle")}</p>
 
-          {/* Search bar */}
-          <div className="mt-5 max-w-lg">
-            <div className="relative">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-300" />
+          {/* Search — a plain GET form, so results are linkable and work without JS.
+              The action is resolved through getPathname so the locale prefix survives. */}
+          <form
+            action={getPathname({ href: "/trending", locale })}
+            method="get"
+            className="mt-5 flex gap-2 max-w-lg"
+          >
+            {sort !== DEFAULT_SORT && <input type="hidden" name="sort" value={sort} />}
+            {category && <input type="hidden" name="category" value={category} />}
+            <div className="relative flex-1">
+              <Search
+                className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-200"
+                aria-hidden="true"
+              />
               <input
-                type="text"
+                type="search"
+                name="q"
+                defaultValue={q ?? ""}
+                aria-label={t("searchPlaceholder")}
                 placeholder={t("searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full ps-10 pe-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-purple-300 focus:bg-white/20 focus:border-white/40 focus:ring-2 focus:ring-white/20 outline-none transition-all text-sm backdrop-blur-sm"
+                className="w-full ps-10 pe-4 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-purple-200 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/40 outline-none transition-all text-sm backdrop-blur-sm"
               />
             </div>
-          </div>
+            <button
+              type="submit"
+              className="rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-white/60"
+            >
+              {t("search")}
+            </button>
+          </form>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar - Categories */}
-          <aside className="lg:w-56 shrink-0">
+          {/* Categories */}
+          <nav aria-label={t("categories")} className="lg:w-56 shrink-0">
             <div className="lg:sticky lg:top-24">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 {t("categories")}
-              </h3>
-              <div className="flex flex-row flex-wrap lg:flex-col gap-1.5">
-                <button
-                  onClick={() => handleCategoryChange("")}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium text-start transition-colors ${
-                    !activeCategory
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {t("allCategories")}
-                  <span className="ms-1.5 text-xs text-gray-400">
-                    ({categories.reduce((a, c) => a + c.skillCount, 0)})
-                  </span>
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategoryChange(cat.slug)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium text-start transition-colors truncate ${
-                      activeCategory === cat.slug
+              </h2>
+              <ul className="flex flex-row flex-wrap lg:flex-col gap-1.5">
+                <li>
+                  <Link
+                    href={hrefWith(base, { category: undefined, page: undefined })}
+                    aria-current={!category ? "true" : undefined}
+                    className={`block px-3 py-1.5 rounded-lg text-sm font-medium text-start transition-colors ${
+                      !category
                         ? "bg-purple-100 text-purple-700"
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
-                    {cat.name}
-                    <span className="ms-1.5 text-xs text-gray-400">
-                      ({cat.skillCount})
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <div className="flex-1 min-w-0">
-            {/* Sort tabs + info */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                {SORT_OPTIONS.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => handleSortChange(opt.key)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                        sort === opt.key
-                          ? "bg-white text-purple-700 shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
+                    {t("allCategories")}
+                    {showCategoryCounts && (
+                      <span className="ms-1.5 text-xs text-gray-500">
+                        ({exact.format(categories.reduce((a, c) => a + c.skillCount, 0))})
+                      </span>
+                    )}
+                  </Link>
+                </li>
+                {visibleCategories.map((cat) => (
+                  <li key={cat.id}>
+                    <Link
+                      href={hrefWith(base, { category: cat.slug, page: undefined })}
+                      aria-current={category === cat.slug ? "true" : undefined}
+                      className={`block px-3 py-1.5 rounded-lg text-sm font-medium text-start transition-colors truncate ${
+                        category === cat.slug
+                          ? "bg-purple-100 text-purple-700"
+                          : "text-gray-600 hover:bg-gray-100"
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">{t(opt.labelKey)}</span>
-                    </button>
+                      {cat.name}
+                      {showCategoryCounts && (
+                        <span className="ms-1.5 text-xs text-gray-500">
+                          ({exact.format(cat.skillCount)})
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </nav>
+
+          {/* Leaderboard */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <nav
+                aria-label={t("sortLabel")}
+                className="flex items-center gap-1 bg-gray-100 rounded-lg p-1"
+              >
+                {COLUMNS.map((col) => {
+                  const Icon = col.icon;
+                  const active = sort === col.key;
+                  return (
+                    <Link
+                      key={col.key}
+                      href={hrefWith(base, {
+                        sort: col.key === DEFAULT_SORT ? undefined : col.key,
+                        page: undefined,
+                      })}
+                      aria-current={active ? "true" : undefined}
+                      aria-label={t(col.labelKey)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        active
+                          ? "bg-white text-purple-700 shadow-sm"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="hidden sm:inline">{t(col.labelKey)}</span>
+                    </Link>
                   );
                 })}
-              </div>
-              <p className="text-sm text-gray-500">
+              </nav>
+              <p className="text-sm text-gray-600">
                 {activeCategoryName
                   ? t("countInCategory", { count: total, category: activeCategoryName })
                   : t("count", { count: total })}
               </p>
             </div>
 
+            {/* Where the numbers come from. Two of these four columns are not ours. */}
+            <p
+              id={PROVENANCE_NOTE_ID}
+              className="mb-4 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs text-gray-600"
+            >
+              <span aria-hidden="true" className="me-1">
+                †
+              </span>
+              {t("provenanceNote")}
+            </p>
+
             {/* Table header */}
-            <div className="hidden md:grid md:grid-cols-[3rem_1fr_8rem_6rem_6rem_6rem] gap-2 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-200">
-              <span>#</span>
+            <div className="hidden md:grid md:grid-cols-[3rem_1fr_8rem_6rem_6rem_6rem] gap-2 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+              <span>
+                <span aria-hidden="true">#</span>
+                <span className="sr-only">{t("rank")}</span>
+              </span>
               <span>{t("skill")}</span>
-              <span className="text-end">
-                <span className="inline-flex items-center gap-1">
-                  <Download className="h-3 w-3" /> {t("downloads")}
-                </span>
-              </span>
-              <span className="text-end">
-                <span className="inline-flex items-center gap-1">
-                  <Star className="h-3 w-3" /> {t("stars")}
-                </span>
-              </span>
-              <span className="text-end">
-                <span className="inline-flex items-center gap-1">
-                  <Heart className="h-3 w-3" /> {t("likes")}
-                </span>
-              </span>
-              <span className="text-end">
-                <span className="inline-flex items-center gap-1">
-                  <Eye className="h-3 w-3" /> {t("views")}
-                </span>
-              </span>
+              {COLUMNS.map((col) => {
+                const Icon = col.icon;
+                return (
+                  <span
+                    key={col.key}
+                    className="text-end"
+                    aria-describedby={col.upstream ? PROVENANCE_NOTE_ID : undefined}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      <Icon className="h-3 w-3" aria-hidden="true" />
+                      {t(col.labelKey)}
+                      {col.upstream && <span aria-hidden="true">†</span>}
+                    </span>
+                  </span>
+                );
+              })}
             </div>
 
-            {/* Skills list */}
-            {loading ? (
-              <div className="space-y-1">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-16 bg-gray-50 rounded-lg animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : skills.length === 0 ? (
-              <div className="text-center py-20 text-gray-500">
-                <TrendingUp className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            {/* Rows */}
+            {skills.length === 0 ? (
+              <div className="text-center py-20 text-gray-600">
+                <TrendingUp className="h-12 w-12 mx-auto mb-3 text-gray-300" aria-hidden="true" />
                 <p className="text-lg font-medium">{t("emptyTitle")}</p>
-                <p className="text-sm mt-1">
-                  {t("emptySubtitle")}
-                </p>
+                <p className="text-sm mt-1">{t("emptySubtitle")}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {skills.map((skill, idx) => {
-                  const rank = (page - 1) * LIMIT + idx + 1;
+                  const rank = (page - 1) * PAGE_SIZE + idx + 1;
                   const isTop3 = rank <= 3;
                   return (
                     <Link
@@ -341,98 +501,62 @@ function TrendingContent() {
                             : "bg-gray-50/50 hover:bg-gray-100/50"
                       }`}
                     >
-                      {/* Rank */}
                       <div className="flex items-center justify-center">
                         <RankBadge rank={rank} />
                       </div>
 
-                      {/* Skill info */}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`text-sm font-semibold truncate group-hover:text-purple-600 transition-colors ${
-                              isTop3 ? "text-gray-900" : "text-gray-800"
-                            }`}
-                          >
+                          <span className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-600 transition-colors">
                             {skill.name}
                           </span>
-                          <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-600 font-medium shrink-0">
+                          <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700 font-medium shrink-0">
                             {skill.category.name}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {skill.author && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-500">
                               {t("byAuthor", { author: skill.author })}
                             </span>
                           )}
                           {skill.brief && (
-                            <span className="hidden lg:inline text-xs text-gray-400 truncate">
+                            <span className="hidden lg:inline text-xs text-gray-500 truncate">
                               &mdash; {skill.brief}
                             </span>
                           )}
                         </div>
 
-                        {/* Mobile stats */}
+                        {/* Mobile: only the metric the table is currently sorted by —
+                            four columns of numbers do not fit, and the other three
+                            would be noise next to the ranking that is on screen. */}
                         <div className="flex items-center gap-3 mt-1 md:hidden">
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                            <SortIcon className="h-3 w-3 text-purple-500" />
-                            {formatNumber(getSortValue(skill))}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                            <Star className="h-3 w-3" />
-                            {formatNumber(skill.stars)}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                            <Heart className="h-3 w-3" />
-                            {formatNumber(skill.likesCount)}
+                          <span
+                            className="inline-flex items-center gap-1 text-xs text-gray-600"
+                            aria-describedby={
+                              activeColumn.upstream ? PROVENANCE_NOTE_ID : undefined
+                            }
+                          >
+                            <ActiveIcon className="h-3 w-3 text-purple-600" aria-hidden="true" />
+                            {t(activeColumn.labelKey)}{" "}
+                            <span className="tabular-nums font-medium">
+                              {compact.format(activeColumn.value(skill))}
+                            </span>
                           </span>
                         </div>
                       </div>
 
-                      {/* Downloads */}
-                      <span
-                        className={`hidden md:flex items-center justify-end gap-1 text-sm font-medium ${
-                          sort === "downloads"
-                            ? "text-purple-700"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {formatNumber(skill.downloads)}
-                      </span>
-
-                      {/* Stars */}
-                      <span
-                        className={`hidden md:flex items-center justify-end gap-1 text-sm font-medium ${
-                          sort === "stars"
-                            ? "text-purple-700"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {formatNumber(skill.stars)}
-                      </span>
-
-                      {/* Likes */}
-                      <span
-                        className={`hidden md:flex items-center justify-end gap-1 text-sm font-medium ${
-                          sort === "popular"
-                            ? "text-purple-700"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {formatNumber(skill.likesCount)}
-                      </span>
-
-                      {/* Views */}
-                      <span
-                        className={`hidden md:flex items-center justify-end gap-1 text-sm font-medium ${
-                          sort === "views"
-                            ? "text-purple-700"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {formatNumber(skill.viewsCount)}
-                      </span>
+                      {COLUMNS.map((col) => (
+                        <span
+                          key={col.key}
+                          title={exact.format(col.value(skill))}
+                          className={`hidden md:flex items-center justify-end text-sm font-medium tabular-nums ${
+                            sort === col.key ? "text-purple-700" : "text-gray-600"
+                          }`}
+                        >
+                          {compact.format(col.value(skill))}
+                        </span>
+                      ))}
                     </Link>
                   );
                 })}
@@ -441,90 +565,63 @@ function TrendingContent() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-500">
+              <nav
+                aria-label={t("paginationLabel")}
+                className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200"
+              >
+                <p className="text-sm text-gray-600">
                   {t("showing", {
-                    from: (page - 1) * LIMIT + 1,
-                    to: Math.min(page * LIMIT, total),
+                    from: (page - 1) * PAGE_SIZE + 1,
+                    to: Math.min(page * PAGE_SIZE, total),
                     total,
                   })}
                 </p>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white disabled:opacity-30 hover:bg-gray-50 transition-colors"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    {t("prev")}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }).map(
-                      (_, i) => {
-                        let pageNum: number;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (page <= 3) {
-                          pageNum = i + 1;
-                        } else if (page >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = page - 2 + i;
-                        }
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setPage(pageNum)}
-                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                              page === pageNum
-                                ? "bg-purple-600 text-white"
-                                : "text-gray-600 hover:bg-gray-100"
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
-                  <button
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages, p + 1))
+                  <PageStep
+                    direction="prev"
+                    label={t("prev")}
+                    href={
+                      page > 1
+                        ? hrefWith(base, {
+                            page: page - 1 === 1 ? undefined : String(page - 1),
+                          })
+                        : null
                     }
-                    disabled={page === totalPages}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white disabled:opacity-30 hover:bg-gray-50 transition-colors"
-                  >
-                    {t("next")}
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                  />
+
+                  <div className="flex items-center gap-1">
+                    {pageNumbers.map((n) => (
+                      <Link
+                        key={n}
+                        href={hrefWith(base, { page: n === 1 ? undefined : String(n) })}
+                        aria-label={t("goToPage", { page: n })}
+                        aria-current={n === page ? "page" : undefined}
+                        className={`w-8 h-8 inline-flex items-center justify-center rounded-lg text-sm font-medium tabular-nums transition-colors ${
+                          n === page
+                            ? "bg-purple-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {n}
+                      </Link>
+                    ))}
+                  </div>
+
+                  <PageStep
+                    direction="next"
+                    label={t("next")}
+                    href={
+                      page < totalPages
+                        ? hrefWith(base, { page: String(page + 1) })
+                        : null
+                    }
+                  />
                 </div>
-              </div>
+              </nav>
             )}
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function TrendingPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gradient-to-b from-purple-50/50 via-white to-white">
-          <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="h-8 w-48 bg-white/20 rounded animate-pulse" />
-              <div className="h-4 w-72 bg-white/10 rounded animate-pulse mt-3" />
-            </div>
-          </div>
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="h-96 bg-gray-50 rounded-xl animate-pulse" />
-          </div>
-        </div>
-      }
-    >
-      <TrendingContent />
-    </Suspense>
   );
 }

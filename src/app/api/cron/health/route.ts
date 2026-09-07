@@ -15,7 +15,12 @@ async function handle(req: NextRequest) {
   }
   const startedAt = Date.now();
   const summary = await runHealthChecks();
-  return NextResponse.json({ ...summary, durationMs: Date.now() - startedAt });
+  const result = { ...summary, durationMs: Date.now() - startedAt };
+  // Cloud Scheduler discards response bodies, so returning the summary was the same
+  // as throwing it away — there was no hour-by-hour record of fleet health anywhere.
+  // One structured line makes the run queryable in Logs Explorer.
+  console.log(JSON.stringify({ severity: "INFO", event: "agent_health_run", ...result }));
+  return NextResponse.json(result);
 }
 
 export const GET = handle;

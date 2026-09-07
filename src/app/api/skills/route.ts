@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clampPagination } from "@/lib/pagination";
 import { withRequestLog } from "@/lib/requestLog";
+import { PUBLIC_CACHE_HEADERS } from "@/lib/http";
 import type { Prisma } from "@prisma/client";
 
 const AGENT_TYPES = new Set([
@@ -37,7 +38,10 @@ export async function GET(req: NextRequest) {
     else if (source === "user") where.source = "USER_SUBMITTED";
     else if (source === "curated") where.source = "CURATED";
 
-    const orderBy: Prisma.SkillOrderByWithRelationInput =
+    // `{ id: "asc" }` last: this endpoint is paginated with skip/take and every
+    // sort column above is non-unique with large tie blocks, so without a unique
+    // final key rows repeat and vanish across pages. Same fix as the /skills page.
+    const orderBy: Prisma.SkillOrderByWithRelationInput[] = [
       sort === "popular"
         ? { likesCount: "desc" }
         : sort === "views"
@@ -46,11 +50,15 @@ export async function GET(req: NextRequest) {
             ? { downloads: "desc" }
             : sort === "stars"
               ? { ghStars: "desc" }
-              : { createdAt: "desc" };
+              : { createdAt: "desc" },
+      { id: "asc" },
+    ];
 
     const [skills, total] = await Promise.all([
       prisma.skill.findMany({
         where,
+        // A listing never needs the README (up to 500 KB per row) or reviewer notes.
+        omit: { readme: true, reviewNote: true },
         include: { category: { select: { name: true, slug: true } } },
         orderBy,
         skip,
@@ -59,14 +67,17 @@ export async function GET(req: NextRequest) {
       prisma.skill.count({ where }),
     ]);
 
-    return NextResponse.json({
-      skills,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        skills,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    });
+      { headers: PUBLIC_CACHE_HEADERS }
+    );
   });
 }

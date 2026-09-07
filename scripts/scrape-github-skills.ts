@@ -134,7 +134,9 @@ async function importRepo(
     githubUrl: repo.htmlUrl,
     clawSkillsUrl: null,
     clawHubUrl: null,
-    installCmd: `clawhub install ${slug}`,
+    // GitHub-sourced skills are not published on ClawHub, so there is no install
+    // command to advertise; the detail page shows GitHub install guidance instead.
+    installCmd: null,
     author: item.owner,
     categoryId,
     submitterId: null,

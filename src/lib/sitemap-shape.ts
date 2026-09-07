@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { localizedUrl, SITE_URL } from "@/lib/seo";
 import { routing } from "@/i18n/routing";
@@ -16,7 +17,10 @@ import { getAllPosts } from "@/lib/blog";
 // each entity URL expands to 15 hreflang lines, so ~1k URLs ≈ a couple of MB.
 export const CHUNK = 1000;
 
-const APPROVED = { status: "APPROVED" } as const;
+// A description shorter than this is a stub, not content. Mirrors the `thin`
+// test in src/app/[locale]/agents/[slug]/page.tsx generateMetadata — the two
+// numbers must stay identical, see INDEXABLE_AGENTS below.
+const THIN_DESCRIPTION_CHARS = 80;
 
 type Entry = {
   path: string;
@@ -25,26 +29,92 @@ type Entry = {
   priority: number;
 };
 
-export async function approvedCounts(): Promise<{ agents: number; skills: number }> {
+/**
+ * Agents worth submitting to Google, as a WHERE fragment shared by the count and
+ * the row query so the two can never drift apart (see the chunking invariant on
+ * childCount).
+ *
+ * The exclusion mirrors generateMetadata in src/app/[locale]/agents/[slug]/page.tsx:
+ * a scraped PROJECT with no declared skills and a stub description renders with
+ * `robots: noindex`. Submitting such a URL earns a "Submitted URL marked noindex"
+ * error in Search Console and spends crawl budget proving the page is not worth
+ * indexing — so keep the two rules in step whenever either moves.
+ *
+ * One deliberate divergence: the page un-thins an entry when GitHub's README
+ * yields an excerpt, which the sitemap cannot check — that is a GitHub round-trip
+ * per row, thousands of rows per request. The sitemap is therefore the stricter
+ * of the two. A README-rescued entry is merely absent here while staying
+ * crawlable and indexable via /agents (its noindex rule is `follow: true`
+ * anyway); that is the cheap direction to be wrong in.
+ */
+const INDEXABLE_AGENTS = Prisma.sql`
+  a."status" = 'APPROVED'
+  AND NOT (
+    a."kind" = 'PROJECT'
+    AND length(a."description") < ${THIN_DESCRIPTION_CHARS}::int
+    AND NOT EXISTS (SELECT 1 FROM "AgentSkillDef" d WHERE d."agentId" = a."id")
+  )
+`;
+
+/**
+ * Skills worth submitting, same contract as INDEXABLE_AGENTS.
+ *
+ * Most of the catalog is GitHub-scraped rows whose whole body is a one-line
+ * repo description; a README is the only other substance the detail page can
+ * render, so a stub description with no README has nothing unique to index.
+ * The skill page does not (yet) set `robots: noindex` for these — it only
+ * noindexes non-APPROVED rows — so this is a sitemap-side judgment. If the page
+ * ever adopts a thin rule it should reuse THIN_DESCRIPTION_CHARS.
+ */
+const INDEXABLE_SKILLS = Prisma.sql`
+  s."status" = 'APPROVED'
+  AND NOT (
+    length(s."description") < ${THIN_DESCRIPTION_CHARS}::int
+    AND (s."readme" IS NULL OR length(btrim(s."readme")) = 0)
+  )
+`;
+
+// Raw SQL rather than findMany because the thin-content rules turn on
+// length(description), which Prisma's query API cannot express — and doing it in
+// JS would mean filtering after skip/take, i.e. ragged chunks and a count that
+// no longer matches the rows.
+export async function indexableCounts(): Promise<{ agents: number; skills: number }> {
   try {
     const [agents, skills] = await Promise.all([
-      prisma.agent.count({ where: APPROVED }),
-      prisma.skill.count({ where: APPROVED }),
+      prisma.$queryRaw<Array<{ count: number }>>`
+        SELECT count(*)::int AS "count" FROM "Agent" a WHERE ${INDEXABLE_AGENTS}
+      `,
+      prisma.$queryRaw<Array<{ count: number }>>`
+        SELECT count(*)::int AS "count" FROM "Skill" s WHERE ${INDEXABLE_SKILLS}
+      `,
     ]);
-    return { agents, skills };
+    return { agents: agents[0]?.count ?? 0, skills: skills[0]?.count ?? 0 };
   } catch {
     // DB unreachable (e.g. the DB-less Docker build): degrade to no entity chunks.
     return { agents: 0, skills: 0 };
   }
 }
 
-// Number of child sitemaps:
-//   id 0                          -> static + blog + scenario pages
-//   1 .. ceil(agents/CHUNK)       -> APPROVED agents
-//   then ceil(skills/CHUNK) more  -> APPROVED skills
+/**
+ * How many chunks each entity section occupies.
+ *
+ * INVARIANT: childCount() === 1 + agentChunks + skillChunks, and entriesFor(n)
+ * must resolve every n in [0, childCount()) to that same section split — child 0
+ * is the static/blog/scenario page, then agentChunks agent chunks, then
+ * skillChunks skill chunks. The index and the children are separate requests, so
+ * the only thing holding them together is that both derive their bounds from
+ * this one helper, over the same predicates the row queries use. Get it wrong by
+ * one and the index advertises a child that answers with an empty <urlset>,
+ * which Search Console reports as a broken sitemap.
+ */
+async function chunkPlan(): Promise<{ agentChunks: number; skillChunks: number }> {
+  const { agents, skills } = await indexableCounts();
+  return { agentChunks: Math.ceil(agents / CHUNK), skillChunks: Math.ceil(skills / CHUNK) };
+}
+
 export async function childCount(): Promise<number> {
-  const { agents, skills } = await approvedCounts();
-  return 1 + Math.ceil(agents / CHUNK) + Math.ceil(skills / CHUNK);
+  const { agentChunks, skillChunks } = await chunkPlan();
+  return 1 + agentChunks + skillChunks;
 }
 
 function pageEntries(): Entry[] {
@@ -52,6 +122,9 @@ function pageEntries(): Entry[] {
   const staticRoutes: Entry[] = [
     { path: "", lastModified: now, changeFrequency: "daily", priority: 1 },
     { path: "/agents", lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    // The API docs are a primary developer landing page — the page most of our
+    // non-brand search intent ("agent api", "one api for agents") lands on.
+    { path: "/docs", lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { path: "/scenarios", lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { path: "/skills", lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { path: "/install", lastModified: now, changeFrequency: "monthly", priority: 0.6 },
@@ -65,6 +138,8 @@ function pageEntries(): Entry[] {
     changeFrequency: "monthly",
     priority: 0.6,
   }));
+  // Every SCENARIOS slug has a page: /scenarios/[slug] resolves through
+  // findScenario() over this same list and notFound()s on anything else.
   const scenarioRoutes: Entry[] = SCENARIOS.map((s) => ({
     path: `/scenarios/${s.slug}`,
     lastModified: now,
@@ -74,24 +149,46 @@ function pageEntries(): Entry[] {
   return [...staticRoutes, ...blogRoutes, ...scenarioRoutes];
 }
 
+type SlugRow = { slug: string; updatedAt: Date };
+
+// updatedAt alone is not a total order — the nightly scraper stamps thousands of
+// rows within the same transaction — and OFFSET over a tied ORDER BY may repeat
+// a row in one chunk and drop it from the next. slug is unique, so it breaks
+// every tie.
+async function agentRows(skip: number): Promise<SlugRow[]> {
+  return prisma.$queryRaw<SlugRow[]>`
+    SELECT a."slug", a."updatedAt"
+    FROM "Agent" a
+    WHERE ${INDEXABLE_AGENTS}
+    ORDER BY a."updatedAt" DESC, a."slug" ASC
+    OFFSET ${skip}::int LIMIT ${CHUNK}::int
+  `;
+}
+
+async function skillRows(skip: number): Promise<SlugRow[]> {
+  return prisma.$queryRaw<SlugRow[]>`
+    SELECT s."slug", s."updatedAt"
+    FROM "Skill" s
+    WHERE ${INDEXABLE_SKILLS}
+    ORDER BY s."updatedAt" DESC, s."slug" ASC
+    OFFSET ${skip}::int LIMIT ${CHUNK}::int
+  `;
+}
+
 // Entries for child sitemap `n` (0-based). Out-of-range ids yield [].
 export async function entriesFor(n: number): Promise<Entry[]> {
   if (n === 0) return pageEntries();
 
-  const { agents } = await approvedCounts();
-  const agentChunks = Math.ceil(agents / CHUNK);
+  const { agentChunks, skillChunks } = await chunkPlan();
   const chunkIndex = n - 1; // 0-based among entity chunks
+  // Past the plan: an id the index never advertised, or one it advertised before
+  // the catalog shrank. Answer empty instead of paging off the end of the table.
+  if (chunkIndex >= agentChunks + skillChunks) return [];
 
   // A DB blip degrades a child to an empty <urlset> rather than a 500.
   try {
     if (chunkIndex < agentChunks) {
-      const rows = await prisma.agent.findMany({
-        where: APPROVED,
-        select: { slug: true, updatedAt: true },
-        orderBy: { updatedAt: "desc" },
-        skip: chunkIndex * CHUNK,
-        take: CHUNK,
-      });
+      const rows = await agentRows(chunkIndex * CHUNK);
       return rows.map((a) => ({
         path: `/agents/${a.slug}`,
         lastModified: a.updatedAt,
@@ -100,13 +197,7 @@ export async function entriesFor(n: number): Promise<Entry[]> {
       }));
     }
 
-    const rows = await prisma.skill.findMany({
-      where: APPROVED,
-      select: { slug: true, updatedAt: true },
-      orderBy: { updatedAt: "desc" },
-      skip: (chunkIndex - agentChunks) * CHUNK,
-      take: CHUNK,
-    });
+    const rows = await skillRows((chunkIndex - agentChunks) * CHUNK);
     return rows.map((s) => ({
       path: `/skills/${s.slug}`,
       lastModified: s.updatedAt,

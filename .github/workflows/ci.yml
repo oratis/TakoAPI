@@ -1,0 +1,44 @@
+name: ci
+
+# Every push to main and every PR: install, secret scan, i18n parity, type check,
+# lint, unit tests, production build. The build needs no database — every page that
+# touches Prisma is force-dynamic, and the sitemap degrades when the DB is absent.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Secret scan
+        run: npm run check:secrets
+      - name: i18n parity
+        run: npm run check:i18n
+      - name: Skill assets in sync
+        run: npm run check:skill-assets
+      - name: Prisma client
+        run: npx prisma generate
+      - name: Type check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          NEXTAUTH_SECRET: ci-build-only
+          NEXTAUTH_URL: http://localhost:3000

@@ -30,20 +30,22 @@ export default function SkillCard({
             {skill.name}
           </h3>
           {skill.author && (
-            <p className="text-xs text-gray-400 mt-0.5">{t("skillBy", { author: skill.author })}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{t("skillBy", { author: skill.author })}</p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0 ms-2">
           {showDownloads && skill.downloads > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
               <Download className="h-3 w-3" />
               {formatNumber(skill.downloads)}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-            <Heart className="h-3 w-3" />
-            {t("skillLikes", { count: skill.likesCount })}
-          </span>
+          {skill.likesCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+              <Heart className="h-3 w-3" />
+              {t("skillLikes", { count: skill.likesCount })}
+            </span>
+          )}
         </div>
       </div>
 

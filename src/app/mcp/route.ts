@@ -8,6 +8,7 @@
 //   claude mcp add --transport http takoapi https://takoapi.com/mcp
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { logGatewayRejection } from "@/lib/gatewayLog";
 import { TOOLS, ToolError, TAKOAPI_ORIGIN, type ToolContext } from "@/lib/mcp/tools";
 
 export const runtime = "nodejs";
@@ -54,8 +55,12 @@ function validateArgs(schema: Record<string, unknown>, args: Record<string, unkn
 
 export async function POST(req: NextRequest) {
   // Per-IP guard for the (partly anonymous) endpoint. Reuses the gateway limiter.
+  // Stays per-IP: unlike /v1 there is no API key here to bucket by.
   const rl = await checkRateLimit(req, { key: "mcp", windowMs: 60_000, max: 120 });
-  if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
+  if (!rl.ok) {
+    logGatewayRejection({ route: "/mcp", reason: "rate_limited", status: 429 });
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   let msg: { jsonrpc?: string; id?: JsonRpcId; method?: string; params?: Record<string, unknown> };
   try {

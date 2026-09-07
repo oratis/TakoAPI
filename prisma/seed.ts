@@ -49,7 +49,7 @@ async function main() {
     }
 
     // Use the clawskills slug as our slug
-    let slug = skill.slug || slugify(skill.name);
+    const slug = skill.slug || slugify(skill.name);
 
     // Construct clawHub URL from author and skill name
     const clawHubUrl = skill.clawHubUrl || skill.clawSkillsUrl || null;

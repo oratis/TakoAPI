@@ -1,5 +1,5 @@
 {
-  "name": "takoapi-temp",
+  "name": "takoapi",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:skill-assets": "node scripts/build-skill-assets.mjs --check",
+    "build:skill-assets": "node scripts/build-skill-assets.mjs",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -39,6 +47,11 @@
     "puppeteer-core": "^24.40.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20 <25",
+    "npm": ">=10"
   }
 }

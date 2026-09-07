@@ -75,7 +75,7 @@ export default async function BlogIndexPage({ params }: { params: Promise<{ loca
                   {tag}
                 </span>
               ))}
-              <span className="text-xs text-gray-400">· {t("minRead", { min: p.readingMinutes })}</span>
+              <span className="text-xs text-gray-500">· {t("minRead", { min: p.readingMinutes })}</span>
             </div>
             <h2 className="text-xl font-semibold group-hover:text-purple-700">
               <Link href={`/blog/${p.slug}`}>{p.title}</Link>
@@ -85,7 +85,7 @@ export default async function BlogIndexPage({ params }: { params: Promise<{ loca
               href={`/blog/${p.slug}`}
               className="inline-block mt-3 text-sm font-medium text-purple-600 hover:text-purple-800"
             >
-              {t("readMore")} →
+              {t("readMore")} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
             </Link>
           </article>
         ))}
