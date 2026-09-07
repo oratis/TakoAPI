@@ -21,7 +21,6 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "projects": "Projects",
-    "blog": "Blog",
     "install": "Install",
     "getApiKey": "Get API key",
     "search": "Search",
@@ -32,7 +31,8 @@
     "searchAgentsPlaceholder": "Search agents by what they do…",
     "searchProjectsPlaceholder": "Search open-source agent projects…",
     "searchSkillsPlaceholder": "Search skills for your coding agent…",
-    "myListings": "My listings"
+    "myListings": "My listings",
+    "docs": "Docs"
   },
   "Footer": {
     "tagline": "One API to access all agents — discover, call, and meter any agent through a single endpoint.",
@@ -50,7 +50,8 @@
     "badge": "README badge",
     "scenarios": "Browse by scenario",
     "a2aSpec": "A2A protocol",
-    "github": "GitHub"
+    "github": "GitHub",
+    "docs": "API documentation"
   },
   "Home": {
     "heroTitle": "<grad>One API</grad> to access all agents",

@@ -12,11 +12,11 @@ import SiteSearch from "@/components/ui/SiteSearch";
 // sub-catalogs, and "Get API key" as the standing call to action. The account
 // menu opens on click (not hover) so it works with touch and keyboard, and both
 // menus carry the ARIA state assistive tech expects.
-const NAV: { href: string; key: "agents" | "projects" | "skills" | "blog" | "install" }[] = [
+const NAV: { href: string; key: "agents" | "projects" | "skills" | "docs" | "install" }[] = [
   { href: "/agents", key: "agents" },
   { href: "/agents?kind=PROJECT", key: "projects" },
   { href: "/skills", key: "skills" },
-  { href: "/blog", key: "blog" },
+  { href: "/docs", key: "docs" },
   { href: "/install", key: "install" },
 ];
 

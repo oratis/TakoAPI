@@ -15,6 +15,7 @@ export default async function Footer() {
     { href: "/dashboard", label: t("developerDashboard") },
   ];
   const resources = [
+    { href: "/docs", label: t("docs"), external: false },
     { href: "/blog", label: t("blog"), external: false },
     { href: "/badge", label: t("badge"), external: false },
     { href: "https://a2aproject.github.io/A2A/", label: t("a2aSpec"), external: true },
