@@ -101,11 +101,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
               {tag}
             </span>
           ))}
-          <span className="text-xs text-gray-400">· {t("minRead", { min: post.readingMinutes })}</span>
+          <span className="text-xs text-gray-500">· {t("minRead", { min: post.readingMinutes })}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold leading-tight">{post.title}</h1>
         <p className="text-lg text-gray-600 mt-4">{post.description}</p>
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="text-xs text-gray-500 mt-3">
           {t("published")} <time dateTime={post.datePublished}>{post.datePublished}</time>
         </p>
       </header>

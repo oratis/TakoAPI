@@ -1,16 +1,25 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/prisma";
+import { Bot, GitFork, Compass, KeyRound, Terminal, ArrowRight } from "lucide-react";
 import SkillCard from "@/components/ui/SkillCard";
 import CategoryBadge from "@/components/ui/CategoryBadge";
-import HomeSearch from "@/components/ui/HomeSearch";
+import SiteSearch from "@/components/ui/SiteSearch";
+import CodeTabs from "@/components/ui/CodeTabs";
 import AgentCard from "@/components/ui/AgentCard";
-import { Terminal, Download, TrendingUp, Bot, GitFork, Compass } from "lucide-react";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL, SITE_NAME } from "@/lib/seo";
-import { SCENARIOS } from "@/lib/scenarios";
+import { discoverySamples } from "@/lib/samples";
+import { getHomeData } from "@/lib/catalog";
+import { findScenario } from "@/lib/scenarios";
 
+// Cached at the data layer (see lib/catalog), so this page no longer runs nine
+// uncached queries per request. Still dynamic so a fresh catalog shows up within
+// the cache window rather than at the next deploy.
 export const dynamic = "force-dynamic";
+
+/** Scenarios with fewer than this many agents are hidden — a tile that leads to
+ *  four results reads as an empty shelf, and the landing page behind it is thin. */
+const MIN_SCENARIO_AGENTS = 20;
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -18,53 +27,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const t = await getTranslations("Home");
   const tScenario = await getTranslations("Scenarios");
 
-  const [categories, mustHaveSkills, latestSkills, totalSkills, agents, totalAgents, projects, totalProjects, agentScenarioRows] =
-    await Promise.all([
-      prisma.category.findMany({ orderBy: { skillCount: "desc" } }),
-      prisma.skill.findMany({
-        orderBy: { downloads: "desc" },
-        take: 8,
-        include: { category: { select: { name: true, slug: true } } },
-      }),
-      prisma.skill.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 12,
-        include: { category: { select: { name: true, slug: true } } },
-      }),
-      prisma.skill.count(),
-      prisma.agent.findMany({
-        where: { status: "APPROVED", kind: "HOSTED" },
-        orderBy: [{ featured: "desc" }, { callsCount: "desc" }, { createdAt: "desc" }],
-        take: 8,
-        include: {
-          category: { select: { name: true, slug: true } },
-          _count: { select: { skills: true } },
-        },
-      }),
-      prisma.agent.count({ where: { status: "APPROVED", kind: "HOSTED" } }),
-      prisma.agent.findMany({
-        where: { status: "APPROVED", kind: "PROJECT" },
-        orderBy: [{ stars: "desc" }, { createdAt: "desc" }],
-        take: 8,
-        include: {
-          category: { select: { name: true, slug: true } },
-          _count: { select: { skills: true } },
-        },
-      }),
-      prisma.agent.count({ where: { status: "APPROVED", kind: "PROJECT" } }),
-      // Just the scenario arrays for all approved agents — one cheap query we
-      // tally in JS for the "Browse by scenario" tile counts.
-      prisma.agent.findMany({ where: { status: "APPROVED" }, select: { scenarios: true } }),
-    ]);
+  const { categories, topSkills, latestSkills, totalSkills, agents, totalAgents, projects, totalProjects, scenarioCounts } =
+    await getHomeData();
 
-  // Show top 12 categories, collapse the rest
   const topCategories = categories.slice(0, 12);
-  const hasMore = categories.length > 12;
-
-  // Per-scenario agent counts (shown as a subtle badge when > 0).
-  const scenarioCounts = new Map<string, number>();
-  for (const row of agentScenarioRows)
-    for (const slug of row.scenarios) scenarioCounts.set(slug, (scenarioCounts.get(slug) ?? 0) + 1);
+  const hasMoreCategories = categories.length > 12;
+  const scenarios = Object.entries(scenarioCounts)
+    .filter(([slug, n]) => n >= MIN_SCENARIO_AGENTS && findScenario(slug))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
 
   const siteLd = [
     {
@@ -90,99 +61,111 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <div>
       <JsonLd data={siteLd} />
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-blue-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-            {t.rich("heroTitle", {
-              grad: (chunks) => (
-                <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                  {chunks}
-                </span>
-              ),
-            })}
-          </h1>
-          <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto">
-            {t.rich("heroSubtitle", {
-              agents: totalAgents,
-              skills: totalSkills,
-              b: (chunks) => <span className="font-semibold text-gray-700">{chunks}</span>,
-            })}
-          </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/agents"
-              className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700"
-            >
-              <Bot className="h-4 w-4" /> {t("browseAgents")}
-            </Link>
-            <Link
-              href="/submit-agent"
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:border-purple-300"
-            >
-              {t("publishAnAgent")}
-            </Link>
-          </div>
+      {/* Hero — what it is, then the two things a developer does next. */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-blue-50 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            <div className="text-center lg:text-start">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance">
+                {t.rich("heroTitle", {
+                  grad: (chunks) => (
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">{chunks}</span>
+                  ),
+                })}
+              </h1>
+              <p className="mt-4 text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">{t("heroSubtitle")}</p>
 
-          <div className="mt-8 max-w-xl mx-auto">
-            <HomeSearch />
-          </div>
+              <div className="mt-7 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700"
+                >
+                  <KeyRound className="h-4 w-4" /> {t("getApiKey")}
+                </Link>
+                <Link
+                  href="/agents"
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:border-purple-300"
+                >
+                  <Bot className="h-4 w-4" /> {t("browseAgents")}
+                </Link>
+              </div>
 
-          <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-400">
-            <span>{t("agentRegistry")}</span>
-            <code className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-mono">
-              GET /api/registry
-            </code>
+              <p className="mt-5 text-sm text-gray-600">
+                {t("catalogSummary", { agents: totalAgents, projects: totalProjects, skills: totalSkills })}
+              </p>
+
+              <div className="mt-5 max-w-lg mx-auto lg:mx-0">
+                <SiteSearch variant="hero" />
+              </div>
+            </div>
+
+            {/* Quickstart: the whole product in three copy-pasteable steps. */}
+            <div className="lg:pt-2">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">{t("quickstartLabel")}</p>
+              <CodeTabs samples={discoverySamples((k) =>
+                  t(k === "discover" ? "quickstartTabDiscover" : k === "call" ? "quickstartTabCall" : "quickstartTabFromAgent")
+                )} ariaLabel={t("quickstartLabel")} />
+              <p className="mt-2 text-xs text-gray-600">
+                {t.rich("quickstartNote", {
+                  link: (chunks) => (
+                    <Link href="/install" className="text-purple-600 hover:underline">
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Browse by scenario — primary use-case entry point */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Compass className="h-5 w-5 text-purple-600" />
-            <h2 className="text-xl font-semibold">{t("browseByScenario")}</h2>
+      {/* Browse by scenario — the use-case entry point, hiding near-empty shelves. */}
+      {scenarios.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <Compass className="h-5 w-5 text-purple-600" />
+              <h2 className="text-xl font-semibold">{t("browseByScenario")}</h2>
+            </div>
+            <Link href="/scenarios" className="text-sm text-purple-600 hover:text-purple-700">
+              {t("allScenarios")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
+            </Link>
           </div>
-          <Link href="/agents" className="text-sm text-purple-600 hover:text-purple-700">
-            {t("allAgents")} →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {SCENARIOS.map((s) => {
-            const n = scenarioCounts.get(s.slug) ?? 0;
-            return (
-              <Link
-                key={s.slug}
-                href={`/agents?scenario=${s.slug}`}
-                className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 hover:border-purple-200 hover:bg-purple-50/40 transition-colors"
-              >
-                <span className="text-2xl shrink-0">{s.emoji}</span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium text-gray-900 truncate group-hover:text-purple-600">
-                    {tScenario(s.slug)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {scenarios.map(([slug, n]) => {
+              const sc = findScenario(slug)!;
+              return (
+                <Link
+                  key={slug}
+                  href={`/agents?scenario=${slug}`}
+                  className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 hover:border-purple-300 hover:bg-purple-50/40 transition-colors"
+                >
+                  <span className="text-2xl shrink-0" aria-hidden>{sc.emoji}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-gray-900 truncate group-hover:text-purple-700">
+                      {tScenario(slug)}
+                    </span>
+                    <span className="block text-xs text-gray-600 tabular-nums">{n}</span>
                   </span>
-                  {n > 0 && (
-                    <span className="block text-xs text-gray-400 truncate">{n}</span>
-                  )}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-      {/* Featured Agents */}
+      {/* Featured agents — curated, and never one whose last probe said "down". */}
       {agents.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-purple-600" />
               <h2 className="text-xl font-semibold">{t("featuredAgents")}</h2>
+              <span className="text-sm text-gray-600">{t("callableNow", { count: totalAgents })}</span>
             </div>
             <Link href="/agents" className="text-sm text-purple-600 hover:text-purple-700">
-              {t("browseAll")} →
+              {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -196,14 +179,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* Popular open-source projects */}
       {projects.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <GitFork className="h-5 w-5 text-purple-600" />
               <h2 className="text-xl font-semibold">{t("popularProjects")}</h2>
-              <span className="text-sm text-gray-400">{t("selfHostable", { count: totalProjects })}</span>
+              <span className="text-sm text-gray-600">{t("selfHostable", { count: totalProjects })}</span>
             </div>
             <Link href="/agents?kind=PROJECT" className="text-sm text-purple-600 hover:text-purple-700">
-              {t("browseAll")} →
+              {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -214,110 +197,64 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </section>
       )}
 
-      {/* Install TakoAPI Skill */}
+      {/* Install into a coding agent */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-500 rounded-2xl p-6 sm:p-8 text-white">
+        <div className="rounded-2xl bg-gradient-to-r from-purple-600 to-blue-500 p-6 sm:p-8 text-white">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">🐙</span>
-                <h2 className="text-xl font-bold">{t("skillTitle")}</h2>
-                <span className="bg-white/20 text-xs px-2 py-0.5 rounded-full font-medium">{t("official")}</span>
+                <Terminal className="h-5 w-5" aria-hidden />
+                <h2 className="text-xl font-bold">{t("installTitle")}</h2>
               </div>
-              <p className="text-purple-100 text-sm">
-                {t("skillDescription")}
-              </p>
-              <a
-                href="https://github.com/oratis/skill-takoapi_skill_manage"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-2 text-xs text-purple-200 hover:text-white transition-colors"
+              <p className="text-purple-100 text-sm max-w-xl">{t("installDescription")}</p>
+              <Link
+                href="/install"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2 text-sm font-medium hover:bg-white/25"
               >
-                {t("viewOnGithub")} →
-              </a>
+                {t("installCta")} <ArrowRight className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
+              </Link>
             </div>
-            <div className="w-full md:w-auto space-y-2">
-              <div className="flex items-center bg-black/20 rounded-lg overflow-hidden">
-                <Terminal className="h-4 w-4 ms-3 text-purple-200 shrink-0" />
-                <code className="flex-1 px-3 py-2.5 text-sm font-mono whitespace-nowrap">
-                  clawhub install takoapi
+            <div className="w-full md:w-auto md:min-w-[22rem]">
+              <div className="flex items-center bg-black/25 rounded-lg overflow-hidden">
+                <code className="flex-1 px-3 py-2.5 text-sm font-mono whitespace-pre overflow-x-auto">
+                  curl -fsSL takoapi.com/install.sh | sh
                 </code>
               </div>
-              <p className="text-xs text-purple-200 text-center">{t("askAgent")}</p>
-              <p className="text-xs text-purple-200 text-center">
-                {t("usingCodingAgent")}{" "}
-                <Link href="/install" className="underline hover:text-white">{t("oneCommandInstall")} →</Link>
-              </p>
+              <p className="mt-2 text-xs text-purple-100">{t("installPlatforms")}</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Must-Have Skills */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Download className="h-5 w-5 text-purple-600" />
-            <h2 className="text-xl font-semibold">{t("mustHaveSkills")}</h2>
-          </div>
-          <Link href="/trending" className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700">
-            <TrendingUp className="h-3.5 w-3.5" />
-            {t("viewRankings")}
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mustHaveSkills.map((skill, i) => (
-            <div key={skill.id} className="relative">
-              {i < 3 && (
-                <span className={`absolute -top-2 -start-2 z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                  i === 0 ? "bg-yellow-500" : i === 1 ? "bg-gray-400" : "bg-amber-600"
-                }`}>
-                  {i + 1}
-                </span>
-              )}
-              <SkillCard skill={skill as never} showDownloads />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">{t("categories")}</h2>
+      {/* Skills — one section, not four */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-16">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-semibold">{t("skillsTitle")}</h2>
           <Link href="/skills" className="text-sm text-purple-600 hover:text-purple-700">
-            {t("viewAll")}
+            {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-          {topCategories.map((cat) => (
-            <CategoryBadge key={cat.id} category={cat} compact />
-          ))}
-        </div>
-        {hasMore && (
-          <div className="mt-3 text-center">
-            <Link
-              href="/skills"
-              className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
-            >
-              {t("moreCategories", { count: categories.length - 12 })}
-            </Link>
-          </div>
-        )}
-      </section>
+        <p className="text-sm text-gray-600 mb-5">{t("skillsSubtitle", { count: totalSkills })}</p>
 
-      {/* Latest Skills */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">{t("latestSkills")}</h2>
-          <Link href="/skills?sort=latest" className="text-sm text-purple-600 hover:text-purple-700">
-            {t("viewAll")}
-          </Link>
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {latestSkills.map((skill) => (
+          {topSkills.slice(0, 4).map((skill) => (
+            <SkillCard key={skill.id} skill={skill as never} showDownloads />
+          ))}
+          {latestSkills.slice(0, 4).map((skill) => (
             <SkillCard key={skill.id} skill={skill as never} />
           ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-600 me-1">{t("categories")}</span>
+          {topCategories.map((cat) => (
+            <CategoryBadge key={cat.id} category={cat} />
+          ))}
+          {hasMoreCategories && (
+            <Link href="/skills" className="text-xs text-gray-600 hover:text-purple-600">
+              {t("moreCategories", { count: categories.length - 12 })}
+            </Link>
+          )}
         </div>
       </section>
     </div>

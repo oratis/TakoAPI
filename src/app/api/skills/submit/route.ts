@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveApiUser, canBypassModeration } from "@/lib/api-user";
 import { slugify } from "@/lib/utils";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { badRequest, parseJson, serverError, unauthorized } from "@/lib/api";
@@ -9,19 +9,10 @@ import { submitSkillSchema } from "@/lib/schemas";
 import { withRequestLog } from "@/lib/requestLog";
 
 async function getSubmitter(req: NextRequest) {
-  const apiKey = req.headers.get("x-api-key");
-  if (apiKey) {
-    const user = await prisma.user.findUnique({ where: { apiKey } });
-    if (!user) return null;
-    return { user, autoApprove: user.role === "admin" };
-  }
-  const session = await auth();
-  if (session?.user?.id) {
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (!user) return null;
-    return { user, autoApprove: false };
-  }
-  return null;
+  const user = await resolveApiUser(req);
+  if (!user) return null;
+  const autoApprove = canBypassModeration(user);
+  return { user, autoApprove };
 }
 
 export async function POST(req: NextRequest) {
@@ -50,6 +41,13 @@ export async function POST(req: NextRequest) {
 
       const status = autoApprove ? "APPROVED" : "PENDING";
 
+      // Only skills that actually live on ClawSkills/ClawHub have an install
+      // command, and it must use *their* slug (from the URL), not ours — a
+      // `clawhub install <our-slug>` for a GitHub-only skill is a command that
+      // fails for everyone who copies it.
+      const clawSlug = clawSkillsUrl ? clawSkillsUrl.match(/\/skills\/([^/?#]+)/)?.[1] ?? null : null;
+      const installCmd = clawSlug ? `clawhub install ${clawSlug}` : null;
+
       const skill = await prisma.$transaction(async (tx) => {
         const created = await tx.skill.create({
           data: {
@@ -61,7 +59,7 @@ export async function POST(req: NextRequest) {
             githubUrl: githubUrl || null,
             clawSkillsUrl: clawSkillsUrl || null,
             clawHubUrl: clawSkillsUrl || null,
-            installCmd: `clawhub install ${slug}`,
+            installCmd,
             author: user.name || "unknown",
             categoryId,
             submitterId: user.id,

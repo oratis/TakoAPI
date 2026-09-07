@@ -18,6 +18,7 @@ export type AgentCardData = {
   streaming: boolean;
   callsCount: number;
   avgRating: number;
+  healthStatus?: string | null;
   stars?: number | null;
   githubUrl?: string | null;
   repoOwner?: string | null;
@@ -105,7 +106,7 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
 
       {isProject ? (
         <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
-          <span className="text-xs text-gray-400 truncate">
+          <span className="text-xs text-gray-600 truncate">
             {agent.repoOwner ? `${agent.repoOwner}/${agent.name}` : t("agentOpenSource")}
           </span>
           <span className="inline-flex items-center gap-2 shrink-0">
@@ -143,12 +144,31 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-            {agent._count && (
+          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+            {agent.healthStatus && (
+              <span
+                className="inline-flex items-center gap-1"
+                title={t(agent.healthStatus === "ok" ? "healthOk" : agent.healthStatus === "degraded" ? "healthDegraded" : "healthDown")}
+              >
+                <span
+                  aria-hidden
+                  className={`inline-block h-2 w-2 rounded-full ${
+                    agent.healthStatus === "ok" ? "bg-green-500" : agent.healthStatus === "degraded" ? "bg-amber-400" : "bg-red-500"
+                  }`}
+                />
+                <span className="sr-only">
+                  {t(agent.healthStatus === "ok" ? "healthOk" : agent.healthStatus === "degraded" ? "healthDegraded" : "healthDown")}
+                </span>
+              </span>
+            )}
+            {agent._count && agent._count.skills > 0 && (
               <span className="inline-flex items-center gap-1">
                 <Layers className="h-3 w-3" />
                 {t("agentSkills", { count: agent._count.skills })}
               </span>
+            )}
+            {agent.callsCount > 0 && (
+              <span className="inline-flex items-center gap-1">{t("agentCalls", { count: agent.callsCount })}</span>
             )}
             {agent.avgRating > 0 && (
               <span className="inline-flex items-center gap-1">

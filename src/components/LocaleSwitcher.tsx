@@ -41,11 +41,11 @@ export default function LocaleSwitcher({ className = "" }: { className?: string 
         isPending ? "opacity-60" : ""
       } ${className}`}
     >
-      <Languages className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
+      <Languages className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" aria-hidden />
       {/* Visible label — just the short code, keeps the chip narrow. */}
       <span className="pointer-events-none py-1.5 ps-8 pe-7 font-medium uppercase">{locale}</span>
       <svg
-        className="pointer-events-none absolute end-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+        className="pointer-events-none absolute end-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500"
         viewBox="0 0 12 12"
         fill="none"
         aria-hidden

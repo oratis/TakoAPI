@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useAsync, fetchJson } from "@/hooks/useAsync";
 import { ScrollText, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 interface LogItem {
@@ -50,38 +51,22 @@ const TARGET_TYPE_LABEL_KEY: Record<string, string> = {
 };
 
 function getActionBadgeStyle(action: string): string {
-  return ACTION_BADGE_STYLES[action] || "bg-gray-100 text-gray-600";
+  return ACTION_BADGE_STYLES[action] || "bg-gray-100 text-gray-700";
 }
 
 export default function AdminLogsPage() {
   const t = useTranslations("Admin");
-  const [logs, setLogs] = useState<LogItem[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 30, total: 0, totalPages: 0 });
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
-  const fetchLogs = useCallback(async (page: number) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: "30" });
-      const res = await fetch(`/api/admin/logs?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setLogs(data.logs);
-      setPagination(data.pagination);
-    } catch {
-      // keep existing state on error
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data, loading, error, reload } = useAsync(
+    () => fetchJson<{ logs: LogItem[]; pagination: Pagination }>(
+      `/api/admin/logs?${new URLSearchParams({ page: String(page), limit: "30" })}`
+    ),
+    [page]
+  );
 
-  useEffect(() => {
-    fetchLogs(1);
-  }, [fetchLogs]);
-
-  const goToPage = (page: number) => {
-    fetchLogs(page);
-  };
+  const logs = data?.logs ?? [];
+  const pagination = data?.pagination ?? { page, limit: 30, total: 0, totalPages: 0 };
 
   const actionLabel = (action: string) => {
     const key = ACTION_LABEL_KEY[action];
@@ -109,7 +94,7 @@ export default function AdminLogsPage() {
           <ScrollText className="h-6 w-6 text-purple-600" />
           {t("logsTitle")}
         </h1>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-gray-600">
           {t("logsTotal", { count: pagination.total })}
         </span>
       </div>
@@ -132,22 +117,34 @@ export default function AdminLogsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center">
-                    <div className="flex items-center justify-center gap-2 text-gray-400">
+                    <div className="flex items-center justify-center gap-2 text-gray-600">
                       <Loader2 className="h-5 w-5 animate-spin" />
                       {t("loadingLogs")}
                     </div>
                   </td>
                 </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <p className="text-sm text-gray-600 mb-3">{t("somethingWentWrong")}</p>
+                    <button
+                      onClick={reload}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700"
+                    >
+                      {t("retry")}
+                    </button>
+                  </td>
+                </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-400">
+                  <td colSpan={6} className="py-16 text-center text-gray-600">
                     {t("noLogsFound")}
                   </td>
                 </tr>
               ) : (
                 logs.map((log) => (
                   <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                       {formatTimestamp(log.createdAt)}
                     </td>
                     <td className="px-4 py-3">
@@ -165,11 +162,11 @@ export default function AdminLogsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded capitalize">
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded capitalize">
                         {targetTypeLabel(log.targetType)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">
                       {log.targetId.length > 12
                         ? log.targetId.slice(0, 12) + "..."
                         : log.targetId}
@@ -187,7 +184,7 @@ export default function AdminLogsPage() {
         {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-600">
               {t("showingRange", {
                 from: (pagination.page - 1) * pagination.limit + 1,
                 to: Math.min(pagination.page * pagination.limit, pagination.total),
@@ -196,9 +193,10 @@ export default function AdminLogsPage() {
             </p>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => goToPage(pagination.page - 1)}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={pagination.page <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                aria-label={t("prevPage")}
+                className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -214,13 +212,14 @@ export default function AdminLogsPage() {
                 }, [])
                 .map((item, idx) =>
                   typeof item === "string" ? (
-                    <span key={`ellipsis-${idx}`} className="px-1 text-gray-400 text-xs">
+                    <span key={`ellipsis-${idx}`} className="px-1 text-gray-600 text-xs">
                       ...
                     </span>
                   ) : (
                     <button
                       key={item}
-                      onClick={() => goToPage(item)}
+                      onClick={() => setPage(item)}
+                      aria-current={item === pagination.page ? "page" : undefined}
                       className={`min-w-[28px] h-7 rounded-lg text-xs font-medium transition-colors ${
                         item === pagination.page
                           ? "bg-purple-600 text-white"
@@ -232,9 +231,10 @@ export default function AdminLogsPage() {
                   )
                 )}
               <button
-                onClick={() => goToPage(pagination.page + 1)}
+                onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={pagination.page >= pagination.totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                aria-label={t("nextPage")}
+                className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

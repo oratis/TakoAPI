@@ -1,0 +1,33 @@
+-- Storage for password-reset and email-verification tokens.
+--
+-- No new table: both flows in src/lib/password-reset.ts reuse "VerificationToken",
+-- which has existed since 0_init with nothing reading or writing it. Rows hold a
+-- SHA-256 digest of the token, never the token itself, and "identifier" carries the
+-- kind plus the subject ("reset:<userId>" / "verify:<userId>").
+--
+-- What was missing is the index the expiry sweep needs. Nothing has ever deleted
+-- from this table and there is no cron for it, so password-reset.ts purges expired
+-- rows on every request; without an index that DELETE seq-scans the whole table on
+-- each reset.
+--
+-- NO INDEX ON "identifier" IS ADDED, deliberately. The existing
+-- "VerificationToken_identifier_token_key" unique index leads with "identifier", so
+-- the by-user lookups and deletes in password-reset.ts already use it — a standalone
+-- copy would add write cost on every token issued and buy nothing.
+--
+-- DRIFT NOTE: prisma/schema.prisma has no matching `@@index([expires])` on
+-- VerificationToken (that file is outside this change), so `prisma migrate diff`
+-- reports this index as drift until the line is added there.
+--
+-- HOW TO APPLY IN PRODUCTION: `npx prisma db execute --url "$PROD_URL" --file
+-- prisma/migrations/013_password_reset/migration.sql`, per
+-- docs/agent-marketplace/HANDOFF.md §5. Do NOT run `prisma migrate deploy` against
+-- production — see the note at the top of
+-- prisma/migrations/010_requestlog_ip_hash/migration.sql. The statement below is
+-- idempotent, so a re-run is safe.
+--
+-- ORDERING vs the code deploy: either order is safe. This is purely additive and no
+-- shipped revision touches the table; applying it after the deploy only means the
+-- first reset requests pay a seq scan over an almost-empty table.
+
+CREATE INDEX IF NOT EXISTS "VerificationToken_expires_idx" ON "VerificationToken"("expires");

@@ -33,7 +33,7 @@ export function BadgeSnippet({ slug }: { slug: string }) {
         {snippets.map((s) => (
           <div key={s.key}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-400">{s.label}</span>
+              <span className="text-xs text-gray-500">{s.label}</span>
               <button
                 onClick={() => copy(s.text, s.key)}
                 className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700"
@@ -48,7 +48,7 @@ export function BadgeSnippet({ slug }: { slug: string }) {
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-400 mt-2">{t("snippetHint")}</p>
+      <p className="text-xs text-gray-500 mt-2">{t("snippetHint")}</p>
     </div>
   );
 }

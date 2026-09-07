@@ -31,11 +31,15 @@ export const registerSchema = z.object({
 export const adminSkillUpdateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   brief: z.string().max(500).nullable().optional(),
-  description: z.string().max(10_000).nullable().optional(),
+  // Not nullable: Skill.description is NOT NULL, so accepting null here would only
+  // buy a Prisma error at write time.
+  description: z.string().max(10_000).optional(),
   readme: z.string().max(500_000).nullable().optional(),
   githubUrl: z.string().url().max(500).nullable().optional(),
+  clawHubUrl: z.string().url().max(500).nullable().optional(),
   clawSkillsUrl: z.string().url().max(500).nullable().optional(),
   installCmd: z.string().max(500).nullable().optional(),
+  author: z.string().max(200).nullable().optional(),
   categoryId: z.string().min(1).optional(),
   featured: z.boolean().optional(),
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
@@ -46,6 +50,31 @@ export const adminBatchSchema = z.object({
   ids: z.array(z.string().min(1)).min(1).max(500),
   action: z.enum(["approve", "reject", "delete", "feature", "unfeature"]),
   reviewNote: z.string().max(2000).optional(),
+});
+
+export const adminCategoryCreateSchema = z.object({
+  name: z.string().min(2).max(80),
+  description: z.string().max(500).nullable().optional(),
+  icon: z.string().max(80).nullable().optional(),
+});
+
+export const adminCategoryUpdateSchema = z
+  .object({
+    name: z.string().min(2).max(80).optional(),
+    description: z.string().max(500).nullable().optional(),
+    icon: z.string().max(80).nullable().optional(),
+  })
+  // Unknown keys are stripped, so a body of only unrecognised fields parses to {}
+  // and would silently no-op the update. Reject it instead of reporting success.
+  .refine((v) => Object.keys(v).length > 0, {
+    message: "Provide at least one field to update",
+  });
+
+// User.role is a free-text column, not a Postgres enum, so this list is the only
+// thing standing between a request body and admin access. Keep it here rather than
+// inline in the route so widening it is a single, reviewable edit.
+export const adminUserRoleSchema = z.object({
+  role: z.enum(["user", "admin"]),
 });
 
 export const autoFillSchema = z.object({

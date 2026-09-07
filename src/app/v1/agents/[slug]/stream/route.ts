@@ -1,13 +1,45 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authenticateApiKey, newRpcId } from "@/lib/apikey";
+import { authenticateApiKey, gatewayRateLimit, newRpcId } from "@/lib/apikey";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { checkCreditPreflight, computeBilledUsd, meterInvocation } from "@/lib/billing";
+import { logGatewayRejection } from "@/lib/gatewayLog";
+import {
+  checkCreditPreflight,
+  computeBilledUsd,
+  meterInvocation,
+  settleInvocation,
+  startInvocation,
+} from "@/lib/billing";
 
 // Streaming gateway — A2A message/stream passthrough over SSE.
 // Note: behind a Global HTTPS LB + serverless NEG, SSE can be throttled; prefer
 // the direct Cloud Run URL for streaming. See docs/.../03-technical-architecture.md §8.
 const TIMEOUT_MS = 120_000;
+const ROUTE = "/v1/agents/[slug]/stream";
+
+// A2A reports failures inside the stream, over an HTTP 200, so the response status
+// alone cannot tell a served call from a failed one. The bytes are relayed verbatim;
+// this only *observes* them, so a stream whose whole content is a JSON-RPC error is
+// recorded as a failure and billed nothing — which is what the docs promise
+// (messages/en.json `Docs.limitsBillingFailures`) and what the OpenAI shim already
+// does with the same frames.
+const EVENT_BOUNDARY = /\r\n\r\n|\n\n|\r\r/;
+
+function frameIsRpcError(raw: string): boolean {
+  const data = raw
+    .split(/\r\n|\n|\r/)
+    .filter((l) => l.startsWith("data:"))
+    .map((l) => l.slice(5).trim())
+    .join("");
+  if (!data || data === "[DONE]") return false;
+  try {
+    const envelope = JSON.parse(data);
+    return !!(envelope && typeof envelope === "object" && "error" in envelope && !("result" in envelope));
+  } catch {
+    // A partial or non-JSON frame says nothing either way.
+    return false;
+  }
+}
 
 export async function POST(
   req: NextRequest,
@@ -19,11 +51,27 @@ export async function POST(
     req.headers.get("authorization") || req.headers.get("x-api-key")
   );
   if (!keyRecord) {
+    logGatewayRejection({ route: ROUTE, reason: "unauthenticated", status: 401, agentSlug: slug });
     return Response.json({ error: "Invalid or missing API key" }, { status: 401 });
   }
 
-  const rl = await checkRateLimit(req, { key: `gw:${keyRecord.id}`, windowMs: 60_000, max: 120 });
-  if (!rl.ok) return rateLimitResponse(rl.retryAfterMs);
+  const rl = await checkRateLimit(req, {
+    key: `gw:${keyRecord.id}`,
+    windowMs: 60_000,
+    max: gatewayRateLimit(keyRecord),
+    perIp: false,
+  });
+  if (!rl.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "rate_limited",
+      status: 429,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+    });
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   const agent = await prisma.agent.findFirst({
     where: { slug, status: "APPROVED" },
@@ -41,6 +89,16 @@ export async function POST(
   // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
   const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
   if (!credit.ok) {
+    logGatewayRejection({
+      route: ROUTE,
+      reason: "insufficient_credit",
+      status: 402,
+      apiKeyId: keyRecord.id,
+      userId: keyRecord.userId,
+      agentSlug: slug,
+      requiredUsd: credit.requiredUsd,
+      balanceUsd: credit.balanceUsd,
+    });
     return Response.json(
       {
         error: "Insufficient credit",
@@ -94,38 +152,125 @@ export async function POST(
     return Response.json({ error: "Agent unreachable" }, { status: 502 });
   }
 
-  const billedUsd =
-    upstream.status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
-  void meterInvocation({
+  const meterBase = {
     apiKeyId: keyRecord.id,
     userId: keyRecord.userId,
     agentId: agent.id,
-    protocol: "A2A",
-    status: upstream.status,
-    latencyMs: Date.now() - started,
-    billedUsd,
-  });
+    protocol: "A2A" as const,
+  };
 
+  // Upstream answered but there is nothing to stream — record the failure and bill
+  // nothing. (Previously the charge had already been written by this point, so the
+  // caller got a 502 with a paid-for, status-200 Invocation row behind it.)
   if (!upstream.body) {
     clearTimeout(timer);
+    void meterInvocation({
+      ...meterBase,
+      status: 502,
+      latencyMs: Date.now() - started,
+      errorCode: "NO_STREAM_BODY",
+      billedUsd: 0,
+    });
     return Response.json({ error: "Agent did not return a stream" }, { status: 502 });
   }
 
+  // An agent that does not implement `message/stream` answers HTTP 200 with a plain
+  // JSON-RPC body. It has a body, so the guard above passes; it has no `data:` lines
+  // and no blank-line boundary, so `frameIsRpcError` never runs and the relay reached
+  // `done` with rpcError === false — scoring a non-answer as a completed stream and
+  // charging the full unit price. Require the declared content type instead.
+  const upstreamType = upstream.headers.get("content-type") ?? "";
+  if (!upstreamType.toLowerCase().includes("text/event-stream")) {
+    clearTimeout(timer);
+    upstream.body.cancel().catch(() => {});
+    void meterInvocation({
+      ...meterBase,
+      status: 502,
+      latencyMs: Date.now() - started,
+      errorCode: "UPSTREAM_BAD_RESPONSE",
+      billedUsd: 0,
+    });
+    return Response.json({ error: "Agent did not return a stream" }, { status: 502 });
+  }
+
+  // Open the invocation now, unpriced, so a stream that dies mid-flight still counts
+  // in the denominator; the charge is decided when the stream actually terminates.
+  const invocationId = await startInvocation({
+    ...meterBase,
+    status: upstream.status,
+    latencyMs: Date.now() - started,
+    billedUsd: 0,
+  });
+
+  let settled = false;
+  const settle = async (status: number, errorCode: string | null) => {
+    if (settled) return;
+    settled = true;
+    // Only a stream that ran to completion over a non-error response is billable.
+    const billedUsd =
+      !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
+    await settleInvocation(invocationId, {
+      ...meterBase,
+      status,
+      latencyMs: Date.now() - started,
+      errorCode,
+      billedUsd,
+    });
+  };
+
   // Pass the upstream SSE through; clear the abort timer when it ends.
   const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let sniffBuffer = "";
+  let rpcError = false;
+  // An upstream that declares text/event-stream and then closes without ever
+  // emitting a complete event delivered nothing. Billing keys off this so an
+  // empty 200 body cannot be scored as a successful call.
+  let sawEvent = false;
   const out = new ReadableStream<Uint8Array>({
     async pull(controller) {
-      const { done, value } = await reader.read();
-      if (done) {
-        controller.close();
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          clearTimeout(timer);
+          // Settle BEFORE closing. `controller.close()` ends the HTTP response, and
+          // Cloud Run may stop giving this instance CPU the moment it does, so a
+          // debit awaited afterwards can be lost — leaving the caller with a
+          // complete answer and the Invocation row stuck unpriced. This is the only
+          // path that charges.
+          await settle(
+            rpcError || !sawEvent ? 502 : upstream.status,
+            rpcError ? "UPSTREAM_ERROR" : sawEvent ? null : "NO_STREAM_CONTENT"
+          );
+          controller.close();
+          return;
+        }
+        // Relay first, then inspect a copy: observation must never delay or alter
+        // the bytes the caller receives.
+        controller.enqueue(value);
+        sniffBuffer += decoder.decode(value, { stream: true });
+        let boundary = EVENT_BOUNDARY.exec(sniffBuffer);
+        while (boundary) {
+          sawEvent = true;
+          if (frameIsRpcError(sniffBuffer.slice(0, boundary.index))) rpcError = true;
+          sniffBuffer = sniffBuffer.slice(boundary.index + boundary[0].length);
+          boundary = EVENT_BOUNDARY.exec(sniffBuffer);
+        }
+        // A malformed upstream that never emits a boundary must not grow this
+        // buffer without bound.
+        if (sniffBuffer.length > 64_000) sniffBuffer = sniffBuffer.slice(-8_000);
+      } catch (err) {
+        // Upstream broke mid-stream, or TIMEOUT_MS aborted it. The caller did not
+        // get a complete answer, so bill nothing — but do record what happened.
         clearTimeout(timer);
-        return;
+        await settle(502, "STREAM_ABORTED");
+        controller.error(err);
       }
-      controller.enqueue(value);
     },
-    cancel() {
+    async cancel() {
       reader.cancel().catch(() => {});
       clearTimeout(timer);
+      await settle(499, "CLIENT_DISCONNECTED");
     },
   });
 

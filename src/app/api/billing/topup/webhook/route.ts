@@ -32,7 +32,18 @@ export async function POST(req: NextRequest) {
     if (!verified) return NextResponse.json({ error: "signature verification failed" }, { status: 400 });
 
     if (event.event_type === "CHECKOUT.ORDER.APPROVED" && event.resource?.id) {
-      await captureAndCredit(event.resource.id);
+      const outcome = await captureAndCredit(event.resource.id);
+      if (outcome === "failed") {
+        // Answering 200 here threw away PayPal's retry — our only second chance at
+        // a payment that was captured but not credited. Fail the delivery instead so
+        // PayPal redelivers; captureAndCredit is idempotent, so a retry that finds
+        // the money already credited simply reports "already".
+        console.error("[topup] webhook could not credit an approved order", {
+          orderId: event.resource.id,
+        });
+        return NextResponse.json({ error: "capture or credit failed" }, { status: 500 });
+      }
+      return NextResponse.json({ ok: true, outcome });
     }
     return NextResponse.json({ ok: true });
   });

@@ -1,25 +1,49 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { withAdmin, logAdminAction } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
-import type { SkillStatus } from "@prisma/client";
+import { notFound, parseJson } from "@/lib/api";
+import { adminSkillUpdateSchema } from "@/lib/schemas";
+import { revalidateSkills, revalidateCategories } from "@/lib/revalidate";
+import { sendReviewResultEmail } from "@/lib/email";
+import { absoluteUrl } from "@/lib/seo";
+import { NO_STORE_HEADERS } from "@/lib/http";
 
-const ALLOWED_FIELDS = [
-  "name",
-  "brief",
-  "description",
-  "readme",
-  "githubUrl",
-  "clawHubUrl",
-  "clawSkillsUrl",
-  "installCmd",
-  "author",
-  "categoryId",
-  "status",
-  "featured",
-  "reviewNote",
-] as const;
-
-const VALID_STATUSES: SkillStatus[] = ["PENDING", "APPROVED", "REJECTED"];
+/**
+ * Tell the submitter what the moderator decided.
+ *
+ * Deferred with `after` so the mail never sits between the moderator and their
+ * response, and never fails the moderation: a skill that was approved in the
+ * database stays approved even if Resend is down. Failures are logged with the
+ * skill id so a missing notification can be traced.
+ *
+ * A rejected skill is not publicly reachable, so the "resubmit" link goes to the
+ * dashboard, where the submitter can see the status and the reviewer's note.
+ */
+function notifyReviewOutcome(input: {
+  skillId: string;
+  email: string;
+  name: string;
+  slug: string;
+  approved: boolean;
+  note: string | null;
+}) {
+  after(async () => {
+    try {
+      await sendReviewResultEmail(input.email, {
+        kind: "skill",
+        name: input.name,
+        approved: input.approved,
+        note: input.note,
+        url: input.approved ? absoluteUrl(`/skills/${input.slug}`) : absoluteUrl("/dashboard"),
+      });
+    } catch (err) {
+      console.error("[admin/skills] review email failed", {
+        skillId: input.skillId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -27,22 +51,15 @@ export async function PATCH(
 ) {
   return withAdmin(req, "/api/admin/skills/[id]", async (admin) => {
     const { id } = await params;
-    const data = await req.json();
-
-    const updateData: Record<string, unknown> = {};
-    for (const key of ALLOWED_FIELDS) {
-      if (data[key] !== undefined) updateData[key] = data[key];
-    }
-
-    if (updateData.status && !VALID_STATUSES.includes(updateData.status as SkillStatus)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-    }
+    const parsed = await parseJson(req, adminSkillUpdateSchema);
+    if (!parsed.ok) return parsed.response;
+    const updateData = parsed.data;
 
     const existing = await prisma.skill.findUnique({
       where: { id },
-      select: { status: true, categoryId: true },
+      select: { status: true, categoryId: true, submitter: { select: { email: true } } },
     });
-    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!existing) return notFound();
 
     const skill = await prisma.$transaction(async (tx) => {
       const updated = await tx.skill.update({
@@ -79,6 +96,24 @@ export async function PATCH(
       return updated;
     });
 
+    // The skill itself, and category.skillCount, which the transaction above may
+    // have moved — the categories tag backs the skills filter row.
+    revalidateSkills();
+    revalidateCategories();
+
+    // Only a *transition* is news; re-saving an already-approved skill is not.
+    const decided = skill.status === "APPROVED" || skill.status === "REJECTED";
+    if (decided && skill.status !== existing.status && existing.submitter?.email) {
+      notifyReviewOutcome({
+        skillId: id,
+        email: existing.submitter.email,
+        name: skill.name,
+        slug: skill.slug,
+        approved: skill.status === "APPROVED",
+        note: skill.reviewNote,
+      });
+    }
+
     await logAdminAction(
       admin.id,
       "update",
@@ -87,7 +122,7 @@ export async function PATCH(
       `Updated: ${Object.keys(updateData).join(", ")}`
     );
 
-    return NextResponse.json(skill);
+    return NextResponse.json(skill, { headers: NO_STORE_HEADERS });
   });
 }
 
@@ -102,7 +137,7 @@ export async function DELETE(
       where: { id },
       select: { name: true, categoryId: true, status: true },
     });
-    if (!skill) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!skill) return notFound();
 
     await prisma.$transaction(async (tx) => {
       await tx.like.deleteMany({ where: { skillId: id } });
@@ -115,8 +150,11 @@ export async function DELETE(
       }
     });
 
+    revalidateSkills();
+    revalidateCategories();
+
     await logAdminAction(admin.id, "delete", "skill", id, `Deleted: ${skill.name}`);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
   });
 }

@@ -54,9 +54,24 @@ export default async function BadgePage({ params }: { params: Promise<{ locale: 
 
       {exSlug && (
         <div className="mt-6 rounded-xl border border-gray-200 p-5">
-          <p className="text-xs text-gray-400 mb-2">{t("example")}</p>
+          <p className="text-xs text-gray-500 mb-2">{t("example")}</p>
+          {/*
+            A raw <img>: the source is our own /api/badge SVG route, which
+            next/image cannot optimise (and must not cache — the star count is
+            the point). It still needs a reserved box, or the badge pops in and
+            shoves the snippet below it down the page. The route emits a 20px-tall
+            SVG whose width depends on the star count and carries no viewBox, so
+            it renders at its natural size inside whatever box we give it: reserve
+            the widest it can emit and let the slack stay transparent.
+          */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${SITE_URL}/api/badge/${exSlug}`} alt="TakoAPI badge" className="h-5 mb-3" />
+          <img
+            src={`${SITE_URL}/api/badge/${exSlug}`}
+            alt={t("exampleAlt")}
+            width={122}
+            height={20}
+            className="w-[122px] h-5 mb-3"
+          />
           <code className="block text-[11px] bg-gray-50 border border-gray-200 rounded px-3 py-2 break-all font-mono text-gray-600">
             {md}
           </code>

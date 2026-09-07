@@ -133,7 +133,25 @@ npx tsx prisma/seed.ts
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The dev server uses SWC and skips type-checking, so run `npx tsc --noEmit` before shipping.
+Open [http://localhost:3000](http://localhost:3000).
+
+### Checks
+
+The dev server skips type-checking, so run the same checks CI does before pushing:
+
+```bash
+npm run typecheck        # tsc --noEmit
+npm run lint
+npm test                 # vitest
+npm run check:i18n       # every locale matches messages/en.json, ICU is valid
+npm run check:secrets    # no credential-shaped values in tracked files
+npm run check:skill-assets   # the generated skill copies match takoapi_skill/SKILL.md
+npm run build
+```
+
+The skill body has one source of truth (`takoapi_skill/SKILL.md`) and five generated
+copies — the plugin, the three npx installer assets, and the heredoc inside
+`public/install.sh`. Edit the source, then run `npm run build:skill-assets`.
 
 ### Environment Variables
 
@@ -149,32 +167,42 @@ Open [http://localhost:3000](http://localhost:3000). The dev server uses SWC and
 
 ## API Reference
 
-### Agent registry
+Full reference with request and response examples: **<https://takoapi.com/docs>**.
+
+### Agent registry (no auth)
 
 ```
-GET /api/registry              # Markdown directory of all agents (default)
+GET /api/registry              # Markdown directory (default) — drop straight into an LLM
 GET /api/registry?format=json  # Structured JSON
+GET /api/agents/{slug}         # One agent: capabilities, protocols, pricing, health
 ```
 
-Filters: `q` (search), `category`, `protocol` (`A2A` | `OPENAI_COMPAT` | `MCP`), `limit`.
+Filters: `q` (search), `category`, `protocol` (`A2A` | `OPENAI_COMPAT` | `MCP`), `kind`
+(`HOSTED` | `PROJECT`), `sort` (`stars` | `calls` | `rating`), `limit`.
 
-### Gateway (hosted agents)
+Only `HOSTED` agents are callable; `PROJECT` entries are open-source repositories
+listed for discovery. Responses report the totals per kind, so a client can tell
+when it is holding a subset.
 
-```
-POST /v1/agents/{slug}/message     # A2A passthrough
-GET  /v1/agents/{slug}/stream      # Server-sent events
-POST /v1/chat/completions          # OpenAI-compatible shim
-```
-
-All gateway routes require an API key: `Authorization: Bearer $TAKO_KEY`.
-
-### Skills
+### Gateway (hosted agents — requires an API key)
 
 ```
-GET  /api/agent                # Curated skills as Markdown (md) or JSON, for AI agents
-GET  /api/skills               # List skills (paginated, sortable)
-GET  /api/skills/search?q=     # Full-text search
-GET  /api/skills/:id           # Skill detail (by ID or slug)
+POST /v1/agents/{slug}/message     # A2A passthrough; accepts {"text": …} or a full A2A message
+POST /v1/agents/{slug}/stream      # Same, relayed as Server-Sent Events
+POST /v1/chat/completions          # OpenAI-compatible; model = agent slug, stream supported
+```
+
+`Authorization: Bearer $TAKO_KEY`. Default allowance 120 requests / 60 s per key.
+Free agents cost nothing; priced agents debit prepaid credit, and a call that fails
+— or a stream that does not run to completion — is not charged.
+
+### Skills (no auth)
+
+```
+GET  /api/agent                # Curated skills as Markdown (default) or JSON, for AI agents
+GET  /api/skills               # List skills (paginated, sortable, filterable)
+GET  /api/skills/search?q=     # Search by name, description or author
+GET  /api/skills/{idOrSlug}    # Skill detail
 POST /api/skills/submit        # Submit a new skill (auth required)
 ```
 
@@ -184,28 +212,45 @@ POST /api/skills/submit        # Submit a new skill (auth required)
 POST /mcp                      # Streamable-HTTP MCP endpoint (JSON-RPC 2.0)
 ```
 
-Tools: `search_agents`, `get_agent`, `search_skills` (anonymous), and `invoke_agent` (send your key as `Authorization: Bearer $TAKO_KEY`). Register in any MCP client, e.g. `claude mcp add --transport http takoapi https://takoapi.com/mcp`.
+Tools: `search_agents`, `get_agent`, `search_skills` (anonymous), and `invoke_agent`
+(send your key as `Authorization: Bearer $TAKO_KEY`). Register in any MCP client, e.g.
+`claude mcp add --transport http takoapi https://takoapi.com/mcp`.
 
 ## Project Structure
 
 ```
 src/
   app/
-    page.tsx                 # Home
-    agents/                  # Agent marketplace + detail pages
-    skills/                  # Skills browse + detail pages
-    trending/                # Trending leaderboard
-    dashboard/               # Developer console (API keys, usage)
-    admin/                   # Moderation
-    api/                     # REST API routes
-    v1/                      # Gateway routes (A2A / OpenAI-compatible)
-    sitemap.ts, robots.ts    # SEO
+    [locale]/                # Every page, under a locale segment (en unprefixed, 14 more)
+      page.tsx               #   Home
+      agents/                #   Agent marketplace + detail pages
+      scenarios/             #   Use-case landing pages
+      skills/, trending/     #   Coding-agent skills catalog + leaderboard
+      blog/, install/, badge/
+      dashboard/             #   Developer console (API keys, usage, credits)
+      profile/, bookmarks/   #   My listings, saved agents
+      submit-agent/, submit/ #   Publish an agent / a skill
+      admin/                 #   Moderation
+      auth/                  #   Sign in / up / password reset
+    api/                     # REST API routes (public catalog, user, admin, cron, billing)
+    v1/                      # Gateway routes (A2A passthrough, SSE, OpenAI-compatible)
+    mcp/                     # Hosted MCP server (Streamable HTTP)
+    sitemap.xml/, sitemap/   # Sitemap index + chunked children
+    robots.ts, opengraph-image.tsx
+  proxy.ts                   # Locale routing (Next 16 request interceptor)
   components/                # UI + layout
-  lib/                       # auth, prisma, seo, helpers
+  i18n/                      # next-intl routing + request config
+  lib/                       # auth, prisma, billing, gateway, seo, helpers
+  hooks/                     # client hooks
+messages/                    # 15 locale catalogs (checked by `npm run check:i18n`)
 prisma/
   schema.prisma              # Database schema
+  migrations/                # Applied manually in production (see docs/agent-marketplace/HANDOFF.md §5)
   seed.ts                    # Database seeder
-scripts/                     # Scrapers + maintenance scripts
+scripts/                     # Scrapers, sync jobs, CI checks (secrets, skill assets)
+packages/takoapi-install/    # `npx takoapi-install`
+plugins/takoapi/             # Claude Code plugin
+takoapi_skill/SKILL.md       # Source of truth for the skill body (run `npm run build:skill-assets`)
 ```
 
 ## Deployment
