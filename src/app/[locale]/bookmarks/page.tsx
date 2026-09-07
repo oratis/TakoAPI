@@ -49,7 +49,7 @@ export default async function BookmarksPage({ params }: { params: Promise<{ loca
         <div className="text-center py-16 bg-gray-50 rounded-xl">
           <p className="text-gray-500">{t("empty")}</p>
           <Link href="/agents" className="text-purple-600 text-sm mt-1 inline-block">
-            {t("browseAgents")} →
+            {t("browseAgents")} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
           </Link>
         </div>
       ) : (

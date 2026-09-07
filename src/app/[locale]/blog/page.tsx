@@ -85,7 +85,7 @@ export default async function BlogIndexPage({ params }: { params: Promise<{ loca
               href={`/blog/${p.slug}`}
               className="inline-block mt-3 text-sm font-medium text-purple-600 hover:text-purple-800"
             >
-              {t("readMore")} →
+              {t("readMore")} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
             </Link>
           </article>
         ))}

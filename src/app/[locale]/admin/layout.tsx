@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-56 bg-gray-900 text-white shrink-0">
         <div className="p-4 border-b border-gray-800">
           <Link href="/" className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
             {t("backToSite")}
           </Link>
           <h2 className="mt-3 text-lg font-bold">{t("panelTitle")}</h2>

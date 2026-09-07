@@ -150,7 +150,7 @@ export default async function SkillDetailPage({
         href="/skills"
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
         {t("backToSkills")}
       </Link>
 
