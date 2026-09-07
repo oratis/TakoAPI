@@ -50,6 +50,10 @@ for (const file of files) {
         if (/:\/\/(user|username|usuario|<[^>]+>|\$\{?\w+\}?)[^\s@]*:(pass(word)?|secret|<[^>]+>|\$\{?\w+\}?)[^\s@]*@/i.test(line)) continue;
         // Local development targets — a throwaway password on a loopback host.
         if (/@(localhost|127\.0\.0\.1|db)(:\d+)?[\/?]/.test(line)) continue;
+        // A "secret" made of one repeated character is a shape, not a value —
+        // docs write tako_live_xxxxxxxx… and AKIA0000… to show the format. Real
+        // credentials are random, so this cannot mask one.
+        if (/(.)\1{7,}/.test(line.match(re)?.[0] ?? "")) continue;
         hits.push(`${file}:${i + 1}: ${name}`);
       }
     }
