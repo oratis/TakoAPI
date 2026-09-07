@@ -7,7 +7,7 @@ vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/apikey", () => ({ authenticateApiKey: vi.fn() }));
 
-import { hasScope, type ApiUser } from "@/lib/api-user";
+import { canBypassModeration, hasScope, type ApiUser } from "@/lib/api-user";
 
 // hasScope is the gate that decides whether a credential reaches the admin API.
 // It exists because gateway keys are meant to be handed out — the docs tell users
@@ -85,5 +85,30 @@ describe("hasScope — read / invoke / submit", () => {
   it("lets any session through, admin or not", () => {
     expect(hasScope(user({ role: "user" }), "invoke")).toBe(true);
     expect(hasScope(user({ role: "admin" }), "submit")).toBe(true);
+  });
+});
+
+// /api/agents/submit and /api/skills/submit each wrote this predicate out by hand
+// and the copies drifted: the agents route kept `via !== "session"`, which also
+// matched `via === "apikey"`, so any leaked gateway key belonging to an admin could
+// publish an agent — endpoint, price and all — straight to the public catalog.
+describe("canBypassModeration", () => {
+  it("lets an admin's single-purpose legacy key skip the review queue", () => {
+    expect(canBypassModeration(user({ role: "admin", via: "legacy-apikey" }))).toBe(true);
+  });
+
+  it("does NOT let an admin's gateway key skip it — that key is handed to MCP clients and CI", () => {
+    expect(canBypassModeration(user({ role: "admin", via: "apikey", scopes: [] }))).toBe(false);
+    expect(canBypassModeration(user({ role: "admin", via: "apikey", scopes: ["admin"] }))).toBe(false);
+  });
+
+  it("queues an admin publishing through the browser form", () => {
+    expect(canBypassModeration(user({ role: "admin", via: "session" }))).toBe(false);
+  });
+
+  it("queues every non-admin, whatever they authenticated with", () => {
+    for (const via of ["session", "apikey", "legacy-apikey"] as const) {
+      expect(canBypassModeration(user({ role: "user", via }))).toBe(false);
+    }
   });
 });

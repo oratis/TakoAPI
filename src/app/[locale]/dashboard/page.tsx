@@ -418,7 +418,11 @@ function Dashboard() {
           </p>
         )}
 
-        {notice && noticeMessages[notice] && (
+        {/* Object.hasOwn, not a bare lookup: `?topup=__proto__` resolves through the
+            prototype chain to Object.prototype — truthy, and React throws "Objects are
+            not valid as a React child" when it is rendered, taking the whole dashboard
+            into the error boundary. `constructor` and `toString` hit the same hole. */}
+        {notice && Object.hasOwn(noticeMessages, notice) && (
           <div className="mb-5 flex items-start gap-2">
             <p
               className={`text-xs ${

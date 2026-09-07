@@ -49,7 +49,12 @@ for (const file of files) {
         // Documentation placeholders: postgres://user:pass@host, USER:PASSWORD@…
         if (/:\/\/(user|username|usuario|<[^>]+>|\$\{?\w+\}?)[^\s@]*:(pass(word)?|secret|<[^>]+>|\$\{?\w+\}?)[^\s@]*@/i.test(line)) continue;
         // Local development targets — a throwaway password on a loopback host.
-        if (/@(localhost|127\.0\.0\.1|db)(:\d+)?[\/?]/.test(line)) continue;
+        // NOT applied when the line also carries a unix-socket host override: Cloud
+        // SQL connection strings are written `…@localhost/db?host=/cloudsql/<inst>`,
+        // which is a *production* credential wearing a loopback hostname. That is
+        // the exact shape of the password this scanner exists to stop recurring,
+        // so exempting it would make the guard blind to its own founding incident.
+        if (/@(localhost|127\.0\.0\.1|db)(:\d+)?[\/?]/.test(line) && !/[?&]host=\//.test(line)) continue;
         // A "secret" made of one repeated character is a shape, not a value —
         // docs write tako_live_xxxxxxxx… and AKIA0000… to show the format. Real
         // credentials are random, so this cannot mask one.

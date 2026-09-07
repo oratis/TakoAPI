@@ -251,6 +251,26 @@ async function streamCompletion(ctx: GatewayContext, includeUsage: boolean): Pro
     );
   }
 
+  // An agent that does not implement `message/stream` answers HTTP 200 with a plain
+  // JSON-RPC body. That is ok + non-null body, so the guard above passes; it carries
+  // no `data:` lines and no blank-line boundary, so `parseEvent` never runs and the
+  // relay reached `done` with rpcError === false — handing the caller a well-formed
+  // but empty completion and charging the full unit price for it. Require the
+  // declared content type instead.
+  const upstreamType = upstream.headers.get("content-type") ?? "";
+  if (!upstreamType.toLowerCase().includes("text/event-stream")) {
+    clearTimeout(timer);
+    upstream.body.cancel().catch(() => {});
+    void meterInvocation({
+      ...meterBase,
+      status: 502,
+      latencyMs: Date.now() - started,
+      errorCode: "UPSTREAM_BAD_RESPONSE",
+      billedUsd: 0,
+    });
+    return openaiError("Agent did not return a stream", "upstream_error", 502);
+  }
+
   const invocationId = await startInvocation({
     ...meterBase,
     status: upstream.status,
@@ -295,6 +315,10 @@ async function streamCompletion(ctx: GatewayContext, includeUsage: boolean): Pro
   const decoder = new TextDecoder();
   let buffer = "";
   let rpcError = false;
+  // An upstream that declares text/event-stream and then closes without ever
+  // emitting a parseable event delivered nothing. Billing keys off this so an
+  // empty 200 body cannot be scored as a successful call.
+  let sawEvent = false;
 
   const out = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -335,7 +359,10 @@ async function streamCompletion(ctx: GatewayContext, includeUsage: boolean): Pro
           // removed everywhere else — it would lose the charge silently, leaving the
           // Invocation row stuck unpriced. This is the only path that charges, and
           // only when the agent did not report a failure through the stream.
-          await settle(rpcError ? 502 : upstream.status, rpcError ? "UPSTREAM_ERROR" : null);
+          await settle(
+            rpcError || !sawEvent ? 502 : upstream.status,
+            rpcError ? "UPSTREAM_ERROR" : sawEvent ? null : "NO_STREAM_CONTENT"
+          );
           controller.close();
           return;
         }
@@ -346,6 +373,7 @@ async function streamCompletion(ctx: GatewayContext, includeUsage: boolean): Pro
           const event = parseEvent(buffer.slice(0, boundary.index));
           buffer = buffer.slice(boundary.index + boundary[0].length);
           if (event) {
+            sawEvent = true;
             if (event.state) taskState = event.state;
             if (event.rpcError) rpcError = true;
             if (event.delta) controller.enqueue(frame(chunk({ content: event.delta }, null)));
@@ -413,11 +441,15 @@ async function sendCompletion(ctx: GatewayContext): Promise<Response> {
       // that retries drains its balance.
       status = 502;
       errorCode = abort.signal.aborted ? "UPSTREAM_TIMEOUT" : "UPSTREAM_BAD_RESPONSE";
-    } else if (!result && envelope.error) {
-      // JSON-RPC failures arrive over HTTP 200. Without this the caller got an empty
-      // completion and was charged full price for it.
+    } else if (!result) {
+      // A JSON-RPC response carrying no `result` is a failure however it is dressed:
+      // an `error` envelope, a bare `{"result":null}`, or a proxy's own
+      // `{"status":"ok"}`. Keying this branch on `envelope.error` caught only the
+      // first shape and let every other one through as a success — HTTP 200,
+      // finish_reason "stop", empty content, and charged full price. Same class of
+      // loss as the `!envelope` branch above.
       status = 502;
-      errorCode = "UPSTREAM_ERROR";
+      errorCode = envelope.error ? "UPSTREAM_ERROR" : "UPSTREAM_BAD_RESPONSE";
     } else {
       const state = obj(result?.status)?.state;
       if (typeof state === "string") taskState = state;
@@ -453,9 +485,15 @@ async function sendCompletion(ctx: GatewayContext): Promise<Response> {
     void meterInvocation(meter);
   }
 
-  if (errorCode) {
+  // `|| status >= 400`: an upstream 4xx/5xx whose body happened to parse as a result
+  // envelope used to be relayed to the caller as HTTP 200 with an empty completion,
+  // swallowing the real status. The sibling A2A route forwards the upstream status
+  // (agents/[slug]/message/route.ts), and this one now fails closed too.
+  if (errorCode || status >= 400) {
     return openaiError(
-      errorCode === "UPSTREAM_ERROR" ? "Agent returned an error" : "Agent unreachable",
+      errorCode === "UPSTREAM_UNREACHABLE" || errorCode === "UPSTREAM_TIMEOUT"
+        ? "Agent unreachable"
+        : "Agent returned an error",
       "upstream_error",
       502
     );

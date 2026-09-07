@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { badRequest, parseJson, serverError, unauthorized } from "@/lib/api";
-import { resolveApiUser } from "@/lib/api-user";
+import { resolveApiUser, canBypassModeration } from "@/lib/api-user";
 import { revalidateAgents } from "@/lib/revalidate";
 import { submitAgentSchema } from "@/lib/schemas";
 import { withRequestLog } from "@/lib/requestLog";
@@ -44,9 +44,7 @@ export async function POST(req: NextRequest) {
 
     const user = await resolveApiUser(req);
     if (!user) return unauthorized();
-    // Auto-approval stays a programmatic affordance for admin tooling: an admin
-    // publishing through the browser form still lands in the review queue.
-    const autoApprove = user.role === "admin" && user.via !== "session";
+    const autoApprove = canBypassModeration(user);
     logCtx.userId = user.id;
 
     const parsed = await parseJson(req, submitAgentSchema);

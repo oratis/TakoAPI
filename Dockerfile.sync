@@ -29,6 +29,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 COPY scripts/daily-sync.ts ./scripts/
+# daily-sync.ts imports ../src/lib/ingestion-log for its run-summary telemetry.
+# The module is dependency-free, so this one file is the whole subtree it needs;
+# without it `npx tsx scripts/daily-sync.ts` dies at MODULE_NOT_FOUND before main().
+COPY src/lib/ingestion-log.ts ./src/lib/
 
 # tsx is not in package.json deps; install it into the image so the
 # runtime `npx tsx` never has to fetch it. prisma generate runs against

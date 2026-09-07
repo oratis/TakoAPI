@@ -38,7 +38,10 @@ export async function GET(req: NextRequest) {
     else if (source === "user") where.source = "USER_SUBMITTED";
     else if (source === "curated") where.source = "CURATED";
 
-    const orderBy: Prisma.SkillOrderByWithRelationInput =
+    // `{ id: "asc" }` last: this endpoint is paginated with skip/take and every
+    // sort column above is non-unique with large tie blocks, so without a unique
+    // final key rows repeat and vanish across pages. Same fix as the /skills page.
+    const orderBy: Prisma.SkillOrderByWithRelationInput[] = [
       sort === "popular"
         ? { likesCount: "desc" }
         : sort === "views"
@@ -47,7 +50,9 @@ export async function GET(req: NextRequest) {
             ? { downloads: "desc" }
             : sort === "stars"
               ? { ghStars: "desc" }
-              : { createdAt: "desc" };
+              : { createdAt: "desc" },
+      { id: "asc" },
+    ];
 
     const [skills, total] = await Promise.all([
       prisma.skill.findMany({

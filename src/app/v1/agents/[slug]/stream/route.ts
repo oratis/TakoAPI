@@ -174,6 +174,25 @@ export async function POST(
     return Response.json({ error: "Agent did not return a stream" }, { status: 502 });
   }
 
+  // An agent that does not implement `message/stream` answers HTTP 200 with a plain
+  // JSON-RPC body. It has a body, so the guard above passes; it has no `data:` lines
+  // and no blank-line boundary, so `frameIsRpcError` never runs and the relay reached
+  // `done` with rpcError === false — scoring a non-answer as a completed stream and
+  // charging the full unit price. Require the declared content type instead.
+  const upstreamType = upstream.headers.get("content-type") ?? "";
+  if (!upstreamType.toLowerCase().includes("text/event-stream")) {
+    clearTimeout(timer);
+    upstream.body.cancel().catch(() => {});
+    void meterInvocation({
+      ...meterBase,
+      status: 502,
+      latencyMs: Date.now() - started,
+      errorCode: "UPSTREAM_BAD_RESPONSE",
+      billedUsd: 0,
+    });
+    return Response.json({ error: "Agent did not return a stream" }, { status: 502 });
+  }
+
   // Open the invocation now, unpriced, so a stream that dies mid-flight still counts
   // in the denominator; the charge is decided when the stream actually terminates.
   const invocationId = await startInvocation({
@@ -204,6 +223,10 @@ export async function POST(
   const decoder = new TextDecoder();
   let sniffBuffer = "";
   let rpcError = false;
+  // An upstream that declares text/event-stream and then closes without ever
+  // emitting a complete event delivered nothing. Billing keys off this so an
+  // empty 200 body cannot be scored as a successful call.
+  let sawEvent = false;
   const out = new ReadableStream<Uint8Array>({
     async pull(controller) {
       try {
@@ -215,7 +238,10 @@ export async function POST(
           // debit awaited afterwards can be lost — leaving the caller with a
           // complete answer and the Invocation row stuck unpriced. This is the only
           // path that charges.
-          await settle(rpcError ? 502 : upstream.status, rpcError ? "UPSTREAM_ERROR" : null);
+          await settle(
+            rpcError || !sawEvent ? 502 : upstream.status,
+            rpcError ? "UPSTREAM_ERROR" : sawEvent ? null : "NO_STREAM_CONTENT"
+          );
           controller.close();
           return;
         }
@@ -225,6 +251,7 @@ export async function POST(
         sniffBuffer += decoder.decode(value, { stream: true });
         let boundary = EVENT_BOUNDARY.exec(sniffBuffer);
         while (boundary) {
+          sawEvent = true;
           if (frameIsRpcError(sniffBuffer.slice(0, boundary.index))) rpcError = true;
           sniffBuffer = sniffBuffer.slice(boundary.index + boundary[0].length);
           boundary = EVENT_BOUNDARY.exec(sniffBuffer);

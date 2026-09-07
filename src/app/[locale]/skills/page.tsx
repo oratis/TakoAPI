@@ -109,20 +109,25 @@ function buildWhere({ q, category, agent, source }: SkillQuery): Prisma.SkillWhe
   return where;
 }
 
+// Every branch ends in `{ id: "asc" }` for the reason trending/page.tsx and
+// agents/page.tsx already document: ties are the common case (most skills sit at
+// zero likes, views and stars), and page N / page N+1 are two independent
+// statements, so without a unique final key Postgres may order a tie block
+// differently between them — rows then repeat on one page and vanish from another.
 function buildOrderBy(sort: SortValue): Prisma.SkillOrderByWithRelationInput[] {
   switch (sort) {
     case "relevance":
-      return [{ downloads: "desc" }, { likesCount: "desc" }];
+      return [{ downloads: "desc" }, { likesCount: "desc" }, { id: "asc" }];
     case "popular":
-      return [{ likesCount: "desc" }];
+      return [{ likesCount: "desc" }, { id: "asc" }];
     case "views":
-      return [{ viewsCount: "desc" }];
+      return [{ viewsCount: "desc" }, { id: "asc" }];
     case "stars":
       // ghStars is nullable and Postgres sorts NULLS FIRST on DESC, which would
       // otherwise open "most starred" with every skill that has no star count.
-      return [{ ghStars: { sort: "desc", nulls: "last" } }];
+      return [{ ghStars: { sort: "desc", nulls: "last" } }, { id: "asc" }];
     default:
-      return [{ createdAt: "desc" }];
+      return [{ createdAt: "desc" }, { id: "asc" }];
   }
 }
 
@@ -272,7 +277,11 @@ export default async function SkillsPage({
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <span className="text-xs text-gray-600 me-1">{t("agentFilter")}</span>
-        <Link href={hrefWith(base, { agent: undefined, page: undefined })} className={chip(!agent)}>
+        <Link
+          href={hrefWith(base, { agent: undefined, page: undefined })}
+          className={chip(!agent)}
+          aria-current={!agent ? "true" : undefined}
+        >
           {t("agentAll")}
         </Link>
         {AGENT_TYPES.map((a) => (
@@ -280,6 +289,7 @@ export default async function SkillsPage({
             key={a.value}
             href={hrefWith(base, { agent: a.value, page: undefined })}
             className={chip(agent === a.value)}
+            aria-current={agent === a.value ? "true" : undefined}
           >
             {t(a.labelKey)}
           </Link>
@@ -288,7 +298,11 @@ export default async function SkillsPage({
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <span className="text-xs text-gray-600 me-1">{t("sourceFilter")}</span>
-        <Link href={hrefWith(base, { source: undefined, page: undefined })} className={chip(!source)}>
+        <Link
+          href={hrefWith(base, { source: undefined, page: undefined })}
+          className={chip(!source)}
+          aria-current={!source ? "true" : undefined}
+        >
           {t("all")}
         </Link>
         {SOURCES.map((s) => (
@@ -296,6 +310,7 @@ export default async function SkillsPage({
             key={s.value}
             href={hrefWith(base, { source: s.value, page: undefined })}
             className={chip(source === s.value)}
+            aria-current={source === s.value ? "true" : undefined}
           >
             {t(s.labelKey)}
           </Link>
@@ -305,7 +320,11 @@ export default async function SkillsPage({
       {categories.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <span className="text-xs text-gray-600 me-1">{t("categoryFilter")}</span>
-          <Link href={hrefWith(base, { category: undefined, page: undefined })} className={chip(!category)}>
+          <Link
+            href={hrefWith(base, { category: undefined, page: undefined })}
+            className={chip(!category)}
+            aria-current={!category ? "true" : undefined}
+          >
             {t("all")}
           </Link>
           {categories.map((c) => (
@@ -313,6 +332,7 @@ export default async function SkillsPage({
               key={c.slug}
               href={hrefWith(base, { category: c.slug, page: undefined })}
               className={chip(category === c.slug)}
+              aria-current={category === c.slug ? "true" : undefined}
             >
               {c.name}
             </Link>

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resolveApiUser } from "@/lib/api-user";
+import { resolveApiUser, canBypassModeration } from "@/lib/api-user";
 import { slugify } from "@/lib/utils";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { badRequest, parseJson, serverError, unauthorized } from "@/lib/api";
@@ -11,11 +11,7 @@ import { withRequestLog } from "@/lib/requestLog";
 async function getSubmitter(req: NextRequest) {
   const user = await resolveApiUser(req);
   if (!user) return null;
-  // Auto-approval is a moderation bypass, so it stays with the credential that was
-  // always meant to carry it: an admin's single-purpose legacy key. A gateway key
-  // (tako_live_…) is handed to MCP clients and CI, so it submits like anyone else
-  // and waits for review, even when its owner is an admin.
-  const autoApprove = user.role === "admin" && user.via === "legacy-apikey";
+  const autoApprove = canBypassModeration(user);
   return { user, autoApprove };
 }
 

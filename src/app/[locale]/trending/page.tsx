@@ -236,7 +236,11 @@ export default async function TrendingPage({
   const sp = await searchParams;
   const rawSort = firstValue(sp.sort) ?? "";
   const sort: SortKey =
-    SORTS.find((s) => s === rawSort) ?? SORT_ALIASES[rawSort] ?? DEFAULT_SORT;
+    // Object.hasOwn guards the alias lookup: `?sort=__proto__` would otherwise
+    // resolve through the prototype chain to a truthy non-SortKey value.
+    SORTS.find((s) => s === rawSort) ??
+    (Object.hasOwn(SORT_ALIASES, rawSort) ? SORT_ALIASES[rawSort] : undefined) ??
+    DEFAULT_SORT;
   const activeColumn = COLUMN_BY_KEY.get(sort) ?? COLUMNS[0];
   const ActiveIcon = activeColumn.icon;
   const category = firstValue(sp.category)?.trim() || undefined;

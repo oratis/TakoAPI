@@ -61,33 +61,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // The only brute-force budget this login has. /api/* is excluded from
         // proxy.ts's matcher and NextAuth owns the route, so nothing upstream ever
         // saw these POSTs: password guessing against a known address was free.
-        // 8 tries per 15 minutes per (account, client IP), checked before the user
-        // lookup so a flood costs neither a query nor a bcrypt compare.
         //
         // `perIp: false` is load-bearing. checkRateLimit otherwise appends
         // extractClientIp(), which reads the FIRST element of X-Forwarded-For — a
         // value the caller writes, since Cloud Run appends to that header rather
         // than replacing it. Bucketing on it would let a single host rotate the
-        // header and mint a fresh 8-try budget per request, i.e. no limit at all.
-        // The budget is per account instead: an attacker cannot rotate the address
-        // they are trying to break into.
+        // header and mint a fresh budget per request, i.e. no limit at all.
+        //
+        // But a per-account counter is a counter a *stranger* controls: they only
+        // need the email address. Refusing on it outright — as this did — hands
+        // anyone an account-lockout lever, and because the refusal is deliberately
+        // indistinguishable from a wrong password, the victim cannot even tell why
+        // they are locked out. /api/auth/forgot is budgeted per account too, so the
+        // documented self-recovery path is closed off by the same attacker.
+        //
+        // So the budget gates *guessing*, not *the owner*: over budget, the password
+        // is still verified and a correct one is still admitted. A wrong password is
+        // refused whether or not there is budget left, which is what actually stops
+        // a grinder. `hardMax` exists only to bound the bcrypt cost of a flood; it is
+        // set far above any human's retry rate, and is the one remaining (expensive,
+        // sustained) way to hold an account shut.
         const bucketId = loginBucketId(email);
+        const window = 15 * 60 * 1000;
+        const burst = await checkRateLimit(asRateLimitRequest(request), {
+          key: `login-burst:${bucketId}`,
+          windowMs: window,
+          max: 60,
+          perIp: false,
+        });
+        if (!burst.ok) {
+          console.warn("[auth] credentials login flood — refused before compare", {
+            bucketId,
+            retryAfterMs: burst.retryAfterMs,
+          });
+          return null;
+        }
         const rl = await checkRateLimit(asRateLimitRequest(request), {
           key: `login:${bucketId}`,
-          windowMs: 15 * 60 * 1000,
+          windowMs: window,
           max: 8,
           perIp: false,
         });
-        if (!rl.ok) {
-          console.warn("[auth] credentials login rate-limited", {
-            bucketId,
-            retryAfterMs: rl.retryAfterMs,
-          });
-          // Returning null surfaces the same "invalid email or password" the UI
-          // already shows for a wrong password. A distinct "too many attempts" would
-          // tell a grinder exactly when to back off, and confirm the account exists.
-          return null;
-        }
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -99,7 +113,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credentials.password as string,
           user.password
         );
+        // Wrong password: refused, budget or no budget. Returning null surfaces the
+        // same "invalid email or password" the UI shows anyway — a distinct "too many
+        // attempts" would tell a grinder when to back off and confirm the account
+        // exists.
         if (!isValid) return null;
+        if (!rl.ok) {
+          // Correct password over budget: admit them, and say so, because a sustained
+          // stream of these against one account is what being ground on looks like.
+          console.warn("[auth] correct password admitted over the login budget", {
+            bucketId,
+            retryAfterMs: rl.retryAfterMs,
+          });
+        }
 
         return { id: user.id, name: user.name, email: user.email, image: user.image };
       },

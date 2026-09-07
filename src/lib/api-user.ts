@@ -76,3 +76,24 @@ export function hasScope(user: ApiUser, scope: "read" | "invoke" | "submit" | "a
   if (user.via === "session") return true;
   return user.scopes.length === 0 || user.scopes.includes(scope);
 }
+
+
+/**
+ * May this credential publish straight to the catalog, skipping the review queue?
+ *
+ * Auto-approval is a moderation bypass, so it stays with the credential that was
+ * always meant to carry it: an admin's single-purpose legacy key. A gateway key
+ * (`tako_live_…`) is handed out to MCP clients and CI — /docs tells users to paste
+ * it into third-party config — so it submits like anyone else and waits for review,
+ * even when its owner is an admin. A browser session is a human at the form, who
+ * also queues.
+ *
+ * This lives here because it was previously written out twice, and the two copies
+ * drifted: /api/skills/submit tightened to `via === "legacy-apikey"` while
+ * /api/agents/submit kept `via !== "session"`, which still matched `via === "apikey"`
+ * and let any leaked gateway key publish an agent — endpoint, price and all —
+ * into the public catalog with no moderator in the loop.
+ */
+export function canBypassModeration(user: ApiUser): boolean {
+  return user.role === "admin" && user.via === "legacy-apikey";
+}
