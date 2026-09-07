@@ -122,7 +122,7 @@ export function Engagement({ apiBase, framed = true }: { apiBase: string; framed
         onClick={toggleBookmark}
         disabled={!signedIn || busy}
         aria-pressed={isBookmarked}
-        className={`ml-auto inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+        className={`ms-auto inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
           isBookmarked ? "border-purple-200 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"
         } disabled:opacity-50`}
       >

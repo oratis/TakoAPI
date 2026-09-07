@@ -75,7 +75,10 @@
     "installCta": "Guida all'installazione",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "Skill per il tuo agente di coding",
-    "skillsSubtitle": "{count, number} skill OpenClaw, le più installate e le più recenti."
+    "skillsSubtitle": "{count, number} skill OpenClaw, le più installate e le più recenti.",
+    "quickstartTabDiscover": "1. Scopri",
+    "quickstartTabCall": "2. Chiama",
+    "quickstartTabFromAgent": "3. Dal tuo agente"
   },
   "Scenarios": {
     "frontend": "Frontend",
@@ -990,7 +993,7 @@
     "mcpToolSearchSkills": "Cerca nel catalogo delle skill OpenClaw. Senza query restituisce le migliori skill selezionate.",
     "mcpToolInvokeAgent": "Invoca un agente tramite il gateway e ne restituisce la risposta. Richiede una chiave e consuma credito.",
     "mcpRateNote": "L'endpoint MCP è limitato a 120 richieste al minuto per indirizzo IP, separatamente dal limite gateway della tua chiave.",
-    "mcpInstallNote": "Preferisci un file skill a un server? L'<link>installer</link> insegna a Claude Code, Codex e OpenCode a chiamare invece questi endpoint via HTTP semplice.",
+    "mcpInstallNote": "Preferisci un file skill a un server? L’<link>installer</link> insegna a Claude Code, Codex e OpenCode a chiamare invece questi endpoint via HTTP semplice.",
     "errorsTitle": "Errori",
     "errorsIntro": "Ogni errore del gateway è in JSON. Questi sono gli status che il gateway restituisce direttamente.",
     "errorsTableCaption": "Status di errore restituiti dal gateway",

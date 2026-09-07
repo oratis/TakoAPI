@@ -73,3 +73,6 @@ CREATE INDEX IF NOT EXISTS "Skill_submitterId_createdAt_idx"
 -- looks up (skillId, type, referrer) and the sweep deletes by (type, createdAt).
 CREATE INDEX IF NOT EXISTS "SkillEvent_skillId_type_referrer_idx"
   ON "SkillEvent" ("skillId", "type", "referrer");
+-- …and the retention sweep deletes by (type, createdAt).
+CREATE INDEX IF NOT EXISTS "SkillEvent_type_createdAt_idx"
+  ON "SkillEvent" ("type", "createdAt");

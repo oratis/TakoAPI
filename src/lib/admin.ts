@@ -2,7 +2,7 @@ import { auth } from "./auth";
 import { prisma } from "./prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { withRequestLog } from "./requestLog";
-import { resolveApiUser } from "./api-user";
+import { hasScope, resolveApiUser } from "./api-user";
 
 type AdminUser = { id: string; name: string | null; email: string | null; role: string };
 
@@ -23,6 +23,16 @@ async function resolveAdmin(req?: NextRequest): Promise<
       const user = await resolveApiUser(req);
       if (!user) return { ok: false, reason: "anonymous" };
       if (user.role !== "admin") return { ok: false, reason: "not-admin" };
+      // A gateway key (tako_live_…) must NEVER stand in for an admin session. Those
+      // keys exist to be handed out — the docs tell users to paste one into an MCP
+      // client's config, and /api/keys mints them from any session — so treating one
+      // as an admin credential would turn "an admin created a key to call agents"
+      // into "whoever holds that key can change user roles and read every email".
+      // Only a browser session, or the legacy single-purpose User.apiKey, reaches
+      // the admin surface; a gateway key gets the same 403 as a non-admin.
+      if (user.via === "apikey" && !hasScope(user, "admin")) {
+        return { ok: false, reason: "not-admin" };
+      }
       return { ok: true, admin: { id: user.id, name: user.name, email: user.email, role: user.role } };
     }
   }

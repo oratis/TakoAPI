@@ -49,18 +49,24 @@ curl ${SITE_URL}/v1/agents/${slug}/message \\
   ];
 }
 
-/** Discovery samples for the home page — no key required. */
-export function discoverySamples() {
+/**
+ * Discovery samples for the home page — no key required.
+ *
+ * The tab labels are UI text, so the caller passes a translator; the code inside
+ * each sample stays English because it is code. Without this the three labels
+ * rendered untranslated on all fifteen locales.
+ */
+export function discoverySamples(label: (key: "discover" | "call" | "fromAgent") => string) {
   return [
     {
       key: "discover",
-      label: "1. Discover",
+      label: label("discover"),
       code: `# The whole catalog, as Markdown for an LLM or JSON for code
 curl "${SITE_URL}/api/registry?format=json&q=research&limit=5"`,
     },
     {
       key: "call",
-      label: "2. Call",
+      label: label("call"),
       code: `# One key, any agent — set model to the agent's slug
 curl ${SITE_URL}/v1/chat/completions \\
   -H "Authorization: Bearer $TAKO_KEY" \\
@@ -68,7 +74,7 @@ curl ${SITE_URL}/v1/chat/completions \\
     },
     {
       key: "agent",
-      label: "3. From your agent",
+      label: label("fromAgent"),
       code: `# Teach Claude Code / Codex / OpenCode to use TakoAPI
 curl -fsSL ${SITE_URL}/install.sh | sh
 

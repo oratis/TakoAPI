@@ -15,7 +15,11 @@ export async function GET() {
   if (!session?.user?.id) return unauthorized();
   const userId = session.user.id;
 
-  const since = new Date(Date.now() - DAILY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  // (N - 1) days back, so the N generated buckets run today-13 … today. Using N
+  // produced a window that started a day too early and ended yesterday, so the
+  // chart never showed the calls a developer had just made — the one thing they
+  // open it to check.
+  const since = new Date(Date.now() - (DAILY_WINDOW_DAYS - 1) * 24 * 60 * 60 * 1000);
   since.setUTCHours(0, 0, 0, 0);
 
   const [totalCalls, recent, byAgent, spend, daily] = await Promise.all([

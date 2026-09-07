@@ -15,6 +15,11 @@ export async function GET(
 
   const skill = await prisma.skill.findFirst({
     where: { OR: [{ id }, { slug: id }] },
+    // reviewNote is a moderator's private note. It was being served to anonymous
+    // callers AND (below) sent with a CDN-cacheable header, so a single request
+    // could publish it to every subsequent visitor. The owner/admin branch re-reads
+    // it explicitly.
+    omit: { reviewNote: true },
     include: {
       category: true,
       // Public shape: the submitter's display name only, never their avatar URL.
@@ -36,7 +41,13 @@ export async function GET(
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "Skill not found" }, { status: 404 });
     }
-    return NextResponse.json(skill, { headers: NO_STORE_HEADERS });
+    // The owner and admins are the only ones who may see the moderator's note, and
+    // this branch is never cached.
+    const withNote = await prisma.skill.findUnique({
+      where: { id: skill.id },
+      select: { reviewNote: true },
+    });
+    return NextResponse.json({ ...skill, reviewNote: withNote?.reviewNote ?? null }, { headers: NO_STORE_HEADERS });
   }
 
   return NextResponse.json(skill, { headers: PUBLIC_CACHE_HEADERS });

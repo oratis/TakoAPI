@@ -75,7 +75,10 @@
     "installCta": "Hướng dẫn cài đặt",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "Kỹ năng cho coding agent của bạn",
-    "skillsSubtitle": "{count, number} kỹ năng OpenClaw, được cài nhiều nhất và mới nhất."
+    "skillsSubtitle": "{count, number} kỹ năng OpenClaw, được cài nhiều nhất và mới nhất.",
+    "quickstartTabDiscover": "1. Khám phá",
+    "quickstartTabCall": "2. Gọi",
+    "quickstartTabFromAgent": "3. Từ agent của bạn"
   },
   "Scenarios": {
     "frontend": "Frontend",

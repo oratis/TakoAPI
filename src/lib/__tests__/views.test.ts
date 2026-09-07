@@ -43,6 +43,9 @@ function lastVisitorKey(): string {
 }
 
 beforeEach(() => {
+  // The dedupe key is only formed when a real salt is configured — see visitorKey
+  // in lib/views. Every test below that exercises deduplication needs one set.
+  vi.stubEnv("TAKO_IP_SALT", "test-salt");
   extractClientIp.mockImplementation(
     (r) => (r as { headers: Headers }).headers.get("x-test-ip") ?? "anon"
   );
@@ -54,6 +57,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
 
@@ -207,5 +211,39 @@ describe("pruneSkillViewEvents", () => {
     expect(deleteMany).toHaveBeenCalledWith({
       where: { type: "view", createdAt: { lt: new Date("2026-09-03T12:00:00Z") } },
     });
+  });
+});
+
+describe("recordSkillView — no usable dedupe key", () => {
+  // Falling back to a constant salt would make the digest reversible by anyone
+  // holding the source, and treating extractClientIp's "anon" sentinel as an
+  // identity collapses every such visitor into one key — so the first view per
+  // skill per day counted and the rest were discarded as duplicates. Both now
+  // count the view and write no dedupe row: over-count slightly rather than
+  // under-count arbitrarily.
+  it("counts the view without a dedupe row when TAKO_IP_SALT is unset", async () => {
+    vi.stubEnv("TAKO_IP_SALT", "");
+    updateSkill.mockResolvedValue({});
+    const counted = await recordSkillView("skill-1", req(CHROME_UA));
+    expect(counted).toBe(true);
+    expect(findFirst).not.toHaveBeenCalled();
+    expect(createEvent).not.toHaveBeenCalled();
+    expect(updateSkill).toHaveBeenCalledWith({
+      where: { id: "skill-1" },
+      data: { viewsCount: { increment: 1 } },
+    });
+  });
+
+  it("does the same when the client address is unknown", async () => {
+    updateSkill.mockResolvedValue({});
+    const counted = await recordSkillView("skill-1", req(CHROME_UA, "anon"));
+    expect(counted).toBe(true);
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+
+  it("still swallows a database failure on that path", async () => {
+    vi.stubEnv("TAKO_IP_SALT", "");
+    updateSkill.mockRejectedValue(new Error("db down"));
+    await expect(recordSkillView("skill-1", req(CHROME_UA))).resolves.toBe(false);
   });
 });

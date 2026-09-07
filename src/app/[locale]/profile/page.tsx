@@ -38,6 +38,7 @@ export default async function ProfilePage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Profile");
+  const tComponents = await getTranslations("Components");
   const session = await auth();
   if (!session?.user?.id) {
     return <SignInPrompt title={t("title")} description={t("signInPrompt")} />;
@@ -110,13 +111,14 @@ export default async function ProfilePage({
       </div>
 
       {/* Primary tab: agents | skills */}
-      <div className="flex gap-2 mb-3" role="tablist" aria-label={t("myListings")}>
+      {/* Links, not tabs: each navigates to a URL and there is no tabpanel to own,
+          so aria-current is the honest annotation. */}
+      <nav className="flex gap-2 mb-3" aria-label={t("myListings")}>
         {(["agents", "skills"] as Tab[]).map((k) => (
           <Link
             key={k}
             href={href({ tab: k })}
-            role="tab"
-            aria-selected={tab === k}
+            aria-current={tab === k ? "page" : undefined}
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${
               tab === k ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600 hover:border-purple-300"
             }`}
@@ -125,7 +127,7 @@ export default async function ProfilePage({
             <span className={`ms-1.5 text-xs ${tab === k ? "text-purple-200" : "text-gray-500"}`}>{k === "agents" ? agents.length : skills.length}</span>
           </Link>
         ))}
-      </div>
+      </nav>
 
       {/* Status filter */}
       <div className="flex flex-wrap gap-2 mb-5 border-b border-gray-200 pb-3">
@@ -172,7 +174,7 @@ export default async function ProfilePage({
                           <span className="text-xs text-gray-500">{a.kind === "PROJECT" ? t("kindProject") : t("kindHosted")}</span>
                           {live && a.healthStatus && (
                             <span className={`text-xs ${a.healthStatus === "ok" ? "text-green-700" : a.healthStatus === "degraded" ? "text-amber-700" : "text-red-700"}`}>
-                              ● {a.healthStatus}
+                              ● {tComponents(a.healthStatus === "ok" ? "healthOk" : a.healthStatus === "degraded" ? "healthDegraded" : "healthDown")}
                             </span>
                           )}
                         </div>

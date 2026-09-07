@@ -75,7 +75,10 @@
     "installCta": "安装指南",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "面向编程智能体的技能",
-    "skillsSubtitle": "{count, number} 个 OpenClaw 技能,按安装最多和最新排列。"
+    "skillsSubtitle": "{count, number} 个 OpenClaw 技能,按安装最多和最新排列。",
+    "quickstartTabDiscover": "1. 发现",
+    "quickstartTabCall": "2. 调用",
+    "quickstartTabFromAgent": "3. 从你的 agent"
   },
   "Scenarios": {
     "frontend": "前端",

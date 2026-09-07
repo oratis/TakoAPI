@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveApiUser } from "@/lib/api-user";
 import { slugify } from "@/lib/utils";
 import { checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { badRequest, parseJson, serverError, unauthorized } from "@/lib/api";
@@ -9,19 +9,14 @@ import { submitSkillSchema } from "@/lib/schemas";
 import { withRequestLog } from "@/lib/requestLog";
 
 async function getSubmitter(req: NextRequest) {
-  const apiKey = req.headers.get("x-api-key");
-  if (apiKey) {
-    const user = await prisma.user.findUnique({ where: { apiKey } });
-    if (!user) return null;
-    return { user, autoApprove: user.role === "admin" };
-  }
-  const session = await auth();
-  if (session?.user?.id) {
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (!user) return null;
-    return { user, autoApprove: false };
-  }
-  return null;
+  const user = await resolveApiUser(req);
+  if (!user) return null;
+  // Auto-approval is a moderation bypass, so it stays with the credential that was
+  // always meant to carry it: an admin's single-purpose legacy key. A gateway key
+  // (tako_live_…) is handed to MCP clients and CI, so it submits like anyone else
+  // and waits for review, even when its owner is an admin.
+  const autoApprove = user.role === "admin" && user.via === "legacy-apikey";
+  return { user, autoApprove };
 }
 
 export async function POST(req: NextRequest) {

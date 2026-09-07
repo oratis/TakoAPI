@@ -75,7 +75,10 @@
     "installCta": "इंस्टॉलेशन गाइड",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "आपके कोडिंग एजेंट के लिए स्किल्स",
-    "skillsSubtitle": "{count, number} OpenClaw स्किल्स — सर्वाधिक इंस्टॉल की गईं और नवीनतम।"
+    "skillsSubtitle": "{count, number} OpenClaw स्किल्स — सर्वाधिक इंस्टॉल की गईं और नवीनतम।",
+    "quickstartTabDiscover": "1. खोजें",
+    "quickstartTabCall": "2. कॉल करें",
+    "quickstartTabFromAgent": "3. अपने एजेंट से"
   },
   "Scenarios": {
     "frontend": "फ़्रंटएंड",

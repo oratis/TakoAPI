@@ -75,7 +75,10 @@
     "installCta": "Руководство по установке",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "Навыки для кодинг-агента",
-    "skillsSubtitle": "{count, number} навыков OpenClaw — самые устанавливаемые и самые новые."
+    "skillsSubtitle": "{count, number} навыков OpenClaw — самые устанавливаемые и самые новые.",
+    "quickstartTabDiscover": "1. Поиск",
+    "quickstartTabCall": "2. Вызов",
+    "quickstartTabFromAgent": "3. Из вашего агента"
   },
   "Scenarios": {
     "frontend": "Фронтенд",

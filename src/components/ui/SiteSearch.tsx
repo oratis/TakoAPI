@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -33,6 +33,10 @@ export default function SiteSearch({
   const inferred: SearchScope = pathname.startsWith("/skills") || pathname.startsWith("/trending") ? "skills" : "agents";
   const [scope, setScope] = useState<SearchScope>(defaultScope ?? inferred);
   const [query, setQuery] = useState("");
+  // Both the desktop header and the open mobile menu render this component at the
+  // same time; keying the ids off `variant` alone made them collide, so one label
+  // pointed at the other instance's input.
+  const uid = useId();
 
   const placeholder =
     scope === "skills"
@@ -56,11 +60,11 @@ export default function SiteSearch({
           hero ? "shadow-sm py-1 ps-2 pe-1.5" : "bg-gray-50 focus-within:bg-white py-0.5 ps-1.5 pe-1"
         }`}
       >
-        <label className="sr-only" htmlFor={`site-search-scope-${variant}`}>
+        <label className="sr-only" htmlFor={`site-search-scope-${uid}`}>
           {t("searchScope")}
         </label>
         <select
-          id={`site-search-scope-${variant}`}
+          id={`site-search-scope-${uid}`}
           value={scope}
           onChange={(e) => setScope(e.target.value as SearchScope)}
           className={`shrink-0 rounded-full border-0 bg-transparent font-medium text-gray-600 outline-none cursor-pointer hover:text-gray-900 ${
@@ -72,11 +76,11 @@ export default function SiteSearch({
           <option value="skills">{t("scopeSkills")}</option>
         </select>
         <span aria-hidden className="mx-1 h-5 w-px bg-gray-200" />
-        <label className="sr-only" htmlFor={`site-search-${variant}`}>
+        <label className="sr-only" htmlFor={`site-search-${uid}`}>
           {placeholder}
         </label>
         <input
-          id={`site-search-${variant}`}
+          id={`site-search-${uid}`}
           type="search"
           autoFocus={autoFocus}
           placeholder={placeholder}

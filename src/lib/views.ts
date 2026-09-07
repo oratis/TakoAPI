@@ -13,9 +13,22 @@ import { extractClientIp } from "@/lib/ratelimit";
 // viewsCount move. The hash is not reversible to an address without the salt, and
 // even with it only identifies a source for one day.
 
-function visitorKey(req: NextRequest): string {
-  const salt = process.env.TAKO_IP_SALT || "unsalted-dev";
+/**
+ * Per-visitor-per-day dedupe key, or null when we cannot form an honest one.
+ *
+ * The guards match hashClientIp() in lib/requestLog deliberately. An earlier version
+ * fell back to a hardcoded salt when TAKO_IP_SALT was unset, which makes the digest
+ * reversible by anyone holding the source, and accepted extractClientIp's "anon"
+ * sentinel, which collapses every visitor without a forwarded address into one key —
+ * so the first such view per skill per day counted and every other one was silently
+ * discarded as a duplicate. Returning null instead means the view is counted without
+ * a dedupe row, which over-counts slightly rather than under-counting arbitrarily.
+ */
+function visitorKey(req: NextRequest): string | null {
+  const salt = process.env.TAKO_IP_SALT;
+  if (!salt) return null;
   const ip = extractClientIp(req);
+  if (!ip || ip === "anon") return null;
   const ua = req.headers.get("user-agent") ?? "";
   const day = new Date().toISOString().slice(0, 10);
   return createHash("sha256").update(`${ip}|${ua}|${day}|${salt}`).digest("hex").slice(0, 32);
@@ -27,7 +40,18 @@ const BOT_UA = /bot|crawl|spider|slurp|preview|fetch|headless|curl|wget|python-r
 export async function recordSkillView(skillId: string, req: NextRequest): Promise<boolean> {
   const ua = req.headers.get("user-agent") ?? "";
   if (!ua || BOT_UA.test(ua)) return false;
-  const key = `v1:${visitorKey(req)}`;
+  const visitor = visitorKey(req);
+  if (!visitor) {
+    // No usable dedupe key (see visitorKey). Count the view, write no row: a
+    // shared key would suppress every visitor after the first.
+    try {
+      await prisma.skill.update({ where: { id: skillId }, data: { viewsCount: { increment: 1 } } });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  const key = `v1:${visitor}`;
   try {
     const seen = await prisma.skillEvent.findFirst({
       where: { skillId, type: "view", referrer: key },

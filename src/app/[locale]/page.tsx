@@ -103,7 +103,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             {/* Quickstart: the whole product in three copy-pasteable steps. */}
             <div className="lg:pt-2">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">{t("quickstartLabel")}</p>
-              <CodeTabs samples={discoverySamples()} ariaLabel={t("quickstartLabel")} />
+              <CodeTabs samples={discoverySamples((k) =>
+                  t(k === "discover" ? "quickstartTabDiscover" : k === "call" ? "quickstartTabCall" : "quickstartTabFromAgent")
+                )} ariaLabel={t("quickstartLabel")} />
               <p className="mt-2 text-xs text-gray-600">
                 {t.rich("quickstartNote", {
                   link: (chunks) => (
@@ -127,7 +129,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <h2 className="text-xl font-semibold">{t("browseByScenario")}</h2>
             </div>
             <Link href="/scenarios" className="text-sm text-purple-600 hover:text-purple-700">
-              {t("allScenarios")} <ArrowRight className="inline h-3.5 w-3.5" />
+              {t("allScenarios")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -163,7 +165,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <span className="text-sm text-gray-600">{t("callableNow", { count: totalAgents })}</span>
             </div>
             <Link href="/agents" className="text-sm text-purple-600 hover:text-purple-700">
-              {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5" />
+              {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -184,7 +186,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <span className="text-sm text-gray-600">{t("selfHostable", { count: totalProjects })}</span>
             </div>
             <Link href="/agents?kind=PROJECT" className="text-sm text-purple-600 hover:text-purple-700">
-              {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5" />
+              {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -209,7 +211,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 href="/install"
                 className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2 text-sm font-medium hover:bg-white/25"
               >
-                {t("installCta")} <ArrowRight className="h-3.5 w-3.5" />
+                {t("installCta")} <ArrowRight className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
               </Link>
             </div>
             <div className="w-full md:w-auto md:min-w-[22rem]">
@@ -229,7 +231,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-semibold">{t("skillsTitle")}</h2>
           <Link href="/skills" className="text-sm text-purple-600 hover:text-purple-700">
-            {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5" />
+            {t("browseAll")} <ArrowRight className="inline h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
           </Link>
         </div>
         <p className="text-sm text-gray-600 mb-5">{t("skillsSubtitle", { count: totalSkills })}</p>

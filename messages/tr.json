@@ -75,7 +75,10 @@
     "installCta": "Kurulum rehberi",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "Kodlama ajanınız için beceriler",
-    "skillsSubtitle": "{count, number} OpenClaw becerisi, en çok kurulanlar ve en yeniler."
+    "skillsSubtitle": "{count, number} OpenClaw becerisi, en çok kurulanlar ve en yeniler.",
+    "quickstartTabDiscover": "1. Keşfet",
+    "quickstartTabCall": "2. Çağır",
+    "quickstartTabFromAgent": "3. Agent’ından"
   },
   "Scenarios": {
     "frontend": "Ön Yüz",

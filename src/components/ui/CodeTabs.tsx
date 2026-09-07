@@ -65,11 +65,17 @@ export default function CodeTabs({
           <span>{copied ? t("copied") : t("copy")}</span>
         </button>
       </div>
+      {/* dir="ltr" + text-start: code is LTR even on the Arabic locale, where the
+          inherited direction would otherwise right-align it and move the leading
+          `$`. tabIndex makes the scroll container reachable without a mouse, which
+          a horizontally scrolling region needs to be. */}
       <pre
         id={`${id}-panel`}
         role="tabpanel"
+        tabIndex={0}
+        dir="ltr"
         aria-labelledby={`${id}-${current.key}`}
-        className="overflow-x-auto px-4 py-3.5 text-[12.5px] leading-relaxed text-gray-100"
+        className="overflow-x-auto px-4 py-3.5 text-[12.5px] leading-relaxed text-gray-100 text-start"
       >
         <code>{current.code}</code>
       </pre>

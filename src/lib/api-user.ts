@@ -55,9 +55,24 @@ export async function resolveApiUser(req: NextRequest): Promise<ApiUser | null> 
   return user ? { ...user, via: "session", scopes: [] } : null;
 }
 
-/** True when a key-authenticated caller may perform `scope` (sessions always may). */
+/**
+ * True when the caller may perform `scope`.
+ *
+ * `admin` is deliberately not part of the "no scopes means unrestricted" rule that
+ * covers the read/invoke/submit surface. Every key `/api/keys` issues today has an
+ * empty `scopes` array, and those keys are meant to be pasted into MCP clients and
+ * CI config; if an empty array granted `admin`, an admin's ordinary gateway key
+ * would be a full admin credential. `admin` requires the scope to be named, which
+ * nothing currently sets — so today only a session (or the legacy `User.apiKey`)
+ * reaches the admin surface, which is the intended blast radius.
+ */
 export function hasScope(user: ApiUser, scope: "read" | "invoke" | "submit" | "admin"): boolean {
-  if (user.via === "session") return scope !== "admin" || user.role === "admin";
-  if (scope === "admin") return user.role === "admin" && (user.scopes.length === 0 || user.scopes.includes("admin"));
+  if (scope === "admin") {
+    if (user.role !== "admin") return false;
+    // A session, or the single-purpose legacy key, is already admin-shaped.
+    if (user.via !== "apikey") return true;
+    return user.scopes.includes("admin");
+  }
+  if (user.via === "session") return true;
   return user.scopes.length === 0 || user.scopes.includes(scope);
 }

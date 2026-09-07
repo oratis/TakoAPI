@@ -61,7 +61,7 @@ export default function CategoryBadge({
         <div className="flex-1 min-w-0">
           <span className="block truncate text-xs">{category.name}</span>
         </div>
-        <span className={`text-xs font-normal ${active ? "text-purple-200" : "text-gray-500"}`}>
+        <span className={`text-xs font-normal ${active ? "text-purple-100" : "text-gray-600"}`}>
           {category.skillCount}
         </span>
       </Link>
@@ -79,7 +79,7 @@ export default function CategoryBadge({
     >
       <span>{icon}</span>
       <span>{category.name}</span>
-      <span className={`text-xs ${active ? "text-purple-200" : "text-gray-500"}`}>
+      <span className={`text-xs ${active ? "text-purple-100" : "text-gray-600"}`}>
         {category.skillCount}
       </span>
     </Link>

@@ -17,6 +17,30 @@ import {
 const TIMEOUT_MS = 120_000;
 const ROUTE = "/v1/agents/[slug]/stream";
 
+// A2A reports failures inside the stream, over an HTTP 200, so the response status
+// alone cannot tell a served call from a failed one. The bytes are relayed verbatim;
+// this only *observes* them, so a stream whose whole content is a JSON-RPC error is
+// recorded as a failure and billed nothing — which is what the docs promise
+// (messages/en.json `Docs.limitsBillingFailures`) and what the OpenAI shim already
+// does with the same frames.
+const EVENT_BOUNDARY = /\r\n\r\n|\n\n|\r\r/;
+
+function frameIsRpcError(raw: string): boolean {
+  const data = raw
+    .split(/\r\n|\n|\r/)
+    .filter((l) => l.startsWith("data:"))
+    .map((l) => l.slice(5).trim())
+    .join("");
+  if (!data || data === "[DONE]") return false;
+  try {
+    const envelope = JSON.parse(data);
+    return !!(envelope && typeof envelope === "object" && "error" in envelope && !("result" in envelope));
+  } catch {
+    // A partial or non-JSON frame says nothing either way.
+    return false;
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -177,18 +201,37 @@ export async function POST(
 
   // Pass the upstream SSE through; clear the abort timer when it ends.
   const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let sniffBuffer = "";
+  let rpcError = false;
   const out = new ReadableStream<Uint8Array>({
     async pull(controller) {
       try {
         const { done, value } = await reader.read();
         if (done) {
-          controller.close();
           clearTimeout(timer);
-          // The stream completed — this is the only path that charges.
-          await settle(upstream.status, null);
+          // Settle BEFORE closing. `controller.close()` ends the HTTP response, and
+          // Cloud Run may stop giving this instance CPU the moment it does, so a
+          // debit awaited afterwards can be lost — leaving the caller with a
+          // complete answer and the Invocation row stuck unpriced. This is the only
+          // path that charges.
+          await settle(rpcError ? 502 : upstream.status, rpcError ? "UPSTREAM_ERROR" : null);
+          controller.close();
           return;
         }
+        // Relay first, then inspect a copy: observation must never delay or alter
+        // the bytes the caller receives.
         controller.enqueue(value);
+        sniffBuffer += decoder.decode(value, { stream: true });
+        let boundary = EVENT_BOUNDARY.exec(sniffBuffer);
+        while (boundary) {
+          if (frameIsRpcError(sniffBuffer.slice(0, boundary.index))) rpcError = true;
+          sniffBuffer = sniffBuffer.slice(boundary.index + boundary[0].length);
+          boundary = EVENT_BOUNDARY.exec(sniffBuffer);
+        }
+        // A malformed upstream that never emits a boundary must not grow this
+        // buffer without bound.
+        if (sniffBuffer.length > 64_000) sniffBuffer = sniffBuffer.slice(-8_000);
       } catch (err) {
         // Upstream broke mid-stream, or TIMEOUT_MS aborted it. The caller did not
         // get a complete answer, so bill nothing — but do record what happened.

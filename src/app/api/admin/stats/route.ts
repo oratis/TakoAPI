@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       topSkills,
       totalAgents,
       pendingAgents,
+      pendingAgentRows,
       hostedAgents,
       projectAgents,
       gatewayCalls30d,
@@ -47,6 +48,14 @@ export async function GET(req: NextRequest) {
       }),
       prisma.agent.count(),
       prisma.agent.count({ where: { status: "PENDING" } }),
+      // The review queue on the dashboard needs the rows, not just how many. The
+      // count stays under agents.pending; this is what `pendingAgents` returns.
+      prisma.agent.findMany({
+        where: { status: "PENDING" },
+        select: { id: true, slug: true, name: true, kind: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
       prisma.agent.count({ where: { kind: "HOSTED" } }),
       prisma.agent.count({ where: { kind: "PROJECT" } }),
       prisma.invocation.count({ where: { createdAt: { gte: since } } }),
@@ -70,7 +79,7 @@ export async function GET(req: NextRequest) {
         topSkills,
         // Agents were missing entirely: the dashboard reported a skills-only site
         // long after the registry became the product.
-        pendingAgents,
+        pendingAgents: pendingAgentRows,
         agents: {
           total: totalAgents,
           pending: pendingAgents,

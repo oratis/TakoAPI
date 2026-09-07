@@ -64,14 +64,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // 8 tries per 15 minutes per (account, client IP), checked before the user
         // lookup so a flood costs neither a query nor a bcrypt compare.
         //
-        // The IP half is caller-controlled (see extractClientIp), so this raises the
-        // cost of grinding one account from one source; it is not, and cannot be, a
-        // defence against a spray distributed over many addresses.
+        // `perIp: false` is load-bearing. checkRateLimit otherwise appends
+        // extractClientIp(), which reads the FIRST element of X-Forwarded-For — a
+        // value the caller writes, since Cloud Run appends to that header rather
+        // than replacing it. Bucketing on it would let a single host rotate the
+        // header and mint a fresh 8-try budget per request, i.e. no limit at all.
+        // The budget is per account instead: an attacker cannot rotate the address
+        // they are trying to break into.
         const bucketId = loginBucketId(email);
         const rl = await checkRateLimit(asRateLimitRequest(request), {
           key: `login:${bucketId}`,
           windowMs: 15 * 60 * 1000,
           max: 8,
+          perIp: false,
         });
         if (!rl.ok) {
           console.warn("[auth] credentials login rate-limited", {

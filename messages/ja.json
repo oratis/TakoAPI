@@ -75,7 +75,10 @@
     "installCta": "インストールガイド",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "コーディングエージェント向けスキル",
-    "skillsSubtitle": "{count, number}件のOpenClawスキルから、インストール数上位と最新をご紹介します。"
+    "skillsSubtitle": "{count, number}件のOpenClawスキルから、インストール数上位と最新をご紹介します。",
+    "quickstartTabDiscover": "1. 探す",
+    "quickstartTabCall": "2. 呼び出す",
+    "quickstartTabFromAgent": "3. エージェントから"
   },
   "Scenarios": {
     "frontend": "フロントエンド",

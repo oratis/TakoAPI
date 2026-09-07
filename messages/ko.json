@@ -75,7 +75,10 @@
     "installCta": "설치 가이드",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "코딩 에이전트용 스킬",
-    "skillsSubtitle": "OpenClaw 스킬 {count, number}개 — 설치 많은 순과 최신순."
+    "skillsSubtitle": "OpenClaw 스킬 {count, number}개 — 설치 많은 순과 최신순.",
+    "quickstartTabDiscover": "1. 탐색",
+    "quickstartTabCall": "2. 호출",
+    "quickstartTabFromAgent": "3. 에이전트에서"
   },
   "Scenarios": {
     "frontend": "프런트엔드",

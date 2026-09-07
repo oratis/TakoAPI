@@ -75,7 +75,10 @@
     "installCta": "Guide d'installation",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "Skills pour ton agent de code",
-    "skillsSubtitle": "{count, number} skills OpenClaw, les plus installés et les plus récents."
+    "skillsSubtitle": "{count, number} skills OpenClaw, les plus installés et les plus récents.",
+    "quickstartTabDiscover": "1. Découvrir",
+    "quickstartTabCall": "2. Appeler",
+    "quickstartTabFromAgent": "3. Depuis ton agent"
   },
   "Scenarios": {
     "frontend": "Frontend",

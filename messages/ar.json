@@ -75,7 +75,10 @@
     "installCta": "دليل التثبيت",
     "installPlatforms": "Claude Code · Codex · OpenCode · MCP",
     "skillsTitle": "مهارات لوكيل البرمجة لديك",
-    "skillsSubtitle": "{count, number} مهارة OpenClaw، الأكثر تثبيتًا والأحدث."
+    "skillsSubtitle": "{count, number} مهارة OpenClaw، الأكثر تثبيتًا والأحدث.",
+    "quickstartTabDiscover": "١. الاكتشاف",
+    "quickstartTabCall": "٢. الاستدعاء",
+    "quickstartTabFromAgent": "٣. من وكيلك"
   },
   "Scenarios": {
     "frontend": "الواجهة الأمامية",

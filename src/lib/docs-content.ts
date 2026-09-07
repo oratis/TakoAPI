@@ -137,7 +137,7 @@ export const DISCOVERY_ENDPOINTS: Endpoint[] = [
   "securitySchemes": null,
   "cardSignatureVerified": false,
   "namespaceVerified": true,
-  "healthStatus": "healthy",
+  "healthStatus": "ok",
   "healthCheckedAt": "2026-09-05T02:11:07.000Z",
   "pricingModel": "PER_CALL",
   "unitPriceUsd": 0.02,

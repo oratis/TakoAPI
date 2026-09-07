@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
           {t("resetLinkSent")}
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="sr-only">
               {t("email")}

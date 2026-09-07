@@ -329,10 +329,14 @@ async function streamCompletion(ctx: GatewayContext, includeUsage: boolean): Pro
             }
           }
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-          // The stream completed — this is the only path that charges, and only when
-          // the agent did not report a failure through it.
+          // Settle BEFORE closing. `controller.close()` ends the HTTP response, and
+          // Cloud Run may stop giving this instance CPU the moment it does, so a
+          // debit awaited afterwards is the same fire-and-forget hazard this branch
+          // removed everywhere else — it would lose the charge silently, leaving the
+          // Invocation row stuck unpriced. This is the only path that charges, and
+          // only when the agent did not report a failure through the stream.
           await settle(rpcError ? 502 : upstream.status, rpcError ? "UPSTREAM_ERROR" : null);
+          controller.close();
           return;
         }
 
@@ -400,7 +404,16 @@ async function sendCompletion(ctx: GatewayContext): Promise<Response> {
     status = res.status;
     const envelope = obj(await res.json().catch(() => null));
     const result = obj(envelope?.result);
-    if (!result && envelope?.error) {
+    if (!envelope) {
+      // No parseable JSON-RPC envelope at all: the agent sent HTML, an empty body,
+      // or the 30-second abort landed while the body was being read. `res.json()`
+      // rejects and the catch below swallows it, so without this branch `status`
+      // stayed 200, `errorCode` stayed null, and the caller was charged full price
+      // for an empty completion — the timeout case being the worst, since a client
+      // that retries drains its balance.
+      status = 502;
+      errorCode = abort.signal.aborted ? "UPSTREAM_TIMEOUT" : "UPSTREAM_BAD_RESPONSE";
+    } else if (!result && envelope.error) {
       // JSON-RPC failures arrive over HTTP 200. Without this the caller got an empty
       // completion and was charged full price for it.
       status = 502;

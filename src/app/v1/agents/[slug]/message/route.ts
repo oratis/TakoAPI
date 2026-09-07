@@ -211,7 +211,15 @@ export async function POST(
     upstream = await res.json().catch(() => null);
     const envelope = obj(upstream);
     const result = obj(envelope?.result);
-    if (!result && envelope?.error) {
+    if (!envelope) {
+      // No parseable JSON-RPC envelope: HTML from a proxy, an empty body, or the
+      // abort landing mid-read (res.json() rejects and the `.catch` above swallows
+      // it). Without this the call kept HTTP 200 with a null errorCode, so it was
+      // charged full price and the caller was handed the literal body `null`.
+      status = 502;
+      errorCode = ctrl.signal.aborted ? "UPSTREAM_TIMEOUT" : "UPSTREAM_BAD_RESPONSE";
+      unreachable = true;
+    } else if (!result && envelope.error) {
       // JSON-RPC reports failures over HTTP 200. The caller still gets the envelope
       // unchanged, but it is not a served call and must not be charged for.
       errorCode = "UPSTREAM_RPC_ERROR";

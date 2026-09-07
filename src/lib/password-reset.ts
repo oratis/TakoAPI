@@ -115,12 +115,10 @@ export async function consumeResetToken(rawToken: string): Promise<{ userId: str
 /**
  * Issue an email-verification token and mail the link.
  *
- * GROUNDWORK ONLY — nothing consumes these yet. The route that redeems the link
- * (/api/auth/verify) is not part of this change, so until it ships the mail's button
- * leads nowhere. Login does not depend on it either way: `User.emailVerified` gates
- * nothing in authorize() or in any route, and making it a gate would lock out every
- * account created before this existed. consumeVerificationToken() below is the whole
- * server side of what remains.
+ * Redeemed by GET /api/auth/verify, which sets `User.emailVerified`. Verification
+ * gates nothing: neither authorize() nor any route checks `emailVerified`, and making
+ * it a gate would lock out every account created before this existed. It records the
+ * fact so a future policy has something to stand on.
  */
 export async function sendEmailVerification(userId: string, email: string): Promise<void> {
   const rawToken = await issue(`${VERIFY_PREFIX}${userId}`, VERIFY_TTL_MS);

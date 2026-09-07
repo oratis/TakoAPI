@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthorizedCron } from "@/lib/cron-auth";
+import { pruneSkillViewEvents } from "@/lib/views";
 
-// Cron-only endpoint: age out RequestLog rows. Nothing had ever deleted from this
+// Cron-only endpoint: age out the two tables that grow with traffic and that
+// nothing else deletes from — RequestLog rows, and the SkillEvent rows that
+// deduplicate skill views. Nothing had ever deleted from this
 // table — `maybeClean()` in ratelimit.ts only sweeps RateLimitBucket — so it grew
 // without bound on a db-f1-micro with a 10 GB disk.
 //
@@ -65,12 +68,27 @@ async function handle(req: NextRequest) {
   // `exhausted: false` means the backlog outlived MAX_BATCHES — the next scheduled
   // run continues where this one stopped. Surfaced so a permanent backlog is visible
   // rather than looking like a successful run every time.
+  // View-dedupe rows only matter for the UTC day they were written, so they age out
+  // far faster than the request log. Without this they were written on every counted
+  // page view and never removed. A failure here must not fail the RequestLog sweep,
+  // which is the one that actually threatens the 10 GB disk.
+  let viewEventsDeleted = 0;
+  let viewSweepError: string | null = null;
+  try {
+    viewEventsDeleted = await pruneSkillViewEvents();
+  } catch (err) {
+    viewSweepError = err instanceof Error ? err.message : String(err);
+    console.error("[retention] SkillEvent view purge failed", { err: viewSweepError });
+  }
+
   return NextResponse.json({
-    table: "RequestLog",
+    tables: ["RequestLog", "SkillEvent"],
     retentionDays: RETENTION_DAYS,
     deleted,
     batches,
     exhausted,
+    viewEventsDeleted,
+    ...(viewSweepError ? { viewSweepError } : {}),
     durationMs: Date.now() - startedAt,
   });
 }
