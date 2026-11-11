@@ -50,13 +50,13 @@ const STALE_AFTER_HOURS = 72;
 // new source is monitored. A silent default is how the last outage stayed silent.
 const SKILL_SOURCE_JOBS: Record<SkillSource, string | null> = {
   CURATED: "takoapi-daily-sync", // Cloud Run Job, daily 03:00 UTC (scripts/daily-sync.ts)
-  GITHUB_SCRAPE: null, // scripts/scrape-github-skills.ts, run by hand
+  GITHUB_SCRAPE: "takoapi-github-skills",
   USER_SUBMITTED: null, // humans
 };
 
 const AGENT_KIND_JOBS: Record<AgentKind, string | null> = {
-  PROJECT: "tako-scrape-agents", // daily 04:00 UTC
-  HOSTED: "tako-import-hosted", // daily 04:30 UTC
+  PROJECT: "takoapi-scrape-agents", // daily 04:00 UTC
+  HOSTED: "takoapi-import-hosted", // daily 04:30 UTC
 };
 
 type SourceFreshness = {

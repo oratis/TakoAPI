@@ -184,6 +184,7 @@ async function runForAgent(agent: AgentKey, limit: number): Promise<void> {
   const seen = new Set<string>();
   const aggregated: Array<{ owner: string; repo: string; description: string | null; stars: number; htmlUrl: string; topics: string[] }> = [];
 
+  let failed = 0;
   for (const q of spec.queries) {
     if (aggregated.length >= limit) break;
     try {
@@ -196,6 +197,7 @@ async function runForAgent(agent: AgentKey, limit: number): Promise<void> {
         if (aggregated.length >= limit) break;
       }
     } catch (err) {
+      failed++;
       console.warn(`[${agent}] search failed for "${q}":`, (err as Error).message);
     }
     await new Promise((r) => setTimeout(r, 1100));
@@ -214,10 +216,12 @@ async function runForAgent(agent: AgentKey, limit: number): Promise<void> {
       else skipped++;
       await new Promise((r) => setTimeout(r, 400));
     } catch (err) {
+      failed++;
       console.warn(`[${agent}] import ${item.owner}/${item.repo} failed:`, (err as Error).message);
     }
   }
-  console.log(`[${agent}] created=${created} updated=${updated} skipped=${skipped}`);
+  console.log(JSON.stringify({event: "ingestion_run", job: "github-skills", agent, created, updated, skipped, failed, found: aggregated.length}));
+  if (failed || !aggregated.length) process.exitCode = 1;
 }
 
 async function main() {

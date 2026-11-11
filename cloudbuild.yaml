@@ -25,9 +25,13 @@ steps:
       - --tag=us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:latest
       - .
 
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, "us-central1-docker.pkg.dev/$PROJECT_ID/takoapi-repo/takoapi:$BUILD_ID"]
+
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    waitFor: [build]
+    waitFor: [push]
     entrypoint: gcloud
     args:
       - run
@@ -40,7 +44,9 @@ steps:
       - --port=8080
       - --cpu=1
       - --memory=512Mi
-      - --max-instances=20
+      - --max-instances=6
+      - --concurrency=12
+      - --timeout=360
       - --add-cloudsql-instances=$PROJECT_ID:us-central1:takoapi-db
       # --update-* (not --set-*): only the listed keys are touched.
       # Secrets are bound by reference; their values never appear in this file
