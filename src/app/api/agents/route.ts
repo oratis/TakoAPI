@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.AgentWhereInput = { status: "APPROVED" };
     if (kind && KINDS.has(kind)) where.kind = kind as Prisma.AgentWhereInput["kind"];
+    if (searchParams.get("health") === "ok") where.healthStatus = "ok";
     if (category) where.category = { slug: category };
     if (isScenarioSlug(scenario)) where.scenarios = { has: scenario };
     if (protocol) {
