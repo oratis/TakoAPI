@@ -86,7 +86,7 @@ Full walkthrough and copy-paste commands: <https://takoapi.com/install>.
 - **Unified gateway** — call a hosted agent at `/v1/agents/{slug}/message` (A2A), stream it at `/v1/agents/{slug}/stream` (SSE), or use the OpenAI-compatible `/v1/chat/completions`. Issue API keys in `/dashboard`; usage is metered per call.
 - **Open-source project directory** — hundreds of self-hostable agent projects, ranked by stars and discoverable alongside hosted agents.
 - **Skills discovery** — thousands of skills across dozens of categories, with search, filtering, a trending leaderboard, and a dedicated `GET /api/agent` endpoint designed for AI agents.
-- **Accounts** — sign in with Google, Apple, or email/password. Agents can register via API and receive a key.
+- **Accounts** — sign in with Google, Apple, or email/password. Agents registering through the API receive a submission key. For gateway calls, sign in and create a gateway key in the developer dashboard.
 
 ## Tech Stack
 

@@ -1,9 +1,6 @@
 # Cron 调度 — 权威清单与幂等建置
 
-> 所有自动摄取与维护端点都靠 **Cloud Scheduler** 触发，调度配置本身不在代码库里
-> （无 `vercel.json`）。本文件是它们的**唯一权威来源**：频率、参数、鉴权，以及可复现的
-> `gcloud` 建置命令。改调度请改这里并同步执行。
-> 关联：`docs/05-automation-ingestion-review.md` §7、`docs/08-tech-review-2026-09-05.md` §2.9。
+调度定义在 `scripts/configure-catalog-schedules.py`，生产实例由 Google Cloud Scheduler 运行。下表时间均为 UTC。
 
 ## 端点一览
 
@@ -11,10 +8,10 @@
 |-----|------|----------|------|----------|
 | `takoapi-scrape-agents` | `GET /api/cron/scrape-agents` | 每日 06:00 UTC | `?pages=1&minStars=200&max=2000` | PROJECT 直接 APPROVED；admin REJECT/DISABLE 的 slug 会被跳过 |
 | `takoapi-import-hosted` | `GET /api/cron/import-hosted` | 每日 07:00 UTC | `?max=0`（不限） | HOSTED 落 PENDING，待 `/admin/agents` 审核；跨域变更也降级 PENDING |
-| `takoapi-github-check` | `GET /api/cron/check-github` | 每周日 02:00 UTC | —— | 探测 skill 的 GitHub 链接是否 404，写 `ghStatus`/`ghCheckedAt` |
+| `takoapi-github-check` | `POST /api/cron/check-github` | 每周日 02:00 UTC | —— | 探测 skill 的 GitHub 链接是否 404，写 `ghStatus`/`ghCheckedAt` |
 | `takoapi-health` | `GET /api/cron/health` | 每小时 | —— | 更新 `healthStatus`/`healthCheckedAt`，状态**翻转**时追加 `AgentHealthCheck` |
-| `takoapi-weekly-digest` | `GET /api/cron/weekly-digest` | 每周一 09:00 UTC | —— | 给已验证订阅者发周报 |
-| `takoapi-retention` | `GET /api/cron/retention` | 每日 02:30 UTC | —— | 删除 90 天前的 `RequestLog`（分批，单次上限 10 万行） |
+| `takoapi-weekly-digest` | `POST /api/cron/weekly-digest` | 每周一 09:00 UTC | —— | 给已验证订阅者发周报 |
+| `takoapi-retention` | `POST /api/cron/retention` | 每日 02:30 UTC | —— | 删除 90 天前的 `RequestLog`（分批，单次上限 10 万行） |
 | `takoapi-ingestion-health` | `GET /api/cron/ingestion-health` | 每 6 小时 | —— | **只读**。按来源报告目录新鲜度，超过 72 小时无新增即 `stale: true` |
 | `takoapi-github-skills` | Cloud Run Job | 每日 05:00 UTC | 每类最多 50 个仓库 | GitHub 元数据，保留现有审核状态 |
 | `takoapi-daily-sync` | Cloud Run **Job**（非 HTTP 端点） | 每日 03:00 UTC | —— | 从 clawskills.sh 增量同步 skills；见 `scripts/deploy-sync-job.sh` |
@@ -32,18 +29,11 @@
 
 GitHub Skills 每天 05:00 UTC 运行。两个采集作业仅从 Secret Manager 获取运行时数据库配置。GitHub Skills 使用项目的 GitHub 凭据，按来源和标识更新元数据。显示名称允许重复。Hosted Agent 由社区注册表发现后进入既有审核流程。执行记录与新增数可在 Cloud Run Jobs 和 Cloud Logging 查看。
 
-## 必须配的告警（否则等于没做）
+## 告警与恢复
 
-摄取管道曾经**静默停摆两个月**：`takoapi-daily-sync` 每天 03:00 正常触发、正常退出 0，
-但 clawskills.sh 改版后选择器失配，一条都没导入。目录里最新的 skill 停在 2026-07-04，
-而没有任何信号提示。现在 job 在"跑了但一条没找到"时会以非 0 退出，
-但**只有配了告警才有人知道**。建议在 Cloud Monitoring 建三条：
+Cloud Monitoring 的 `TakoAPI catalog ingestion and freshness` 策略读取日志指标 `takoapi_catalog_ingestion_errors`，在 Cloud Console 生成事件。它监测调度失败、采集任务错误和超过 72 小时无新增的来源。没有新增时，先比对上游候选量、成功刷新的数量和待审数。现有站点 5xx 与 uptime 策略继续独立运行。
 
-| 告警 | 条件 | 为什么 |
-|---|---|---|
-| 摄取任务失败 | Cloud Scheduler / Cloud Run Job 执行失败 ≥ 1 次 | 抓取失配、鉴权过期 |
-| 目录停滞 | `/api/cron/ingestion-health` 返回体里任一来源 `stale: true` | 唯一能抓住"成功但没产出"的信号 |
-| 网关 5xx 率 | `jsonPayload.event="gateway_call_rejected"` 或 5xx 超阈值 | 上游批量失效 |
+Cloud SQL 每天 01:00 UTC 开始备份，保留最近七份。应用和采集使用 Secret Manager 的 `tako-runtime-database-url`。管理员连接用于单独的手动迁移作业。该作业默认执行 `prisma validate`。需要应用迁移时，确认备份及目标镜像内的具体 SQL 文件，再为该次执行指定 `db,execute,--schema=prisma/schema.prisma,--file=prisma/migrations/<migration>/migration.sql`。生产的迁移历史经过手动基线处理，部署前应核对实际的表、列和索引。
 
 ## 运维
 
