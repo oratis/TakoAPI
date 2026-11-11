@@ -23,6 +23,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Secret scan
         run: npm run check:secrets
       - name: i18n parity
