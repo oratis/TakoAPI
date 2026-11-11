@@ -1,9 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+const shared = globalThis as typeof globalThis & { prisma?: PrismaClient };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+function createClient() {
+  const raw = process.env.DATABASE_URL;
+  if (!raw || !process.env.K_SERVICE) return new PrismaClient();
+  const url = new URL(raw);
+  url.searchParams.set("connection_limit", process.env.TAKO_DB_POOL_SIZE || "2");
+  return new PrismaClient({ datasourceUrl: url.toString() });
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = shared.prisma ??= createClient();

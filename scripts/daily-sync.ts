@@ -1,8 +1,7 @@
 /**
  * Daily Sync Script for TakoAPI
  * 1. Incremental update from ClawSkills.sh (new skills + updated downloads/stars)
- * 2. Deduplicate skills (keep highest downloads per skill name)
- * 3. Recount category skill counts
+ * 2. Recount category skill counts
  *
  * Run:     DATABASE_URL=... npx tsx scripts/daily-sync.ts
  * Dry run: DATABASE_URL=... npx tsx scripts/daily-sync.ts --dry
@@ -23,7 +22,7 @@
  */
 
 import puppeteer from "puppeteer-core";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { logIngestionRun } from "../src/lib/ingestion-log";
 
 const CHROME_PATH =
@@ -147,9 +146,11 @@ async function syncFromClawSkills(): Promise<SyncResult> {
     console.log(`  Categories found: ${catNames.length}`);
 
     // Get existing slugs from DB
-    const existingSlugs = new Set(
-      (await prisma.skill.findMany({ select: { slug: true } })).map((s) => s.slug)
-    );
+    const stored = await prisma.skill.findMany({
+      select: { slug: true, clawSkillsUrl: true, submitterId: true, downloads: true, stars: true },
+    });
+    const existing = new Map(stored.map((row) => [row.slug, row]));
+    const seen = new Set<string>();
 
     // Get existing category map
     const categoryMap = new Map<string, string>();
@@ -239,7 +240,7 @@ async function syncFromClawSkills(): Promise<SyncResult> {
       found += skills.length;
 
       for (const sk of skills) {
-        if (!sk.slug || !sk.name) {
+        if (!/^[a-z0-9][a-z0-9._-]*$/i.test(sk.slug) || !sk.name) {
           malformed++;
           continue;
         }
@@ -247,7 +248,12 @@ async function syncFromClawSkills(): Promise<SyncResult> {
         const downloads = parseDownloads(sk.downloads);
         const stars = parseInt(sk.stars) || 0;
 
-        if (existingSlugs.has(sk.slug)) {
+        if (seen.has(sk.slug)) continue;
+        seen.add(sk.slug);
+        const previous = existing.get(sk.slug);
+        if (previous) {
+          if (previous.submitterId || previous.clawSkillsUrl !== `https://clawskills.sh/skills/${sk.slug}`) continue;
+          if (previous.downloads === downloads && previous.stars === stars) continue;
           // Update existing: downloads + stars only
           if (!DRY) {
             await prisma.skill.update({
@@ -260,7 +266,6 @@ async function syncFromClawSkills(): Promise<SyncResult> {
           // Count it as new without writing, and remember it so a slug repeated
           // across categories is not counted twice. `!categoryId` only happens
           // under --dry, where the category row was reported rather than created.
-          existingSlugs.add(sk.slug);
           newCount++;
         } else {
           // Insert new skill
@@ -273,7 +278,7 @@ async function syncFromClawSkills(): Promise<SyncResult> {
                 description: sk.description,
                 clawSkillsUrl: `https://clawskills.sh/skills/${sk.slug}`,
                 clawHubUrl: `https://clawskills.sh/skills/${sk.slug}`,
-                installCmd: `clawhub install ${sk.name}`,
+                installCmd: /^[a-z0-9][a-z0-9._-]*$/i.test(sk.name) ? `clawhub install ${sk.name}` : null,
                 author: sk.author,
                 categoryId,
                 downloads,
@@ -284,10 +289,9 @@ async function syncFromClawSkills(): Promise<SyncResult> {
                 source: "CURATED",
               },
             });
-            existingSlugs.add(sk.slug);
             newCount++;
-          } catch {
-            // Slug collision - skip
+          } catch (error) {
+            if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;
             malformed++;
           }
         }
@@ -314,72 +318,7 @@ async function syncFromClawSkills(): Promise<SyncResult> {
 }
 
 // ============================================
-// STEP 2: Deduplicate skills
-// ============================================
-async function deduplicateSkills() {
-  console.log("\n=== Step 2: Deduplicating skills ===");
-
-  // Find duplicate names (case-insensitive)
-  const allSkills = await prisma.skill.findMany({
-    select: { id: true, name: true, slug: true, downloads: true, likesCount: true, viewsCount: true },
-    orderBy: { downloads: "desc" },
-  });
-
-  // Group by lowercase name
-  const groups = new Map<string, typeof allSkills>();
-  for (const skill of allSkills) {
-    const key = skill.name.toLowerCase().trim();
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
-    groups.get(key)!.push(skill);
-  }
-
-  let removedCount = 0;
-  const toDelete: string[] = [];
-
-  for (const [name, skills] of groups) {
-    if (skills.length <= 1) continue;
-
-    // Sort by downloads desc, then likesCount, then viewsCount
-    skills.sort((a, b) => {
-      if (b.downloads !== a.downloads) return b.downloads - a.downloads;
-      if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
-      return b.viewsCount - a.viewsCount;
-    });
-
-    // Keep the first (highest downloads), delete the rest
-    const keep = skills[0];
-    const dupes = skills.slice(1);
-
-    if (dupes.length > 0) {
-      console.log(
-        `  "${name}": keeping ${keep.slug} (${keep.downloads} dl), removing ${dupes.length} dupes`
-      );
-    }
-
-    for (const dupe of dupes) {
-      toDelete.push(dupe.id);
-    }
-    removedCount += dupes.length;
-  }
-
-  // Delete duplicates (and their likes)
-  if (toDelete.length > 0) {
-    await prisma.like.deleteMany({
-      where: { skillId: { in: toDelete } },
-    });
-    await prisma.skill.deleteMany({
-      where: { id: { in: toDelete } },
-    });
-  }
-
-  console.log(`  Removed ${removedCount} duplicate skills`);
-  return removedCount;
-}
-
-// ============================================
-// STEP 3: Recount categories
+// STEP 2: Recount categories
 // ============================================
 async function recountCategories() {
   console.log("\n=== Step 3: Recounting categories ===");
@@ -387,7 +326,7 @@ async function recountCategories() {
   const categories = await prisma.category.findMany();
   for (const cat of categories) {
     const count = await prisma.skill.count({
-      where: { categoryId: cat.id },
+      where: { categoryId: cat.id, status: "APPROVED" },
     });
     if (count !== cat.skillCount) {
       await prisma.category.update({
@@ -425,11 +364,9 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  let removedCount = 0;
   if (DRY) {
-    console.log("\n=== Steps 2-3 skipped (--dry) ===");
+    console.log("\n=== Category recount skipped (--dry) ===");
   } else {
-    removedCount = await deduplicateSkills();
     await recountCategories();
   }
 
@@ -447,9 +384,9 @@ async function main(): Promise<number> {
       `${sync.empty.length} categor${sync.empty.length === 1 ? "y" : "ies"} yielded no rows for selector '${SELECTORS.skillLink}': ${sync.empty.join(", ")}`
     );
   }
-  if (sync.newCount + sync.updatedCount === 0) {
+  if (sync.found === 0 || sync.malformed === sync.found) {
     errors.push(
-      `wrote nothing: 0 inserted, 0 updated across ${sync.categories} categor${sync.categories === 1 ? "y" : "ies"} and ${sync.found} scraped row(s) — check selectors '${SELECTORS.categoryChip}' and '${SELECTORS.skillLink}' against ${SOURCE_URL}`
+      `no usable source rows across ${sync.categories} categor${sync.categories === 1 ? "y" : "ies"} and ${sync.found} scraped row(s) — check selectors '${SELECTORS.categoryChip}' and '${SELECTORS.skillLink}' against ${SOURCE_URL}`
     );
   }
 
@@ -462,7 +399,6 @@ async function main(): Promise<number> {
   console.log(`  ${DRY ? "Would add" : "New"} skills: ${sync.newCount}`);
   console.log(`  ${DRY ? "Would update" : "Updated"}: ${sync.updatedCount}`);
   console.log(`  Malformed/collided rows: ${sync.malformed}`);
-  console.log(`  Deduped: ${removedCount}`);
   console.log(`  Total skills: ${totalSkills}`);
   console.log(`  Duration: ${(durationMs / 1000).toFixed(1)}s`);
   for (const e of errors) console.error(`  ERROR: ${e}`);

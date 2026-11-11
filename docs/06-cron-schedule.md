@@ -9,13 +9,14 @@
 
 | Job | 端点 | 建议频率 | 参数 | 落库策略 |
 |-----|------|----------|------|----------|
-| `tako-scrape-agents` | `GET /api/cron/scrape-agents` | 每日 04:00 UTC | `?pages=1&minStars=200&max=2000` | PROJECT 直接 APPROVED；admin REJECT/DISABLE 的 slug 会被跳过 |
-| `tako-import-hosted` | `GET /api/cron/import-hosted` | 每日 04:30 UTC | `?max=0`（不限） | HOSTED 落 PENDING，待 `/admin/agents` 审核；跨域变更也降级 PENDING |
-| `tako-check-github` | `GET /api/cron/check-github` | 每周一 05:00 UTC | —— | 探测 skill 的 GitHub 链接是否 404，写 `ghStatus`/`ghCheckedAt` |
-| `tako-health` | `GET /api/cron/health` | 每 6 小时 | —— | 更新 `healthStatus`/`healthCheckedAt`，状态**翻转**时追加 `AgentHealthCheck` |
-| `tako-weekly-digest` | `GET /api/cron/weekly-digest` | 每周一 09:00 UTC | —— | 给已验证订阅者发周报 |
-| `tako-retention` | `GET /api/cron/retention` | 每日 02:00 UTC | —— | 删除 90 天前的 `RequestLog`（分批，单次上限 10 万行） |
-| `tako-ingestion-health` | `GET /api/cron/ingestion-health` | 每 6 小时 | —— | **只读**。按来源报告目录新鲜度，超过 72 小时无新增即 `stale: true` |
+| `takoapi-scrape-agents` | `GET /api/cron/scrape-agents` | 每日 06:00 UTC | `?pages=1&minStars=200&max=2000` | PROJECT 直接 APPROVED；admin REJECT/DISABLE 的 slug 会被跳过 |
+| `takoapi-import-hosted` | `GET /api/cron/import-hosted` | 每日 07:00 UTC | `?max=0`（不限） | HOSTED 落 PENDING，待 `/admin/agents` 审核；跨域变更也降级 PENDING |
+| `takoapi-github-check` | `GET /api/cron/check-github` | 每周日 02:00 UTC | —— | 探测 skill 的 GitHub 链接是否 404，写 `ghStatus`/`ghCheckedAt` |
+| `takoapi-health` | `GET /api/cron/health` | 每小时 | —— | 更新 `healthStatus`/`healthCheckedAt`，状态**翻转**时追加 `AgentHealthCheck` |
+| `takoapi-weekly-digest` | `GET /api/cron/weekly-digest` | 每周一 09:00 UTC | —— | 给已验证订阅者发周报 |
+| `takoapi-retention` | `GET /api/cron/retention` | 每日 02:30 UTC | —— | 删除 90 天前的 `RequestLog`（分批，单次上限 10 万行） |
+| `takoapi-ingestion-health` | `GET /api/cron/ingestion-health` | 每 6 小时 | —— | **只读**。按来源报告目录新鲜度，超过 72 小时无新增即 `stale: true` |
+| `takoapi-github-skills` | Cloud Run Job | 每日 05:00 UTC | 每类最多 50 个仓库 | GitHub 元数据，保留现有审核状态 |
 | `takoapi-daily-sync` | Cloud Run **Job**（非 HTTP 端点） | 每日 03:00 UTC | —— | 从 clawskills.sh 增量同步 skills；见 `scripts/deploy-sync-job.sh` |
 
 所有 HTTP 端点鉴权：`Authorization: Bearer <CRON_SECRET>`（见 `src/lib/cron-auth.ts`）。
@@ -25,42 +26,11 @@
 响应含 `durationMs` + `ranAt`；摄取类端点另外向 stdout 打一行
 `{"event":"ingestion_run", …}` 结构化日志（`src/lib/ingestion-log.ts`），供告警使用。
 
-## 建置（幂等 create-or-update）
+## 云端建置与复核
 
-```bash
-set -euo pipefail
-PROJECT=takoapi-491505
-REGION=us-central1
-LOCATION=us-central1                        # Cloud Scheduler location
-BASE=https://takoapi.com                    # 或 run URL
+从已验证的主分支运行 `bash scripts/deploy-sync-job.sh`。脚本构建同一个固定版本的镜像，将 ClawSkills 同步和 GitHub Skills 采集分别部署为 Cloud Run Job，然后根据 `scripts/configure-catalog-schedules.py` 更新 Cloud Scheduler。仅恢复调度时运行 `python3 scripts/configure-catalog-schedules.py`。下一次调度不依赖本地电脑。
 
-SECRET=$(gcloud secrets versions access latest --secret=tako-cron-secret --project="$PROJECT")
-
-upsert_job () {
-  local name="$1" schedule="$2" uri="$3"
-  local verb=create
-  gcloud scheduler jobs describe "$name" --location="$LOCATION" --project="$PROJECT" >/dev/null 2>&1 && verb=update
-  gcloud scheduler jobs "$verb" http "$name" \
-    --location="$LOCATION" --project="$PROJECT" \
-    --schedule="$schedule" --time-zone="Etc/UTC" \
-    --uri="$uri" --http-method=GET \
-    --headers="Authorization=Bearer ${SECRET}" \
-    --attempt-deadline=320s \
-    --max-retry-attempts=1
-}
-
-upsert_job tako-scrape-agents    "0 4 * * *"   "${BASE}/api/cron/scrape-agents?pages=1&minStars=200&max=2000"
-upsert_job tako-import-hosted    "30 4 * * *"  "${BASE}/api/cron/import-hosted?max=0"
-upsert_job tako-check-github     "0 5 * * 1"   "${BASE}/api/cron/check-github"
-upsert_job tako-health           "0 */6 * * *" "${BASE}/api/cron/health"
-upsert_job tako-weekly-digest    "0 9 * * 1"   "${BASE}/api/cron/weekly-digest"
-upsert_job tako-retention        "0 2 * * *"   "${BASE}/api/cron/retention"
-upsert_job tako-ingestion-health "15 */6 * * *" "${BASE}/api/cron/ingestion-health"
-```
-
-> `--attempt-deadline=320s` 略高于 scrape-agents 的 `maxDuration=300`，以免 Scheduler 先于端点超时。
-> **Cloud Run 服务的 request timeout 必须 ≥ 320s**（否则那才是真正的截断点）；核对：
-> `gcloud run services describe takoapi --region us-central1 --project=takoapi-491505 --format='value(spec.template.spec.timeoutSeconds)'`。
+GitHub Skills 每天 05:00 UTC 运行。两个采集作业仅从 Secret Manager 获取运行时数据库配置。GitHub Skills 使用项目的 GitHub 凭据，按来源和标识更新元数据。显示名称允许重复。Hosted Agent 由社区注册表发现后进入既有审核流程。执行记录与新增数可在 Cloud Run Jobs 和 Cloud Logging 查看。
 
 ## 必须配的告警（否则等于没做）
 
@@ -79,19 +49,19 @@ upsert_job tako-ingestion-health "15 */6 * * *" "${BASE}/api/cron/ingestion-heal
 
 ```bash
 gcloud scheduler jobs list --location=us-central1 --project=takoapi-491505
-gcloud scheduler jobs run tako-ingestion-health --location=us-central1 --project=takoapi-491505
-gcloud scheduler jobs pause  tako-scrape-agents --location=us-central1 --project=takoapi-491505
-gcloud scheduler jobs resume tako-scrape-agents --location=us-central1 --project=takoapi-491505
+gcloud scheduler jobs run takoapi-ingestion-health --location=us-central1 --project=takoapi-491505
+gcloud scheduler jobs pause  takoapi-scrape-agents --location=us-central1 --project=takoapi-491505
+gcloud scheduler jobs resume takoapi-scrape-agents --location=us-central1 --project=takoapi-491505
 ```
 
 ## 密钥到期日历（人工提醒，没有代码会替你做）
 
 | 密钥 | 到期 / 轮换周期 | 到期后的症状 |
 |---|---|---|
-| `APPLE_CLIENT_SECRET` | **2026-09-25**（JWT，Apple 上限 6 个月） | Apple 登录静默失败，无报错页 |
+| `APPLE_CLIENT_SECRET` | **2027-05-06 北京时间**（2026-11-12 已续签，提前 30 天复核） | Apple 登录静默失败，无报错页 |
 | `tako-github-token` | GitHub PAT，按创建时设定 | 抓取返回 401；`scrape-agents` 现在会抛错而非静默返回空 |
-| `CRON_SECRET` | 建议每 6 个月 | 轮换后必须重跑上面的 `upsert_job`（header 里带的是明文值） |
-| Cloud SQL 密码 | 见 `docs/08-tech-review-2026-09-05.md` §1.1 —— **待轮换** | —— |
+| `CRON_SECRET` | 建议每 6 个月 | 轮换后必须运行 `python3 scripts/configure-catalog-schedules.py`（header 里带的是明文值） |
+| Cloud SQL 密码 | 应用与采集作业使用独立运行时角色。迁移使用单独的管理员凭据 | —— |
 
 ## 安全备注
 

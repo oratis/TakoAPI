@@ -1,3 +1,4 @@
+import { appleSignInAvailable } from "@/lib/apple-signin";
 import { connection } from "next/server";
 import SignUpForm from "./signup-form";
 
@@ -9,5 +10,5 @@ import SignUpForm from "./signup-form";
 // and touch no database, so rendering per request costs nothing.
 export default async function SignUpPage() {
   await connection();
-  return <SignUpForm />;
+  return <SignUpForm appleAvailable={appleSignInAvailable()} />;
 }

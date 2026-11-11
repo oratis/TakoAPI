@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { appleSignInAvailable } from "./apple-signin";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
@@ -35,7 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-    Apple({
+    ...(appleSignInAvailable() ? [Apple({
       clientId: process.env.APPLE_CLIENT_ID,
       clientSecret: process.env.APPLE_CLIENT_SECRET!,
       profile(profile) {
@@ -47,7 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: profile.email,
         };
       },
-    }),
+    })] : []),
     Credentials({
       name: "credentials",
       credentials: {

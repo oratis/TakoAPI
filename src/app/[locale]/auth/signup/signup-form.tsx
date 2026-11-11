@@ -9,7 +9,7 @@ import { routing } from "@/i18n/routing";
 import { safeCallbackUrl } from "@/lib/callback-url";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
-export default function SignUpForm() {
+export default function SignUpForm({ appleAvailable }: { appleAvailable: boolean }) {
   const t = useTranslations("Auth");
   const locale = useLocale();
   const router = useRouter();
@@ -60,7 +60,7 @@ export default function SignUpForm() {
         <p className="text-sm text-gray-600 mt-1">{t("signUpSubtitle")}</p>
       </div>
 
-      <OAuthButtons callbackUrl={absoluteCallback} mode="signup" />
+      <OAuthButtons appleAvailable={appleAvailable} callbackUrl={absoluteCallback} mode="signup" />
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">

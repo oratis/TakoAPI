@@ -28,15 +28,15 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY prisma ./prisma/
-COPY scripts/daily-sync.ts ./scripts/
+COPY scripts/daily-sync.ts scripts/scrape-github-skills.ts ./scripts/
 # daily-sync.ts imports ../src/lib/ingestion-log for its run-summary telemetry.
 # The module is dependency-free, so this one file is the whole subtree it needs;
 # without it `npx tsx scripts/daily-sync.ts` dies at MODULE_NOT_FOUND before main().
-COPY src/lib/ingestion-log.ts ./src/lib/
+COPY src/lib/ingestion-log.ts src/lib/github.ts ./src/lib/
 
 # tsx is not in package.json deps; install it into the image so the
 # runtime `npx tsx` never has to fetch it. prisma generate runs against
 # the copied (main) schema → enum-aware client (fixes the P2032 drift).
-RUN npm ci && npm install --no-save tsx && npx prisma generate
+RUN npm ci && npx prisma generate
 
 CMD ["npx", "tsx", "scripts/daily-sync.ts"]
