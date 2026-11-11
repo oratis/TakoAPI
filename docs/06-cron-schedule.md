@@ -58,10 +58,10 @@ gcloud scheduler jobs resume takoapi-scrape-agents --location=us-central1 --proj
 
 | 密钥 | 到期 / 轮换周期 | 到期后的症状 |
 |---|---|---|
-| `APPLE_CLIENT_SECRET` | **2026-09-25**（JWT，Apple 上限 6 个月） | Apple 登录静默失败，无报错页 |
+| `APPLE_CLIENT_SECRET` | **2027-05-06 北京时间**（2026-11-12 已续签，提前 30 天复核） | Apple 登录静默失败，无报错页 |
 | `tako-github-token` | GitHub PAT，按创建时设定 | 抓取返回 401；`scrape-agents` 现在会抛错而非静默返回空 |
-| `CRON_SECRET` | 建议每 6 个月 | 轮换后必须重跑上面的 `upsert_job`（header 里带的是明文值） |
-| Cloud SQL 密码 | 见 `docs/08-tech-review-2026-09-05.md` §1.1 —— **待轮换** | —— |
+| `CRON_SECRET` | 建议每 6 个月 | 轮换后必须运行 `python3 scripts/configure-catalog-schedules.py`（header 里带的是明文值） |
+| Cloud SQL 密码 | 应用与采集作业使用独立运行时角色。迁移使用单独的管理员凭据 | —— |
 
 ## 安全备注
 

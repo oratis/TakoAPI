@@ -47,13 +47,14 @@ steps:
       - --max-instances=6
       - --concurrency=12
       - --timeout=360
+      - --no-cpu-throttling
       - --add-cloudsql-instances=$PROJECT_ID:us-central1:takoapi-db
       # --update-* (not --set-*): only the listed keys are touched.
       # Secrets are bound by reference; their values never appear in this file
       # or in build logs. Manage values via:
       #   gcloud secrets versions add <NAME> --data-file=-
       - --update-env-vars=NODE_ENV=production,AUTH_TRUST_HOST=true,NEXTAUTH_URL=https://takoapi.com,GOOGLE_CLIENT_ID=429522911261-t3s9v8av3n4saed95u4vkij5oqlfjoti.apps.googleusercontent.com,APPLE_CLIENT_ID=com.takoapi.auth
-      - --update-secrets=DATABASE_URL=tako-runtime-database-url:latest,NEXTAUTH_SECRET=tako-nextauth-secret:latest,GOOGLE_CLIENT_SECRET=tako-google-client-secret:latest,APPLE_CLIENT_SECRET=tako-apple-client-secret:latest,RESEND_API_KEY=tako-resend-api-key:latest,CRON_SECRET=tako-cron-secret:latest
+      - --update-secrets=TAKO_IP_SALT=tako-ip-salt:latest,DATABASE_URL=tako-runtime-database-url:latest,NEXTAUTH_SECRET=tako-nextauth-secret:latest,GOOGLE_CLIENT_SECRET=tako-google-client-secret:latest,APPLE_CLIENT_SECRET=tako-apple-client-secret:latest,RESEND_API_KEY=tako-resend-api-key:latest,CRON_SECRET=tako-cron-secret:latest
 
 # Both tags are pushed automatically once all steps succeed.
 images:
