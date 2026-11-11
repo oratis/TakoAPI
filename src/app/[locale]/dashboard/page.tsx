@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { SignInPrompt } from "@/components/SignInPrompt";
+import { FirstAgentCall } from "@/components/dashboard/first-agent-call";
 import CodeTabs from "@/components/ui/CodeTabs";
 import { gatewaySamples } from "@/lib/samples";
 import { fetchJson, useAsync } from "@/hooks/useAsync";
@@ -42,6 +43,7 @@ type Usage = {
     slug: string | null;
     protocol: string;
     status: number;
+    errorCode: string | null;
     latencyMs: number | null;
     billedUsd: number | null;
     createdAt: string;
@@ -326,6 +328,7 @@ function Dashboard() {
                 {copied ? t("copied") : t("copy")}
               </button>
             </div>
+            <FirstAgentCall key={newKey} apiKey={newKey} onCall={reloadAll} />
           </div>
         )}
 
@@ -509,7 +512,7 @@ function Dashboard() {
                     <td className="px-4 py-2 text-gray-700">{r.agent}</td>
                     <td className="px-4 py-2 text-gray-500">{r.protocol === "OPENAI_COMPAT" ? "OpenAI" : r.protocol}</td>
                     <td className="px-4 py-2">
-                      <span className={r.status >= 200 && r.status < 300 ? "text-green-700" : "text-red-600"}>{r.status}</span>
+                      <span className={!r.errorCode && r.status >= 200 && r.status < 300 ? "text-green-700" : "text-red-600"}>{r.status}{r.errorCode && ` · ${r.errorCode}`}</span>
                     </td>
                     <td className="px-4 py-2 text-gray-500">{r.latencyMs != null ? `${r.latencyMs}ms` : "—"}</td>
                     <td className="px-4 py-2 text-gray-500">{r.billedUsd != null && r.billedUsd > 0 ? fmtUsd(r.billedUsd) : "—"}</td>

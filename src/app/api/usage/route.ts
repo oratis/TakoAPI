@@ -37,7 +37,7 @@ export async function GET() {
     prisma.$queryRaw<Array<{ day: Date; calls: bigint; errors: bigint; billed: string | null }>>`
       SELECT date_trunc('day', "createdAt") AS day,
              count(*)                        AS calls,
-             count(*) FILTER (WHERE "status" >= 400) AS errors,
+             count(*) FILTER (WHERE "status" >= 400 OR "errorCode" IS NOT NULL) AS errors,
              sum("billedUsd")                AS billed
       FROM "Invocation"
       WHERE "userId" = ${userId} AND "createdAt" >= ${since}

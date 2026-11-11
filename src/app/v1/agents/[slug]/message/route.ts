@@ -135,6 +135,11 @@ export async function POST(
     );
   }
 
+  // The dashboard offers free agents. A price change after selection must not bill the caller.
+  if (req.headers.get("x-tako-free-only") === "1" && agent.pricingModel !== "FREE") {
+    return NextResponse.json({ error: "This agent is no longer free." }, { status: 409 });
+  }
+
   // Pre-flight credit gate — reject before the (billable) upstream call so a looping
   // caller can't run the balance arbitrarily negative. FREE/unpriced agents pass through.
   const credit = await checkCreditPreflight(keyRecord.userId, agent.pricingModel, agent.unitPriceUsd);
@@ -236,10 +241,7 @@ export async function POST(
 
   const latencyMs = Date.now() - started;
 
-  // Meter + bill. A *billed* call is awaited before we respond: Cloud Run may stop
-  // giving this instance CPU once the response is flushed, so a pending debit is not
-  // guaranteed to run. Free/failed calls stay fire-and-forget — losing one costs a
-  // data point, not revenue.
+  // Complete the metering write before the dashboard reloads usage for this response.
   const billedUsd =
     !errorCode && status < 400 ? computeBilledUsd(agent.pricingModel, agent.unitPriceUsd) : 0;
   const meter = {
@@ -256,7 +258,7 @@ export async function POST(
   if (billedUsd > 0) {
     await debitInvocation(meter);
   } else {
-    void meterInvocation(meter);
+    await meterInvocation(meter);
   }
 
   if (unreachable) {
