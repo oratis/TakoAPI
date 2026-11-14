@@ -200,7 +200,11 @@
     "resultsLabel": "Результаты",
     "paginationLabel": "Постраничная навигация",
     "goToPage": "Перейти на страницу {page}",
-    "showingRange": "Показаны {from}–{to} из {total}"
+    "showingRange": "Показаны {from}–{to} из {total}",
+    "allScenarios": "Все сценарии",
+    "searchScenarios": "Найти сценарий…",
+    "noScenarios": "Подходящих сценариев нет.",
+    "resultCount": "{count, plural, =0 {Нет результатов} one {# результат} few {# результата} many {# результатов} other {# результата}}"
   },
   "Components": {
     "agentFree": "Бесплатно",

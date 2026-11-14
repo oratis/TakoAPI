@@ -200,7 +200,11 @@
     "resultsLabel": "परिणाम",
     "paginationLabel": "पेजिनेशन",
     "goToPage": "पेज {page} पर जाएँ",
-    "showingRange": "{total} में से {from}–{to} दिखा रहे हैं"
+    "showingRange": "{total} में से {from}–{to} दिखा रहे हैं",
+    "allScenarios": "सभी परिदृश्य",
+    "searchScenarios": "परिदृश्य खोजें…",
+    "noScenarios": "कोई मेल खाता परिदृश्य नहीं मिला।",
+    "resultCount": "{count, plural, =0 {कोई परिणाम नहीं} one {# परिणाम} other {# परिणाम}}"
   },
   "Components": {
     "agentFree": "मुफ़्त",

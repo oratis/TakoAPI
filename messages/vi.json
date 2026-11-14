@@ -200,7 +200,11 @@
     "resultsLabel": "Kết quả",
     "paginationLabel": "Phân trang",
     "goToPage": "Đến trang {page}",
-    "showingRange": "Hiển thị {from}–{to} trên {total}"
+    "showingRange": "Hiển thị {from}–{to} trên {total}",
+    "allScenarios": "Tất cả tình huống",
+    "searchScenarios": "Tìm tình huống…",
+    "noScenarios": "Không có tình huống phù hợp.",
+    "resultCount": "{count, plural, =0 {Không có kết quả} other {# kết quả}}"
   },
   "Components": {
     "agentFree": "Miễn phí",

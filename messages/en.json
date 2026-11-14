@@ -200,7 +200,11 @@
     "resultsLabel": "Results",
     "paginationLabel": "Pagination",
     "goToPage": "Go to page {page}",
-    "showingRange": "Showing {from}–{to} of {total}"
+    "showingRange": "Showing {from}–{to} of {total}",
+    "allScenarios": "All scenarios",
+    "searchScenarios": "Find a scenario…",
+    "noScenarios": "No matching scenarios.",
+    "resultCount": "{count, plural, =0 {No results} one {# result} other {# results}}"
   },
   "Components": {
     "agentFree": "Free",

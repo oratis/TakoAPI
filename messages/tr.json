@@ -200,7 +200,11 @@
     "resultsLabel": "Sonuçlar",
     "paginationLabel": "Sayfalama",
     "goToPage": "{page}. sayfaya git",
-    "showingRange": "{total} sonuçtan {from}–{to} arası gösteriliyor"
+    "showingRange": "{total} sonuçtan {from}–{to} arası gösteriliyor",
+    "allScenarios": "Tüm senaryolar",
+    "searchScenarios": "Senaryo ara…",
+    "noScenarios": "Eşleşen senaryo yok.",
+    "resultCount": "{count, plural, =0 {Sonuç yok} other {# sonuç}}"
   },
   "Components": {
     "agentFree": "Ücretsiz",

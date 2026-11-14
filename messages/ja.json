@@ -200,7 +200,11 @@
     "resultsLabel": "検索結果",
     "paginationLabel": "ページ送り",
     "goToPage": "{page}ページ目へ",
-    "showingRange": "{total}件中{from}〜{to}件を表示"
+    "showingRange": "{total}件中{from}〜{to}件を表示",
+    "allScenarios": "すべてのシナリオ",
+    "searchScenarios": "シナリオを検索…",
+    "noScenarios": "一致するシナリオはありません。",
+    "resultCount": "{count, plural, =0 {結果なし} other {# 件の結果}}"
   },
   "Components": {
     "agentFree": "無料",

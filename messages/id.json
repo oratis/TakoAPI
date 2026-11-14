@@ -200,7 +200,11 @@
     "resultsLabel": "Hasil",
     "paginationLabel": "Paginasi",
     "goToPage": "Ke halaman {page}",
-    "showingRange": "Menampilkan {from}–{to} dari {total}"
+    "showingRange": "Menampilkan {from}–{to} dari {total}",
+    "allScenarios": "Semua skenario",
+    "searchScenarios": "Cari skenario…",
+    "noScenarios": "Tidak ada skenario yang cocok.",
+    "resultCount": "{count, plural, =0 {Tidak ada hasil} other {# hasil}}"
   },
   "Components": {
     "agentFree": "Gratis",

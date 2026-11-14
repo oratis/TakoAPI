@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import Form from "next/form";
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Prisma } from "@prisma/client";
-import { Link } from "@/i18n/navigation";
+import { getPathname, Link } from "@/i18n/navigation";
 import AgentCard from "@/components/ui/AgentCard";
-import SiteSearch from "@/components/ui/SiteSearch";
+import FilterPanel, { MobileFilters, type FilterGroup } from "@/components/agents/FilterPanel";
 import { getAgentCategories } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { SCENARIOS, isScenarioSlug } from "@/lib/scenarios";
@@ -145,68 +146,11 @@ function protocolLabel(protocol: string): string {
 }
 
 function chip(active: boolean): string {
-  return `px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+  return `inline-flex min-h-10 items-center justify-center px-4 py-2 rounded-lg text-sm font-medium border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500 ${
     active
       ? "bg-purple-600 text-white border-purple-600"
       : "bg-white text-gray-600 border-gray-200 hover:border-purple-300 hover:text-gray-900"
   }`;
-}
-
-type FilterOption = {
-  /** Unique within its group; only used as the React key. */
-  value: string;
-  label: string;
-  emoji?: string;
-  href: string;
-  active: boolean;
-};
-
-type FilterGroup = {
-  id: string;
-  title: string;
-  options: FilterOption[];
-  /** Long groups (the 17 scenarios) get their own scroll area on desktop. */
-  scroll?: boolean;
-};
-
-function FilterPanel({ groups, label }: { groups: FilterGroup[]; label: string }) {
-  return (
-    <nav aria-label={label} className="space-y-6">
-      {groups.map((group) => (
-        <div key={group.id}>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            {group.title}
-          </h2>
-          <ul
-            className={`flex flex-row flex-wrap lg:flex-col gap-1 ${
-              group.scroll ? "lg:max-h-72 lg:overflow-y-auto lg:pe-1" : ""
-            }`}
-          >
-            {group.options.map((option) => (
-              <li key={option.value}>
-                <Link
-                  href={option.href}
-                  aria-current={option.active ? "true" : undefined}
-                  className={`block px-3 py-1.5 rounded-lg text-sm font-medium text-start transition-colors truncate ${
-                    option.active
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  {option.emoji && (
-                    <span aria-hidden="true" className="me-1.5">
-                      {option.emoji}
-                    </span>
-                  )}
-                  {option.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </nav>
-  );
 }
 
 export default async function AgentsMarketplacePage({
@@ -220,6 +164,7 @@ export default async function AgentsMarketplacePage({
   setRequestLocale(locale);
   const t = await getTranslations("Agents");
   const tScenario = await getTranslations("Scenarios");
+  const tHeader = await getTranslations("Header");
 
   const sp = await searchParams;
   const rawScenario = firstValue(sp.scenario);
@@ -229,8 +174,8 @@ export default async function AgentsMarketplacePage({
 
   const category = firstValue(sp.category)?.trim() || undefined;
   const scenario = isScenarioSlug(rawScenario) ? rawScenario : undefined;
-  const protocol = rawProtocol && PROTOCOLS.includes(rawProtocol) ? rawProtocol : undefined;
-  const pricing = rawPricing && PRICING.includes(rawPricing) ? rawPricing : undefined;
+  const protocol = rawKind !== "PROJECT" && rawProtocol && PROTOCOLS.includes(rawProtocol) ? rawProtocol : undefined;
+  const pricing = rawKind !== "PROJECT" && rawPricing && PRICING.includes(rawPricing) ? rawPricing : undefined;
   const q = firstValue(sp.q)?.trim() || undefined;
   const kind: KindFilter = rawKind === "HOSTED" || rawKind === "PROJECT" ? rawKind : "";
 
@@ -419,38 +364,63 @@ export default async function AgentsMarketplacePage({
   const pageNumbers = Array.from({ length: windowSize }, (_, i) => windowStart + i);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 sm:py-10">
       {/* Hero */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">{t("heroTitle")}</h1>
-        <p className="text-sm text-gray-600 mt-2 max-w-2xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{t("heroTitle")}</h1>
+        <p className="text-sm leading-6 text-gray-500 mt-3 max-w-2xl">
           <span className="font-medium text-purple-600">{t("heroTagline")}</span>{" "}
           {t("heroSubtitle")}
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Desktop sidebar. The same panel is rendered again below inside a
-            <details> for narrow screens: native disclosure content cannot be
-            forced open with CSS, and rebuilding it as a client toggle would ship
-            JavaScript for what is a list of links. Only one copy is ever
-            displayed, so the hidden one stays out of the accessibility tree. */}
-        <aside className="hidden lg:block lg:w-60 shrink-0">
-          <div className="lg:sticky lg:top-24">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Only the desktop or mobile panel is exposed at a given breakpoint. */}
+        <aside className="hidden lg:block lg:w-64 shrink-0">
+          <div className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white">
+            <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-4">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <SlidersHorizontal className="h-4 w-4 text-purple-600" aria-hidden="true" />
+                {t("filtersTitle")}
+              </span>
+              {activeFilters.length > 0 && (
+                <Link href={clearAllHref} scroll={false} className="text-xs font-medium text-purple-700 hover:underline">
+                  {t("clearAll")}
+                </Link>
+              )}
+            </div>
             <FilterPanel groups={groups} label={t("filtersTitle")} />
           </div>
         </aside>
 
         <div className="flex-1 min-w-0">
-          {/* Search. A native <form action="/agents"> dropped the visitor back on
-              the English listing from every other locale; SiteSearch routes
-              through the locale-aware router instead. */}
-          <div className="max-w-xl mb-5">
-            <SiteSearch variant="hero" defaultScope={kind === "PROJECT" ? "projects" : "agents"} />
-          </div>
+          {/* Search within the current catalog, keeping filters and locale.
+              The type tabs below already provide the scope selector. */}
+          <Form action={getPathname({ locale, href: "/agents" })} scroll={false} role="search" className="mb-5">
+            {Object.entries(base).map(([name, value]) => name !== "q" && value ? (
+              <input key={name} type="hidden" name={name} value={value} />
+            ) : null)}
+            <label className="sr-only" htmlFor="marketplace-search">{t("searchPlaceholder")}</label>
+            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-1.5 ps-4 shadow-sm transition-shadow focus-within:border-purple-400 focus-within:ring-4 focus-within:ring-purple-50">
+              <Search className="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+              <input
+                key={q ?? ""}
+                id="marketplace-search"
+                name="q"
+                type="search"
+                defaultValue={q ?? ""}
+                placeholder={kind === "PROJECT" ? tHeader("searchProjectsPlaceholder") : t("searchPlaceholder")}
+                className="min-w-0 flex-1 bg-transparent py-2.5 text-base text-gray-900 outline-none placeholder:text-gray-500 sm:text-sm"
+              />
+              <button type="submit" aria-label={t("search")} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-purple-600 px-3 text-sm font-medium text-white transition-colors hover:bg-purple-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500 sm:px-5">
+                <span className="hidden sm:inline">{t("search")}</span>
+                <Search className="h-4 w-4 sm:hidden" aria-hidden="true" />
+              </button>
+            </div>
+          </Form>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <nav aria-label={t("kindLabel")} className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5 border-b border-gray-100 pb-5">
+            <nav aria-label={t("kindLabel")} className="flex flex-wrap items-center gap-2">
               {KINDS.map((k) => (
                 <Link
                   key={k.key || "all"}
@@ -463,6 +433,7 @@ export default async function AgentsMarketplacePage({
                     sort: undefined,
                     ...(k.key === "PROJECT" ? { protocol: undefined, pricing: undefined } : {}),
                   })}
+                  scroll={false}
                   aria-current={kind === k.key ? "true" : undefined}
                   className={chip(kind === k.key)}
                 >
@@ -473,7 +444,7 @@ export default async function AgentsMarketplacePage({
 
             <nav
               aria-label={t("sortLabel")}
-              className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 self-start sm:self-auto"
+              className="flex flex-wrap items-center gap-1 rounded-lg bg-gray-50 p-1"
             >
               {availableSorts.map((s) => (
                 <Link
@@ -482,8 +453,9 @@ export default async function AgentsMarketplacePage({
                     sort: s === defaultSort ? undefined : s,
                     page: undefined,
                   })}
+                  scroll={false}
                   aria-current={sort === s ? "true" : undefined}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-2.5 py-2 rounded-md text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-purple-500 ${
                     sort === s ? "bg-white text-purple-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
@@ -493,21 +465,7 @@ export default async function AgentsMarketplacePage({
             </nav>
           </div>
 
-          {/* Mobile filters — collapsed by default so the results are the first
-              thing on screen instead of forty chips. */}
-          <details className="lg:hidden mb-4 rounded-xl border border-gray-200 bg-white">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-gray-700 marker:text-gray-500">
-              <span className="inline-flex items-center gap-2 align-middle">
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                {activeFilters.length > 0
-                  ? t("filtersWithCount", { count: activeFilters.length })
-                  : t("filtersTitle")}
-              </span>
-            </summary>
-            <div className="border-t border-gray-100 px-4 py-4">
-              <FilterPanel groups={groups} label={t("filtersTitle")} />
-            </div>
-          </details>
+          <MobileFilters groups={groups} activeCount={activeFilters.length} />
 
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -516,11 +474,12 @@ export default async function AgentsMarketplacePage({
                 <Link
                   key={f.key}
                   href={f.href}
+                  scroll={false}
                   aria-label={t("removeFilter", { label: f.label })}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-colors"
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-colors"
                 >
-                  {f.label}
-                  <X className="h-3 w-3" aria-hidden="true" />
+                  <span className="min-w-0 break-words">{f.label}</span>
+                  <X className="h-3 w-3 shrink-0" aria-hidden="true" />
                 </Link>
               ))}
               <Link
@@ -532,7 +491,7 @@ export default async function AgentsMarketplacePage({
             </div>
           )}
 
-          <p className="text-sm text-gray-600 mb-4">{t("count", { count: total })}</p>
+          <p className="text-sm text-gray-500 mb-4" role="status">{t("resultCount", { count: total })}</p>
 
           <h2 className="sr-only">{t("resultsLabel")}</h2>
           {agents.length === 0 ? (
@@ -572,7 +531,7 @@ export default async function AgentsMarketplacePage({
                   total,
                 })}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 {page > 1 ? (
                   <Link
                     href={hrefWith(base, { page: page - 1 === 1 ? undefined : String(page - 1) })}

@@ -200,7 +200,11 @@
     "resultsLabel": "결과",
     "paginationLabel": "페이지 이동",
     "goToPage": "{page}페이지로 이동",
-    "showingRange": "{total}개 중 {from}–{to}개 표시"
+    "showingRange": "{total}개 중 {from}–{to}개 표시",
+    "allScenarios": "모든 시나리오",
+    "searchScenarios": "시나리오 검색…",
+    "noScenarios": "일치하는 시나리오가 없습니다.",
+    "resultCount": "{count, plural, =0 {결과 없음} other {결과 #개}}"
   },
   "Components": {
     "agentFree": "무료",

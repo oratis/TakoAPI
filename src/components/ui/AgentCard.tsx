@@ -63,10 +63,10 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
   return (
     <Link
       href={`/agents/${agent.slug}`}
-      className="group block bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-purple-200 transition-all duration-200"
+      className="group flex h-full min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-5 transition-all duration-200 hover:border-purple-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
     >
       <div className="flex items-start justify-between mb-2 gap-2">
-        <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-600 transition-colors">
+        <h3 className="min-w-0 text-sm font-semibold text-gray-900 break-words group-hover:text-purple-600 transition-colors">
           {agent.name}
         </h3>
         {isProject ? (
@@ -82,7 +82,7 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
         ) : null}
       </div>
 
-      <p className="text-sm text-gray-600 line-clamp-2 mb-3 min-h-[2.5rem]">{agent.description}</p>
+      <p className="text-sm leading-6 text-gray-500 line-clamp-2 mb-3 min-h-12">{agent.description}</p>
 
       {agent.scenarios && agent.scenarios.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
@@ -96,8 +96,8 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
                 title={label}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-600 max-w-full truncate"
               >
-                <span>{sc.emoji}</span>
-                {label}
+                <span aria-hidden="true" className="shrink-0">{sc.emoji}</span>
+                <span className="truncate">{label}</span>
               </span>
             );
           })}
@@ -105,7 +105,7 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
       )}
 
       {isProject ? (
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
           <span className="text-xs text-gray-600 truncate">
             {agent.repoOwner ? `${agent.repoOwner}/${agent.name}` : t("agentOpenSource")}
           </span>
@@ -123,8 +123,8 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               {agent.category && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-600 font-medium truncate">
                   {agent.category.name}
@@ -144,7 +144,7 @@ export default async function AgentCard({ agent }: { agent: AgentCardData }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+          <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
             {agent.healthStatus && (
               <span
                 className="inline-flex items-center gap-1"

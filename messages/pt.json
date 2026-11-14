@@ -200,7 +200,11 @@
     "resultsLabel": "Resultados",
     "paginationLabel": "Paginação",
     "goToPage": "Ir para a página {page}",
-    "showingRange": "Exibindo {from}–{to} de {total}"
+    "showingRange": "Exibindo {from}–{to} de {total}",
+    "allScenarios": "Todos os cenários",
+    "searchScenarios": "Buscar um cenário…",
+    "noScenarios": "Nenhum cenário correspondente.",
+    "resultCount": "{count, plural, =0 {Nenhum resultado} one {# resultado} other {# resultados}}"
   },
   "Components": {
     "agentFree": "Grátis",

@@ -200,7 +200,11 @@
     "resultsLabel": "结果",
     "paginationLabel": "分页",
     "goToPage": "跳到第 {page} 页",
-    "showingRange": "显示第 {from}–{to} 个,共 {total} 个"
+    "showingRange": "显示第 {from}–{to} 个,共 {total} 个",
+    "allScenarios": "全部场景",
+    "searchScenarios": "搜索应用场景…",
+    "noScenarios": "没有匹配的场景。",
+    "resultCount": "{count, plural, =0 {暂无结果} other {# 个结果}}"
   },
   "Components": {
     "agentFree": "免费",

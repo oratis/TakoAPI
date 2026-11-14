@@ -70,12 +70,14 @@ export default function Header() {
           </Link>
 
           {/* Search - desktop */}
-          <div className="hidden lg:block flex-1 max-w-md">
-            <SiteSearch />
-          </div>
+          {pathname !== "/agents" && (
+            <div className="hidden 2xl:block min-w-0 flex-1 max-w-md">
+              <SiteSearch />
+            </div>
+          )}
 
           {/* Nav links - desktop */}
-          <nav className="hidden md:flex items-center gap-1" aria-label={t("mainNav")}>
+          <nav className="hidden xl:flex items-center gap-1" aria-label={t("mainNav")}>
             {NAV.map((item) => {
               const active =
                 item.key === "projects"
@@ -164,7 +166,7 @@ export default function Header() {
           {/* Mobile menu button */}
           <button
             type="button"
-            className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-50"
+            className="xl:hidden p-2 rounded-md text-gray-700 hover:bg-gray-50"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
             aria-expanded={menuOpen}
@@ -176,7 +178,7 @@ export default function Header() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div id={mobileId} className="md:hidden pb-4 space-y-3">
+          <div id={mobileId} className="xl:hidden pb-4 space-y-3">
             <SiteSearch />
             <nav className="flex flex-col gap-1" aria-label={t("mainNav")}>
               {NAV.map((item) => (

@@ -200,7 +200,11 @@
     "resultsLabel": "النتائج",
     "paginationLabel": "ترقيم الصفحات",
     "goToPage": "الانتقال إلى الصفحة {page}",
-    "showingRange": "عرض {from}–{to} من {total}"
+    "showingRange": "عرض {from}–{to} من {total}",
+    "allScenarios": "جميع السيناريوهات",
+    "searchScenarios": "ابحث عن سيناريو…",
+    "noScenarios": "لا توجد سيناريوهات مطابقة.",
+    "resultCount": "{count, plural, =0 {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}"
   },
   "Components": {
     "agentFree": "مجاني",
